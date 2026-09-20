@@ -1,4 +1,6 @@
 data/cleaned/jobs/VietJobs_cleaned.csv filter=lfs diff=lfs merge=lfs -text
+data/raw/exam/diemthi_2021.csv filter=lfs diff=lfs merge=lfs -text
+data/raw/exam/diemthi_2022.csv filter=lfs diff=lfs merge=lfs -text
 data/cleaned/exam/*.csv filter=lfs diff=lfs merge=lfs -text
 data/processed/exam/*.csv filter=lfs diff=lfs merge=lfs -text
 data/processed/admission/*.csv filter=lfs diff=lfs merge=lfs -text

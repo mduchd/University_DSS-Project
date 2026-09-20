@@ -5,6 +5,9 @@ from functools import lru_cache
 import math
 from pathlib import Path
 import unicodedata
+from services.recommendation_service import recommendation_engine
+import logging
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 from flask import Flask, jsonify, render_template, request
 
@@ -45,7 +48,17 @@ SUBJECT_NAMES = {
 }
 
 app = Flask(__name__)
-
+@app.get("/api/health")
+def health_check():
+    return jsonify({
+        "status": "success",
+        "message": "Dịch vụ hoạt động bình thường",
+        "data": {
+            "service_status": "up",
+            "data_cached": True
+        },
+        "errors": None
+    }), 200
 
 def as_number(value: str | float | int | None) -> float | None:
     try:
@@ -194,89 +207,58 @@ def search_admissions():
             "items": paginated_items,
         }
     )
-
-
 @app.post("/api/recommend")
-def recommend():
-    payload = request.get_json(silent=True) or {}
-    combination = str(payload.get("combination", "D01")).upper()
-    subjects = COMBINATIONS.get(combination)
-    if not subjects:
-        return jsonify({"error": "Tổ hợp chưa được hỗ trợ."}), 400
+def recommend_api():
+    try:
+        # Lấy dữ liệu JSON từ Frontend gửi lên
+        payload = request.get_json(silent=True) or {}
+        
+        # KIỂM TRA ĐẦU VÀO (Validation)
+        errors = validate_payload(payload)
+        if errors:
+            return jsonify({
+                "status": "error",
+                "data": None,
+                "errors": errors
+            }), 400
+            
+        # GỌI ENGINE XỬ LÝ (Phase 3)
+        result = recommendation_engine.process_recommendation(payload)
+        
+        # TRẢ VỀ JSON CHUẨN ĐÃ CHỐT VỚI TEAM
+        return jsonify({
+            "status": "success",
+            "data": result,
+            "errors": None
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Lỗi Server: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": "Lỗi hệ thống cục bộ, vui lòng thử lại sau.",
+            "data": None,
+            "errors": [{"message": str(e)}]
+        }), 500
 
-    scores = {subject: as_number(payload.get("scores", {}).get(subject)) for subject in subjects}
-    if any(score is None or score < 0 or score > 10 for score in scores.values()):
-        return jsonify({"error": "Hãy nhập điểm từ 0 đến 10 cho đủ ba môn của tổ hợp."}), 400
-
-    user_score = round(sum(score for score in scores.values() if score is not None), 2)
-    interest = str(payload.get("interest", "")).strip().casefold()
-    selected_group = str(payload.get("group", "")).strip().casefold()
-
-    buckets = {"safe": [], "match": [], "reach": []}
-
-    for row in admissions():
-        # Do not compare scale 30 user scores directly with scale 40 cutoffs
-        if row.get("is_scale_40"):
-            continue
-
-        offered_combinations = str(row.get("Tổ hợp môn", "")).upper()
-        if combination not in offered_combinations:
-            continue
-
-        if selected_group:
-            row_group = str(row.get("Nhóm ngành", "")).casefold()
-            if selected_group not in row_group:
-                continue
-
-        searchable = " ".join(
-            str(row.get(key, "")) for key in ("Tên ngành", "Ngành", "Nhóm ngành", "Trường đào tạo", "Mã trường")
-        ).casefold()
-        if interest and interest not in searchable and remove_accents(interest) not in remove_accents(searchable):
-            continue
-
-        gap = round(user_score - float(row["cutoff"]), 2)
-        label = classify(gap)
-        if not label:
-            continue
-
-        buckets[label].append(
-            {
-                "school_code": row.get("Mã trường", "—"),
-                "school": row.get("Trường đào tạo", "Chưa rõ trường"),
-                "major": row.get("Tên ngành") or row.get("Ngành") or "Chưa rõ ngành",
-                "major_code": row.get("Mã ngành", "—"),
-                "group": row.get("Nhóm ngành", "Khác"),
-                "cutoff": row["cutoff"],
-                "gap": gap,
-                "combination": combination,
-                "note": row.get("Ghi chú", ""),
-            }
-        )
-
-    # Sort each bucket by closest to user score and take top 15
-    for label, items in buckets.items():
-        if label == "safe":
-            items.sort(key=lambda item: item["gap"])
-        elif label == "match":
-            items.sort(key=lambda item: abs(item["gap"]))
-        else:  # reach
-            items.sort(key=lambda item: abs(item["gap"]))
-        buckets[label] = items[:15]
-
-    counts = {k: len(v) for k, v in buckets.items()}
-    total_count = sum(counts.values())
-
-    return jsonify(
-        {
-            "user_score": user_score,
-            "combination": combination,
-            "results": buckets,
-            "counts": counts,
-            "total_count": total_count,
-            "source_year": 2024,
-        }
-    )
-
+# Hàm kiểm tra logic đầu vào
+def validate_payload(data):
+    errors = []
+    
+    scores = data.get("scores", {})
+    if not scores:
+        errors.append({"field": "scores", "message": "Bắt buộc phải có điểm thi."})
+    else:
+        for subject, score in scores.items():
+            if not isinstance(score, (int, float)) or score < 0 or score > 10:
+                errors.append({"field": f"scores.{subject}", "message": "Điểm phải là số nằm trong khoảng 0-10."})
+                
+    priorities = data.get("priorities", {})
+    for key, value in priorities.items():
+        if not isinstance(value, (int, float)) or value < 0:
+            errors.append({"field": f"priorities.{key}", "message": "Mức độ ưu tiên không được là số âm."})
+            
+    return errors
 
 @app.get("/api/career/insights")
 def career_insights():
