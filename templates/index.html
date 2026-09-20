@@ -160,6 +160,50 @@
                   <input type="text" class="form-input" id="interest-input" placeholder="Ví dụ: Công nghệ thông tin, Bách Khoa..." autocomplete="off" />
                 </div>
 
+                <fieldset class="preference-section" aria-describedby="preference-helper">
+                  <div class="preference-heading">
+                    <legend>Hồ sơ định hướng</legend>
+                    <span class="optional-label">Không bắt buộc</span>
+                  </div>
+                  <p class="preference-helper" id="preference-helper">Chọn điều quan trọng với bạn để lưu cùng lộ trình. Điểm xét tuyển vẫn là căn cứ chính cho gợi ý hiện tại.</p>
+
+                  <div class="preference-group">
+                    <div class="preference-label-row">
+                      <span class="form-label">Điều bạn quan tâm</span>
+                      <span class="preference-limit" id="interest-preference-count">Chọn tối đa 2</span>
+                    </div>
+                    <div class="preference-choice-grid" data-preference-group="interests" data-max-selections="2">
+                      <button type="button" class="preference-chip" data-preference-value="Công nghệ">Công nghệ</button>
+                      <button type="button" class="preference-chip" data-preference-value="Kinh doanh">Kinh doanh</button>
+                      <button type="button" class="preference-chip" data-preference-value="Sáng tạo">Sáng tạo</button>
+                      <button type="button" class="preference-chip" data-preference-value="Xã hội & cộng đồng">Xã hội &amp; cộng đồng</button>
+                    </div>
+                  </div>
+
+                  <div class="preference-group">
+                    <div class="preference-label-row">
+                      <span class="form-label">Ưu tiên khi chọn ngành</span>
+                      <span class="preference-limit" id="priority-preference-count">Chọn tối đa 2</span>
+                    </div>
+                    <div class="preference-choice-grid" data-preference-group="priorities" data-max-selections="2">
+                      <button type="button" class="preference-chip" data-preference-value="Cơ hội việc làm">Cơ hội việc làm</button>
+                      <button type="button" class="preference-chip" data-preference-value="Thu nhập">Thu nhập</button>
+                      <button type="button" class="preference-chip" data-preference-value="Ổn định">Ổn định</button>
+                      <button type="button" class="preference-chip" data-preference-value="Cơ hội quốc tế">Cơ hội quốc tế</button>
+                    </div>
+                  </div>
+
+                  <div class="preference-group preference-region-group">
+                    <label class="form-label" for="region-preference">Khu vực muốn học <small>(không bắt buộc)</small></label>
+                    <select class="form-select" id="region-preference" name="regionPreference">
+                      <option value="">Chưa giới hạn khu vực</option>
+                      <option value="Miền Bắc">Miền Bắc</option>
+                      <option value="Miền Trung">Miền Trung</option>
+                      <option value="Miền Nam">Miền Nam</option>
+                    </select>
+                  </div>
+                </fieldset>
+
                 <!-- Nút phân tích -->
                 <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
                   <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
@@ -175,6 +219,7 @@
                 <div>
                   <div class="card-step-badge">Bước 2</div>
                   <h2 class="card-title">Kết quả phân tích gợi ý</h2>
+                  <p class="profile-summary hidden" id="profile-summary"></p>
                 </div>
                 <div class="results-meta hidden" id="results-meta">
                   <span class="score-pill" id="result-score-badge">Tổng điểm: 0.00</span>

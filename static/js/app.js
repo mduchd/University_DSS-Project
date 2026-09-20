@@ -47,6 +47,7 @@
     },
     careerLoaded: false,
     wishlist: JSON.parse(localStorage.getItem("dss_user_wishlist") || "[]"),
+    profile: JSON.parse(localStorage.getItem("dss_user_profile") || '{"interests":[],"priorities":[],"region":""}'),
   };
 
   // DOM Elements
@@ -63,6 +64,10 @@
     totalScoreDisplay: document.getElementById("total-score-display"),
     groupFilter: document.getElementById("group-filter"),
     interestInput: document.getElementById("interest-input"),
+    preferenceChoiceGroups: document.querySelectorAll("[data-preference-group]"),
+    interestPreferenceCount: document.getElementById("interest-preference-count"),
+    priorityPreferenceCount: document.getElementById("priority-preference-count"),
+    regionPreference: document.getElementById("region-preference"),
     submitBtn: document.getElementById("submit-btn"),
     formAlert: document.getElementById("form-alert"),
     presetBtns: document.querySelectorAll(".preset-btn"),
@@ -70,6 +75,7 @@
     // Recommender Results
     resultsMeta: document.getElementById("results-meta"),
     resultScoreBadge: document.getElementById("result-score-badge"),
+    profileSummary: document.getElementById("profile-summary"),
     filterTabsBar: document.getElementById("filter-tabs-bar"),
     tabPills: document.querySelectorAll(".tab-pill"),
     countAll: document.getElementById("count-all"),
@@ -241,6 +247,85 @@
 
   elements.comboSelect.addEventListener("change", renderScoreInputs);
 
+  /* Preference choices are intentionally stored locally until the API ranks by them. */
+  function saveProfile() {
+    localStorage.setItem("dss_user_profile", JSON.stringify(state.profile));
+  }
+
+  function syncPreferenceGroup(groupName) {
+    const group = document.querySelector(`[data-preference-group="${groupName}"]`);
+    if (!group) return;
+
+    const selectedValues = state.profile[groupName] || [];
+    group.querySelectorAll(".preference-chip").forEach((button) => {
+      const isSelected = selectedValues.includes(button.dataset.preferenceValue);
+      button.classList.toggle("selected", isSelected);
+      button.setAttribute("aria-pressed", String(isSelected));
+    });
+
+    const countElement = groupName === "interests" ? elements.interestPreferenceCount : elements.priorityPreferenceCount;
+    if (countElement) countElement.textContent = `${selectedValues.length}/2 đã chọn`;
+  }
+
+  function syncProfileSummary() {
+    const summaryParts = [...state.profile.interests, ...state.profile.priorities];
+    if (state.profile.region) summaryParts.push(state.profile.region);
+
+    if (!summaryParts.length) {
+      elements.profileSummary.classList.add("hidden");
+      elements.profileSummary.textContent = "";
+      return;
+    }
+
+    elements.profileSummary.textContent = `Hồ sơ đã chọn: ${summaryParts.join(" · ")}`;
+    elements.profileSummary.classList.remove("hidden");
+  }
+
+  function initPreferenceProfile() {
+    if (!Array.isArray(state.profile.interests)) state.profile.interests = [];
+    if (!Array.isArray(state.profile.priorities)) state.profile.priorities = [];
+    if (typeof state.profile.region !== "string") state.profile.region = "";
+
+    elements.preferenceChoiceGroups.forEach((group) => {
+      const groupName = group.dataset.preferenceGroup;
+      const maxSelections = Number(group.dataset.maxSelections || 2);
+
+      group.querySelectorAll(".preference-chip").forEach((button) => {
+        button.addEventListener("click", () => {
+          const value = button.dataset.preferenceValue;
+          const selections = state.profile[groupName];
+          const existingIndex = selections.indexOf(value);
+
+          if (existingIndex >= 0) {
+            selections.splice(existingIndex, 1);
+          } else if (selections.length < maxSelections) {
+            selections.push(value);
+          } else {
+            showToast(`Bạn có thể chọn tối đa ${maxSelections} mục.`);
+            return;
+          }
+
+          saveProfile();
+          syncPreferenceGroup(groupName);
+          syncProfileSummary();
+        });
+      });
+
+      syncPreferenceGroup(groupName);
+    });
+
+    if (elements.regionPreference) {
+      elements.regionPreference.value = state.profile.region;
+      elements.regionPreference.addEventListener("change", () => {
+        state.profile.region = elements.regionPreference.value;
+        saveProfile();
+        syncProfileSummary();
+      });
+    }
+
+    syncProfileSummary();
+  }
+
   /* ==========================================================================
      4. RECOMMENDER: SUBMISSION & RENDERING
      ========================================================================== */
@@ -285,6 +370,7 @@
           scores: scores,
           group: elements.groupFilter.value,
           interest: elements.interestInput.value,
+          preferences: state.profile,
         }),
       });
 
@@ -847,6 +933,7 @@
      ========================================================================== */
   initTheme();
   renderScoreInputs();
+  initPreferenceProfile();
   updateWishlistUi();
 
   // Check URL hash for direct tab navigation
