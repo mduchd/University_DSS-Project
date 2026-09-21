@@ -1,4 +1,8 @@
-"""Build leakage-safe historical features and a hierarchical cold-start baseline."""
+"""Bước 4 và 5 - Tạo feature lịch sử chống leakage và thiết kế cold start.
+
+Nguyên tắc bất biến: feature của mẫu năm t chỉ được dùng target từ các năm nhỏ
+hơn t. Các thống kê cùng năm hoặc tương lai tuyệt đối không được đưa vào input.
+"""
 
 from __future__ import annotations
 
@@ -22,6 +26,7 @@ SERIES = "series_combination_key"
 
 
 def parse_args() -> argparse.Namespace:
+    """Đọc đường dẫn dataset bước 2, phổ điểm và các output feature engineering."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--exam-summary", type=Path, default=DEFAULT_EXAM_SUMMARY)
@@ -32,6 +37,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
+    """Ghi CSV qua file tạm để tránh dataset feature bị ghi nửa chừng."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     frame.to_csv(temporary, index=False, encoding="utf-8", lineterminator="\n")
@@ -39,6 +45,7 @@ def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
 
 
 def atomic_json(payload: dict[str, Any], path: Path) -> None:
+    """Ghi feature report JSON UTF-8 theo cơ chế atomic."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -46,10 +53,12 @@ def atomic_json(payload: dict[str, Any], path: Path) -> None:
 
 
 def count_dict(series: pd.Series) -> dict[str, int]:
+    """Đếm tần suất theo nhãn để tóm tắt split và loại cold start."""
     return {str(key): int(value) for key, value in series.value_counts(dropna=False).items()}
 
 
 def build_series_history_features(data: pd.DataFrame) -> pd.DataFrame:
+    """Tạo lag và thống kê riêng cho từng series bằng phần lịch sử trước năm t."""
     result = data.sort_values([SERIES, "year"], kind="stable").reset_index(drop=True).copy()
     size = len(result)
     feature_names = [
@@ -69,6 +78,7 @@ def build_series_history_features(data: pd.DataFrame) -> pd.DataFrame:
     ]
     arrays = {name: np.full(size, np.nan, dtype=float) for name in feature_names}
 
+    # Xử lý từng chuỗi độc lập để lag của ngành này không lẫn sang ngành khác.
     for positions in result.groupby(SERIES, sort=False).indices.values():
         positions = np.asarray(positions, dtype=int)
         years = result.loc[positions, "year"].to_numpy(dtype=int)
@@ -76,6 +86,7 @@ def build_series_history_features(data: pd.DataFrame) -> pd.DataFrame:
         year_to_target = {int(year): float(target) for year, target in zip(years, targets, strict=True)}
         for offset, row_position in enumerate(positions):
             year = int(years[offset])
+            # Cắt đến offset (không gồm dòng hiện tại) là điểm chặn data leakage.
             previous_years = years[:offset]
             previous_targets = targets[:offset]
             arrays["historical_count_prior"][row_position] = offset
@@ -126,6 +137,7 @@ def add_previous_year_aggregate(
     keys: list[str],
     output_prefix: str,
 ) -> pd.DataFrame:
+    """Gắn thống kê đúng năm t-1 bằng cách dịch năm tổng hợp tiến thêm một đơn vị."""
     aggregate = (
         data.groupby(["year", *keys], dropna=False)[TARGET]
         .agg([("mean", "mean"), ("count", "size")])
@@ -138,6 +150,7 @@ def add_previous_year_aggregate(
             "count": f"{output_prefix}_prev_count",
         }
     )
+    # validate many_to_one chặn aggregate vô tình nhân bản số dòng gốc.
     return data.merge(aggregate, on=["year", *keys], how="left", validate="many_to_one")
 
 
@@ -146,7 +159,7 @@ def add_prior_history_aggregate(
     keys: list[str],
     output_prefix: str,
 ) -> pd.DataFrame:
-    """Add a weighted group mean calculated strictly from years before t."""
+    """Tính trung bình có trọng số của nhóm chỉ từ các năm trước t."""
     annual = (
         data.groupby([*keys, "year"], dropna=False)[TARGET]
         .agg([("annual_sum", "sum"), ("annual_count", "size")])
@@ -155,6 +168,7 @@ def add_prior_history_aggregate(
     )
     if keys:
         grouped = annual.groupby(keys, dropna=False, sort=False)
+        # Trừ thống kê năm hiện tại khỏi cumulative sum/count để không rò rỉ target.
         annual["prior_sum"] = grouped["annual_sum"].cumsum() - annual["annual_sum"]
         annual["prior_count"] = grouped["annual_count"].cumsum() - annual["annual_count"]
     else:
@@ -178,6 +192,7 @@ def add_prior_history_aggregate(
 
 
 def add_context_features(data: pd.DataFrame) -> pd.DataFrame:
+    """Tạo thống kê quá khứ theo trường, nhóm ngành và tổ hợp xét tuyển."""
     result = data.copy()
     result = add_previous_year_aggregate(
         result,
@@ -229,7 +244,7 @@ def add_context_features(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_exam_distribution_features(data: pd.DataFrame, summary_path: Path) -> pd.DataFrame:
-    """Attach national combination means from t-1 for a pre-exam forecast."""
+    """Gắn trung bình tổ hợp toàn quốc năm t-1 cho kịch bản dự báo trước kỳ thi."""
     summary = pd.read_csv(summary_path, low_memory=False)
     combinations = ["A00", "A01", "A02", "B00", "C00", "C01", "C02", "D01", "D07"]
     rows: list[dict[str, Any]] = []
@@ -266,6 +281,7 @@ def add_exam_distribution_features(data: pd.DataFrame, summary_path: Path) -> pd
 
 
 def add_cold_start_design(data: pd.DataFrame) -> pd.DataFrame:
+    """Phân loại cold start và chọn fallback đầu tiên có dữ liệu theo thứ bậc."""
     result = data.copy()
     result["cold_start_required"] = result["lag_1_year"].isna()
     result["cold_start_type"] = "not_cold_start"
@@ -278,6 +294,7 @@ def add_cold_start_design(data: pd.DataFrame) -> pd.DataFrame:
         "cold_start_type",
     ] = "history_gap"
 
+    # Thứ tự từ thông tin riêng nhất đến thông tin chung nhất.
     hierarchy = [
         ("lag_1_year", "exact_series_previous_year"),
         ("institution_group_combo_prev_mean", "institution_group_combo_previous_year"),
@@ -297,6 +314,7 @@ def add_cold_start_design(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def metric_block(frame: pd.DataFrame) -> dict[str, Any]:
+    """Tóm tắt số mẫu và tỷ lệ cold start cho một tập dữ liệu."""
     evaluated = frame.loc[frame["baseline_prediction"].notna() & frame[TARGET].notna()]
     if evaluated.empty:
         return {"rows": 0, "mae": None, "rmse": None}
@@ -309,6 +327,7 @@ def metric_block(frame: pd.DataFrame) -> dict[str, Any]:
 
 
 def validate_exact_lags(data: pd.DataFrame) -> bool:
+    """Đối chiếu lag theo năm với target lịch sử; trả False nếu có sai lệch."""
     lookup = data.set_index([SERIES, "year"])[TARGET]
     checked = data.loc[data["lag_1_year"].notna(), [SERIES, "year", "lag_1_year"]]
     for row in checked.itertuples(index=False):
@@ -319,6 +338,7 @@ def validate_exact_lags(data: pd.DataFrame) -> bool:
 
 
 def main() -> None:
+    """Điều phối feature engineering, time split, kiểm tra leakage và xuất kết quả."""
     args = parse_args()
     source = pd.read_csv(args.input.resolve(), low_memory=False)
     required = {
@@ -333,10 +353,12 @@ def main() -> None:
     if missing:
         raise ValueError(f"Step 2 input is missing required columns: {missing}")
 
+    # Pipeline feature: lịch sử series -> ngữ cảnh nhóm -> phổ điểm -> cold start.
     features = build_series_history_features(source)
     features = add_context_features(features)
     features = add_exam_distribution_features(features, args.exam_summary.resolve())
     features = add_cold_start_design(features)
+    # Chia theo thời gian, không shuffle, để mô phỏng dự báo năm tương lai.
     features["model_split"] = np.select(
         [features["year"].le(2022), features["year"].eq(2023), features["year"].eq(2024)],
         ["train", "validation", "test"],
@@ -355,6 +377,7 @@ def main() -> None:
         default="unknown",
     )
 
+    # Cổng kiểm tra leakage và toàn vẹn trước khi xuất dataset modeling.
     if len(features) != len(source):
         raise AssertionError("Feature construction changed the number of rows.")
     if features.duplicated(["year", SERIES]).any():

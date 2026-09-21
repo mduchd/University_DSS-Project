@@ -1,8 +1,7 @@
-"""Step 2: resolve temporal identities and review rejected/flagged cutoff rows.
+"""Bước 2 - Chuẩn hóa định danh theo thời gian và lập hàng đợi rà soát.
 
-The script is deliberately conservative. It creates safer institution/program
-series keys and review queues, but never silently restores a rejected row or
-merges identities whose names conflict.
+Thiết kế cố ý thận trọng: tạo khóa trường và program series an toàn hơn, nhưng
+không tự khôi phục dòng đã loại và không tự merge các định danh có tên xung đột.
 """
 
 from __future__ import annotations
@@ -33,6 +32,7 @@ AMBIGUOUS_REASON = "ambiguous_multiple_cutoffs_for_model_key"
 
 
 def parse_args() -> argparse.Namespace:
+    """Đọc các đường dẫn dữ liệu và output của bước chuẩn hóa identity."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-input", type=Path, default=DEFAULT_BASE_INPUT)
     parser.add_argument("--rejected-input", type=Path, default=DEFAULT_REJECTED_INPUT)
@@ -46,10 +46,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def text(value: Any) -> str:
+    """Đổi giá trị bất kỳ thành chuỗi an toàn; missing trở thành chuỗi rỗng."""
     return "" if pd.isna(value) else str(value).strip()
 
 
 def normalize_text(value: Any) -> str:
+    """Chuẩn hóa Unicode, chữ thường và khoảng trắng để phục vụ so khớp tên."""
     raw = text(value).lower().replace("đ", "d")
     raw = unicodedata.normalize("NFKD", raw)
     raw = "".join(character for character in raw if not unicodedata.combining(character))
@@ -58,7 +60,7 @@ def normalize_text(value: Any) -> str:
 
 
 def normalize_institution_name(value: Any) -> str:
-    """Normalize display-only legal prefixes while preserving identity words."""
+    """Bỏ tiền tố pháp lý phục vụ so khớp nhưng vẫn giữ từ mang nghĩa định danh."""
     normalized = normalize_text(value)
     normalized = re.sub(r"\btruong\b", " ", normalized)
     normalized = re.sub(r"\bdai hoc\b", " ", normalized)
@@ -68,17 +70,19 @@ def normalize_institution_name(value: Any) -> str:
 
 
 def stable_join(values: Iterable[Any], separator: str = " || ") -> str:
+    """Ghép các giá trị không rỗng theo thứ tự ổn định sau khi loại trùng."""
     cleaned = sorted({text(value) for value in values if text(value)})
     return separator.join(cleaned)
 
 
 def year_join(values: Iterable[Any]) -> str:
+    """Chuẩn hóa tập năm, sắp xếp tăng dần rồi ghép thành chuỗi báo cáo."""
     years = sorted({int(value) for value in values if not pd.isna(value)})
     return ";".join(str(year) for year in years)
 
 
 def choose_display(group: pd.DataFrame, column: str) -> str:
-    """Choose the most recent non-empty display value, then the most frequent."""
+    """Chọn giá trị hiển thị mới nhất; nếu hòa thì ưu tiên giá trị phổ biến hơn."""
     candidates = group.loc[group[column].notna() & group[column].astype("string").str.strip().ne("")].copy()
     if candidates.empty:
         return ""
@@ -89,6 +93,7 @@ def choose_display(group: pd.DataFrame, column: str) -> str:
 
 
 def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
+    """Ghi DataFrame ra CSV bằng file tạm để bảo toàn output khi có lỗi."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     frame.to_csv(temporary, index=False, encoding="utf-8", lineterminator="\n")
@@ -96,6 +101,7 @@ def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
 
 
 def atomic_json(payload: dict[str, Any], path: Path) -> None:
+    """Ghi report JSON UTF-8 theo cơ chế atomic."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -103,6 +109,7 @@ def atomic_json(payload: dict[str, Any], path: Path) -> None:
 
 
 def classify_note(note: Any) -> tuple[str, str]:
+    """Phân loại ghi chú nguồn để phát hiện sai phương thức, biến thể hoặc điều kiện phụ."""
     normalized = normalize_text(note)
     if not normalized:
         return "empty", "none"
@@ -144,6 +151,7 @@ def classify_note(note: Any) -> tuple[str, str]:
 
 
 def prepare_identity_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    """Tạo khóa định danh chuẩn hóa mà không làm mất giá trị hiển thị ban đầu."""
     data = frame.copy()
     data["institution_name_normalized"] = data["university_name"].map(normalize_institution_name)
     fallback_institution = data["university_code"].map(normalize_text)
@@ -172,6 +180,8 @@ def prepare_identity_columns(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_institution_map(data: pd.DataFrame) -> pd.DataFrame:
+    """Tạo mapping từ mã/tên trường theo năm sang institution entity canonical."""
+    # Một mã tuyển sinh có nhiều entity là tín hiệu code reuse, chưa đủ để tự merge.
     code_variant_counts = data.groupby("university_admission_code")["institution_entity_key"].nunique()
     rows: list[dict[str, Any]] = []
     for entity_key, group in data.groupby("institution_entity_key", sort=True, dropna=False):
@@ -196,6 +206,7 @@ def build_institution_map(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_program_map(data: pd.DataFrame) -> pd.DataFrame:
+    """Tạo program series theo trường, mã ngành và lịch sử xuất hiện qua các năm."""
     parent = ["institution_entity_key", "major_admission_code"]
     name_counts = data.groupby(parent, dropna=False)["major_name_normalized"].nunique()
     rows: list[dict[str, Any]] = []
@@ -241,6 +252,7 @@ def build_program_map(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def analyze_ambiguous_groups(rejected: pd.DataFrame) -> pd.DataFrame:
+    """Tóm tắt modeling key có nhiều target để phục vụ rà soát thủ công."""
     ambiguous = rejected.loc[rejected["rejection_reason"].eq(AMBIGUOUS_REASON)].copy()
     if ambiguous.empty:
         return pd.DataFrame(columns=MODEL_KEY + ["ambiguity_class", "recommended_action"])
@@ -248,6 +260,7 @@ def analyze_ambiguous_groups(rejected: pd.DataFrame) -> pd.DataFrame:
     results: list[dict[str, Any]] = []
     for key, group in ambiguous.groupby(MODEL_KEY, sort=True, dropna=False):
         identity_columns = ["major_code", "major_name_normalized"]
+        # Nếu cùng identity vẫn có nhiều target thì nguồn chưa đủ rõ để khôi phục tự động.
         identity_targets = group.groupby(identity_columns, dropna=False)["cutoff_score_30"].nunique()
         scoped_columns = identity_columns + ["gender_requirement", "campus"]
         scoped_targets = group.groupby(scoped_columns, dropna=False)["cutoff_score_30"].nunique()
@@ -280,6 +293,7 @@ def analyze_ambiguous_groups(rejected: pd.DataFrame) -> pd.DataFrame:
 
 
 def annotate_rejections(rejected: pd.DataFrame, ambiguous_groups: pd.DataFrame) -> pd.DataFrame:
+    """Gắn loại vấn đề, mức ưu tiên và khuyến nghị xử lý cho từng dòng bị loại."""
     reviewed = rejected.copy()
     if not ambiguous_groups.empty:
         reviewed = reviewed.merge(
@@ -326,6 +340,7 @@ def build_review_queue(
     ambiguous_groups: pd.DataFrame,
     rejected_review: pd.DataFrame,
 ) -> pd.DataFrame:
+    """Hợp nhất tín hiệu identity, ghi chú và rejection thành hàng đợi review."""
     queue: list[dict[str, Any]] = []
 
     for code, group in institution_map.loc[institution_map["institution_code_reuse"]].groupby(
@@ -420,19 +435,24 @@ def build_review_queue(
 
 
 def counts(series: pd.Series) -> dict[str, int]:
+    """Đếm tần suất có kể missing và chuyển kết quả sang kiểu JSON an toàn."""
     return {str(key): int(value) for key, value in series.value_counts(dropna=False).items()}
 
 
 def main() -> None:
+    """Điều phối chuẩn hóa identity, tạo mapping, review queue và báo cáo bước 2."""
     args = parse_args()
+    # 1. Đọc riêng dữ liệu được chấp nhận và dữ liệu bị loại để không trộn hai luồng.
     base = pd.read_csv(args.base_input.resolve(), low_memory=False)
     rejected = pd.read_csv(args.rejected_input.resolve(), low_memory=False)
 
+    # 2. Chuẩn hóa identity và phân loại ghi chú nhạy cảm từ nguồn.
     data = prepare_identity_columns(base)
     note_classification = data["note"].map(classify_note)
     data["note_category"] = note_classification.map(lambda value: value[0])
     data["note_review_priority"] = note_classification.map(lambda value: value[1])
 
+    # 3. Tạo bảng mapping canonical cho trường và program series.
     institution_map = build_institution_map(data)
     program_map = build_program_map(data)
     data = data.merge(
@@ -489,10 +509,12 @@ def main() -> None:
     )
     data = data.merge(history, on="series_combination_key", how="left", validate="many_to_one")
 
+    # 4. Chỉ chú giải dòng bị loại; tuyệt đối không tự đưa target xung đột trở lại.
     ambiguous_groups = analyze_ambiguous_groups(rejected)
     rejected_review = annotate_rejections(rejected, ambiguous_groups)
     review_queue = build_review_queue(data, institution_map, program_map, ambiguous_groups, rejected_review)
 
+    # 5. Temporal key phải duy nhất trước khi dữ liệu được phép đi tới feature engineering.
     step2_key = ["year", "program_series_key", "subject_combination"]
     duplicate_step2_keys = int(data.duplicated(step2_key).sum())
     if duplicate_step2_keys:
@@ -563,6 +585,7 @@ def main() -> None:
         },
     }
 
+    # 6. Xuất đồng thời dataset, mapping, review queue và report để truy vết đầy đủ.
     atomic_csv(data, args.step2_output.resolve())
     atomic_csv(institution_map, args.institution_map.resolve())
     atomic_csv(program_map, args.program_map.resolve())

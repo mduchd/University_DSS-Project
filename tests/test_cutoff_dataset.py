@@ -1,3 +1,5 @@
+"""Kiểm tra chất lượng dataset, time split và khả năng chống data leakage."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -12,17 +14,20 @@ from models.build_cutoff_features import (
 
 
 def test_modeling_keys_are_unique(feature_data: pd.DataFrame) -> None:
+    """Mỗi year, program series và tổ hợp chỉ được có một target modeling."""
     assert not feature_data["model_key"].duplicated().any()
     assert not feature_data.duplicated(["year", "series_combination_key"]).any()
 
 
 def test_target_is_complete_and_in_agreed_domain(feature_data: pd.DataFrame) -> None:
+    """Target không được thiếu và phải nằm trong thang điểm chuẩn hóa 0-30."""
     target = feature_data[TARGET]
     assert target.notna().all()
     assert target.between(0, 30, inclusive="both").all()
 
 
 def test_time_splits_are_fixed_and_do_not_overlap(feature_data: pd.DataFrame) -> None:
+    """Khẳng định train, validation và test tuân thủ đúng mốc năm đã khóa."""
     expected = pd.Series(
         np.select(
             [
@@ -47,6 +52,7 @@ def test_time_splits_are_fixed_and_do_not_overlap(feature_data: pd.DataFrame) ->
 
 
 def test_exact_lags_match_only_prior_year_targets(feature_data: pd.DataFrame) -> None:
+    """Kiểm tra lag k năm luôn trỏ đúng target của năm t-k trong cùng series."""
     lookup = feature_data.set_index(["series_combination_key", "year"])[TARGET]
     for lag in (1, 2, 3):
         rows = feature_data.loc[
@@ -61,6 +67,8 @@ def test_exact_lags_match_only_prior_year_targets(feature_data: pd.DataFrame) ->
 
 
 def test_current_target_perturbation_does_not_change_current_features() -> None:
+    """Chứng minh thay target năm t không làm thay đổi feature của chính năm t."""
+    # Đây là test leakage quan trọng nhất: sửa target năm t không được làm đổi feature năm t.
     source = pd.DataFrame(
         {
             "year": [2020, 2021, 2022, 2023],
@@ -73,6 +81,7 @@ def test_current_target_perturbation_does_not_change_current_features() -> None:
     )
 
     def build(frame: pd.DataFrame) -> pd.DataFrame:
+        """Tạo lại toàn bộ feature cần so sánh cho một DataFrame thử nghiệm."""
         return add_context_features(build_series_history_features(frame)).set_index("year")
 
     original = build(source)
@@ -93,6 +102,7 @@ def test_current_target_perturbation_does_not_change_current_features() -> None:
 
 
 def test_exam_features_use_only_t_minus_one(feature_data: pd.DataFrame) -> None:
+    """Phổ điểm dùng cho năm t phải có source year đúng bằng t-1."""
     available = feature_data["exam_feature_source_year"].notna()
     assert feature_data.loc[available, "exam_feature_source_year"].eq(
         feature_data.loc[available, "year"] - 1
@@ -100,6 +110,8 @@ def test_exam_features_use_only_t_minus_one(feature_data: pd.DataFrame) -> None:
 
 
 def test_historical_count_and_mean_use_strictly_prior_rows(feature_data: pd.DataFrame) -> None:
+    """Historical count và mean chỉ được tính từ các dòng đứng trước trong series."""
+    # shift(1) tạo giá trị kỳ vọng chỉ từ các dòng trước trong cùng series.
     ordered = feature_data.sort_values(["series_combination_key", "year"], kind="stable")
     grouped = ordered.groupby("series_combination_key", sort=False)[TARGET]
     expected_count = grouped.cumcount().astype(float)

@@ -1,8 +1,8 @@
-"""Prediction interface for the admission-cutoff model.
+"""Giao diện dự báo điểm chuẩn dùng cho backend hoặc chạy độc lập.
 
-The persisted artifact contains the fitted preprocessing pipeline and estimator.
-This module loads it once per process, validates the feature contract, and never
-returns an admission-probability field.
+Artifact đã lưu chứa fitted preprocessing pipeline và estimator. Module chỉ load
+model một lần trong mỗi process, kiểm tra feature contract và tuyệt đối không trả
+về trường xác suất trúng tuyển.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ GROUP_FALLBACK_COLUMNS = [
 
 @lru_cache(maxsize=4)
 def load_artifact(model_path: str | Path = DEFAULT_MODEL_PATH) -> dict[str, Any]:
-    """Load and cache an artifact; repeated predictions do not reload the file."""
+    """Load và cache artifact để các lần dự báo sau không đọc lại file."""
     resolved = str(Path(model_path).resolve())
     artifact = joblib.load(resolved)
     if not isinstance(artifact, dict) or "pipeline" not in artifact or "metadata" not in artifact:
@@ -44,6 +44,7 @@ def load_artifact(model_path: str | Path = DEFAULT_MODEL_PATH) -> dict[str, Any]
 
 
 def _first_present(record: Mapping[str, Any], names: list[str]) -> Any:
+    """Trả về alias đầu tiên tồn tại và không missing trong record đầu vào."""
     for name in names:
         value = record.get(name)
         if value is not None and not (isinstance(value, float) and np.isnan(value)):
@@ -52,6 +53,7 @@ def _first_present(record: Mapping[str, Any], names: list[str]) -> Any:
 
 
 def _derive_features(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Bổ sung alias/fallback có thể suy ra an toàn từ một record đầu vào."""
     prepared = dict(record)
     if prepared.get("canonical_program_id") is None and prepared.get("program_series_key") is not None:
         prepared["canonical_program_id"] = prepared["program_series_key"]
@@ -71,9 +73,10 @@ def _derive_features(record: Mapping[str, Any]) -> dict[str, Any]:
 
 
 class CutoffPredictor:
-    """Validated single-row and batch prediction API."""
+    """API dự báo một dòng hoặc theo batch, có kiểm tra input contract."""
 
     def __init__(self, model_path: str | Path = DEFAULT_MODEL_PATH) -> None:
+        """Load artifact đã cache và lấy metadata cần cho input/output contract."""
         self.model_path = Path(model_path).resolve()
         self.artifact = load_artifact(self.model_path)
         self.pipeline = self.artifact["pipeline"]
@@ -81,6 +84,7 @@ class CutoffPredictor:
         self.required_features = list(self.metadata["required_features"])
 
     def prepare(self, records: Mapping[str, Any] | list[Mapping[str, Any]]) -> pd.DataFrame:
+        """Chuẩn hóa input và báo rõ feature bắt buộc còn thiếu theo từng dòng."""
         rows = [records] if isinstance(records, Mapping) else list(records)
         if not rows:
             raise ValueError("At least one input record is required.")
@@ -101,12 +105,14 @@ class CutoffPredictor:
     def predict_values(
         self, records: Mapping[str, Any] | list[Mapping[str, Any]]
     ) -> np.ndarray:
+        """Chạy pipeline và chặn kết quả về miền điểm chuẩn [0, 30]."""
         frame = self.prepare(records)
         predictions = np.asarray(self.pipeline.predict(frame), dtype=float)
         lower, upper = self.metadata.get("prediction_clip", [0.0, 30.0])
-        return np.clip(predictions, float(lower), float(upper))
+        return np.clip(predictions, float(lower), float(upper))  # Giữ output trong thang 0-30.
 
     def predict_one(self, record: Mapping[str, Any]) -> dict[str, Any]:
+        """Dự báo một record và trả đúng output contract cho backend."""
         prepared = _derive_features(record)
         predicted = float(self.predict_values(prepared)[0])
         historical_count = prepared.get("historical_count")
@@ -127,6 +133,7 @@ class CutoffPredictor:
         }
 
     def predict_batch(self, records: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+        """Dự báo nhiều record trong một lần gọi pipeline và giữ metadata từng dòng."""
         values = self.predict_values(records)
         outputs: list[dict[str, Any]] = []
         for record, value in zip(records, values, strict=True):
@@ -153,15 +160,17 @@ class CutoffPredictor:
 
 @lru_cache(maxsize=1)
 def get_default_predictor() -> CutoffPredictor:
+    """Khởi tạo predictor mặc định một lần và tái sử dụng trong toàn process."""
     return CutoffPredictor(DEFAULT_MODEL_PATH)
 
 
 def predict_cutoff(record: Mapping[str, Any]) -> dict[str, Any]:
-    """Convenience function for application code."""
+    """Hàm tiện ích để application gọi predictor mặc định đã được cache."""
     return get_default_predictor().predict_one(record)
 
 
 def main() -> None:
+    """Nhận JSON từ command line, chạy dự báo và in JSON UTF-8 cho hệ thống gọi ngoài."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input-json", type=Path, required=True)
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL_PATH)
