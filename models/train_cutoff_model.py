@@ -1,4 +1,8 @@
-"""Steps 7-10: preprocess, select, evaluate, and persist the cutoff model."""
+"""Bước 7 đến 10 - Preprocess, chọn, đánh giá và lưu cutoff model.
+
+Model chỉ được chọn bằng validation 2023. Test 2024 được giữ kín đến khi cấu
+hình đã khóa; artifact cuối chứa cả fitted preprocessor và estimator.
+"""
 
 from __future__ import annotations
 
@@ -35,6 +39,7 @@ TARGET = "cutoff_score_30"
 MODEL_VERSION = "cutoff_v1"
 RANDOM_STATE = 42
 
+# Feature phân loại đi qua imputer và OneHotEncoder(handle_unknown="ignore").
 CATEGORICAL_FEATURES = [
     "university_admission_code",
     "canonical_program_id",
@@ -43,6 +48,7 @@ CATEGORICAL_FEATURES = [
     "subject_combination",
 ]
 
+# Toàn bộ feature số bên dưới đã được tạo theo nguyên tắc chỉ dùng quá khứ.
 NUMERIC_FEATURES = [
     "year",
     "cutoff_lag_1",
@@ -78,6 +84,7 @@ NUMERIC_FEATURES = [
 
 
 def parse_args() -> argparse.Namespace:
+    """Đọc feature dataset, baseline metrics và đường dẫn lưu artifact cuối."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--baseline-metrics", type=Path, default=DEFAULT_BASELINE_METRICS)
@@ -89,6 +96,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def atomic_json(payload: dict[str, Any], path: Path) -> None:
+    """Ghi evaluation JSON an toàn qua file tạm."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(
@@ -99,6 +107,7 @@ def atomic_json(payload: dict[str, Any], path: Path) -> None:
 
 
 def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
+    """Ghi prediction hoặc feature importance CSV theo cơ chế atomic."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     frame.to_csv(temporary, index=False, encoding="utf-8", lineterminator="\n")
@@ -106,6 +115,7 @@ def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
 
 
 def json_safe(value: Any) -> Any:
+    """Chuyển đệ quy object NumPy/Pandas sang kiểu Python có thể serialize JSON."""
     if isinstance(value, dict):
         return {str(key): json_safe(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
@@ -120,6 +130,7 @@ def json_safe(value: Any) -> Any:
 
 
 def first_available(frame: pd.DataFrame, columns: list[str]) -> tuple[pd.Series, pd.Series]:
+    """Chọn giá trị đầu tiên không thiếu theo thứ tự fallback và ghi lại nguồn đã dùng."""
     prediction = pd.Series(np.nan, index=frame.index, dtype=float)
     level = pd.Series("unavailable", index=frame.index, dtype="string")
     for column in columns:
@@ -130,6 +141,7 @@ def first_available(frame: pd.DataFrame, columns: list[str]) -> tuple[pd.Series,
 
 
 def prepare_model_frame(source: pd.DataFrame) -> pd.DataFrame:
+    """Tạo các alias canonical và fallback feature dùng chung cho mọi candidate."""
     data = source.copy()
     data["canonical_program_id"] = data["program_series_key"].astype("string")
     data["canonical_major_code"] = (
@@ -156,6 +168,7 @@ def prepare_model_frame(source: pd.DataFrame) -> pd.DataFrame:
 
 
 def make_preprocessor(scale_numeric: bool) -> ColumnTransformer:
+    """Tạo preprocessing; Ridge cần scale, model cây chỉ cần impute."""
     categorical = Pipeline(
         [
             ("imputer", SimpleImputer(strategy="constant", fill_value="__MISSING__")),
@@ -187,6 +200,7 @@ def make_preprocessor(scale_numeric: bool) -> ColumnTransformer:
 
 
 def regression_metrics(actual: pd.Series | np.ndarray, predicted: np.ndarray) -> dict[str, Any]:
+    """Tính số mẫu, MAE, RMSE và R² cho bài toán regression."""
     y_true = np.asarray(actual, dtype=float)
     y_pred = np.asarray(predicted, dtype=float)
     return {
@@ -198,6 +212,7 @@ def regression_metrics(actual: pd.Series | np.ndarray, predicted: np.ndarray) ->
 
 
 def segment_metrics(frame: pd.DataFrame, predicted: np.ndarray) -> dict[str, Any]:
+    """Tính metric cho toàn bộ, known history và true cold start trên cùng prediction."""
     result: dict[str, Any] = {"all": regression_metrics(frame[TARGET], predicted)}
     prediction_series = pd.Series(predicted, index=frame.index)
     for segment in ["known_history", "cold_start"]:
@@ -217,6 +232,7 @@ def candidate_record(
     fit_seconds: float,
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Đóng gói cấu hình, thời gian fit và validation metrics của một candidate."""
     record = {
         "name": name,
         "family": family,
@@ -230,6 +246,7 @@ def candidate_record(
 
 
 def load_baseline_metrics(path: Path) -> dict[str, Any]:
+    """Đọc các mốc baseline cần thiết để kiểm tra điều kiện chấp nhận model."""
     metrics = pd.read_csv(path)
     selected = metrics.loc[
         metrics["segment"].eq("all") & metrics["split"].isin(["validation", "test"])
@@ -250,6 +267,7 @@ def fit_validation_candidates(
     train: pd.DataFrame,
     validation: pd.DataFrame,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Huấn luyện các cấu hình trên train và xếp hạng chỉ bằng validation."""
     x_train = train[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
     x_validation = validation[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
     y_train = train[TARGET]
@@ -258,6 +276,7 @@ def fit_validation_candidates(
     fitted: dict[str, Any] = {}
 
     linear_preprocessor = make_preprocessor(scale_numeric=True)
+    # Chỉ fit preprocessor trên train; validation chỉ transform để không học trước phân phối 2023.
     x_train_linear = linear_preprocessor.fit_transform(x_train)
     x_validation_linear = linear_preprocessor.transform(x_validation)
     for alpha in [1.0, 10.0, 100.0]:
@@ -279,6 +298,7 @@ def fit_validation_candidates(
         fitted[name] = (linear_preprocessor, estimator)
 
     tree_preprocessor = make_preprocessor(scale_numeric=False)
+    # Dùng cùng phép biến đổi đã học từ train cho cả Random Forest và XGBoost.
     x_train_tree = tree_preprocessor.fit_transform(x_train)
     x_validation_tree = tree_preprocessor.transform(x_validation)
 
@@ -338,6 +358,7 @@ def fit_validation_candidates(
     ]
     for index, params in enumerate(xgb_configs, start=1):
         start = time.perf_counter()
+        # Early stopping dùng validation 2023 và dừng khi MAE không cải thiện 75 vòng.
         estimator = XGBRegressor(
             **params,
             n_estimators=2500,
@@ -379,6 +400,7 @@ def refit_selected(
     selected: dict[str, Any],
     train_validation: pd.DataFrame,
 ) -> Pipeline:
+    """Refit đúng cấu hình đã chọn trên train+validation, không tuning bằng test."""
     scale_numeric = selected["family"] == "ridge"
     preprocessor = make_preprocessor(scale_numeric=scale_numeric)
     x_full = train_validation[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
@@ -415,6 +437,7 @@ def grouped_test_metrics(
     column: str,
     top_n: int = 10,
 ) -> list[dict[str, Any]]:
+    """Đánh giá test theo các nhóm lớn nhưng bỏ nhóm quá ít mẫu để tránh kết luận nhiễu."""
     working = test.copy()
     working["_prediction"] = prediction
     working[column] = working[column].astype("string").fillna("__MISSING__")
@@ -429,6 +452,7 @@ def grouped_test_metrics(
 
 
 def feature_importance(pipeline: Pipeline) -> pd.DataFrame:
+    """Ghép tên feature sau preprocessing với importance của estimator dạng cây."""
     preprocessor = pipeline.named_steps["preprocessor"]
     estimator = pipeline.named_steps["model"]
     names = preprocessor.get_feature_names_out()
@@ -446,6 +470,7 @@ def feature_importance(pipeline: Pipeline) -> pd.DataFrame:
 
 
 def main() -> None:
+    """Huấn luyện candidate, chọn bằng validation, refit, test và lưu pipeline hoàn chỉnh."""
     args = parse_args()
     source = pd.read_csv(args.input.resolve(), low_memory=False)
     data = prepare_model_frame(source)
@@ -468,11 +493,11 @@ def main() -> None:
     if selected["validation"]["all"]["mae"] >= historical_validation_mae:
         raise RuntimeError("No ML candidate beat Historical Mean on validation 2023.")
 
-    # Configuration is now locked. Test is not used above this line.
+    # Từ dòng này cấu hình đã khóa; test chưa từng được sử dụng ở phía trên.
     train_validation = data.loc[data["model_split"].isin(["train", "validation"])].copy()
     final_pipeline = refit_selected(selected, train_validation)
     x_test = test[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
-    raw_test_prediction = final_pipeline.predict(x_test)
+    raw_test_prediction = final_pipeline.predict(x_test)  # Test chỉ mở sau khi cấu hình đã khóa.
     test_prediction = np.clip(raw_test_prediction, 0.0, 30.0)
     final_test = segment_metrics(test, test_prediction)
     final_test["clipped_prediction_count"] = int(
@@ -501,8 +526,8 @@ def main() -> None:
         hybrid_test_mae * 1.15,
     )
     acceptance = {
-        # Historical Mean has no prediction for cold-start rows, so compare it
-        # with the candidate on the same known-history population.
+        # Historical Mean không dự báo được cold start, nên phải so trên cùng
+        # quần thể known_history để phép đánh giá công bằng.
         "beats_historical_mean_on_validation": bool(
             known_history_validation_mae < historical_validation_mae
         ),
@@ -543,6 +568,7 @@ def main() -> None:
     artifact = {"pipeline": final_pipeline, "metadata": metadata}
     args.model_output.resolve().parent.mkdir(parents=True, exist_ok=True)
     temporary_model = args.model_output.resolve().with_suffix(".joblib.tmp")
+    # Lưu cả preprocessing và estimator để backend không tự xử lý feature khác lúc train.
     joblib.dump(artifact, temporary_model, compress=3)
     temporary_model.replace(args.model_output.resolve())
 

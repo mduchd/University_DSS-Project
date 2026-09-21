@@ -1,8 +1,8 @@
-"""Prepare a strict, reproducible admission-cutoff dataset for modelling.
+"""Bước 1 - Chuẩn bị dataset điểm chuẩn chặt chẽ và có thể tái lập.
 
-Step 1 intentionally does not train a model. It validates the canonical CSV,
-separates unusable/ambiguous records, collapses only exact-target duplicates,
-and produces a machine-readable quality report.
+File này chưa huấn luyện model. Nhiệm vụ của nó là kiểm tra dữ liệu canonical,
+tách các dòng không sử dụng được hoặc mơ hồ, chỉ gộp duplicate khi target giống
+hệt nhau, rồi xuất báo cáo chất lượng có thể kiểm tra bằng máy.
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ DEFAULT_BASE_OUTPUT = PROJECT_ROOT / "data/processed/admission_ml_base.csv"
 DEFAULT_REJECTED_OUTPUT = PROJECT_ROOT / "data/processed/admission_ml_rejected.csv"
 DEFAULT_REPORT_OUTPUT = PROJECT_ROOT / "data/processed/admission_ml_quality_report.json"
 
+# Các ràng buộc nghiệp vụ được cố định để mọi lần chạy cho cùng kết quả.
 YEAR_MIN = 2018
 YEAR_MAX = 2024
 SCORE_MIN = 0.0
@@ -45,6 +46,7 @@ REQUIRED_COLUMNS = {
     "note",
 }
 
+# Một modeling key biểu diễn duy nhất một mức điểm chuẩn của một phương án tuyển sinh.
 MODEL_KEY_COLUMNS = [
     "year",
     "university_admission_code",
@@ -55,6 +57,7 @@ PROGRAM_KEY_COLUMNS = ["university_admission_code", "major_admission_code"]
 
 
 def parse_args() -> argparse.Namespace:
+    """Đọc đường dẫn input/output từ command line và giữ cấu hình mặc định của dự án."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--base-output", type=Path, default=DEFAULT_BASE_OUTPUT)
@@ -64,11 +67,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def as_bool(series: pd.Series) -> pd.Series:
-    """Convert common CSV boolean representations without treating NaN as true."""
+    """Chuẩn hóa các cách ghi boolean trong CSV và không coi NaN là True."""
     return series.astype("string").str.strip().str.lower().isin({"true", "1", "yes", "y"})
 
 
 def joined_reasons(reason_masks: dict[str, pd.Series], index: pd.Index) -> pd.Series:
+    """Ghép mọi lý do loại của từng dòng thành chuỗi audit phân cách bằng ký tự ``|``."""
     reasons = pd.Series("", index=index, dtype="string")
     for reason, mask in reason_masks.items():
         reasons = reasons.mask(mask & reasons.eq(""), reason)
@@ -77,6 +81,7 @@ def joined_reasons(reason_masks: dict[str, pd.Series], index: pd.Index) -> pd.Se
 
 
 def json_number(value: Any) -> Any:
+    """Đổi scalar NumPy/Pandas sang kiểu JSON thuần và đổi missing thành ``null``."""
     if pd.isna(value):
         return None
     if hasattr(value, "item"):
@@ -85,10 +90,12 @@ def json_number(value: Any) -> Any:
 
 
 def value_counts_dict(series: pd.Series) -> dict[str, int]:
+    """Chuyển bảng tần suất thành dictionary có khóa chuỗi để ghi vào quality report."""
     return {str(key): int(value) for key, value in series.value_counts(dropna=False).sort_index().items()}
 
 
 def target_stats(frame: pd.DataFrame) -> dict[str, Any]:
+    """Tóm tắt count, min, mean, median và max của target điểm chuẩn."""
     if frame.empty:
         return {"count": 0, "min": None, "mean": None, "median": None, "max": None}
     values = frame["cutoff_score_30"]
@@ -102,6 +109,7 @@ def target_stats(frame: pd.DataFrame) -> dict[str, Any]:
 
 
 def atomic_write_csv(frame: pd.DataFrame, path: Path) -> None:
+    """Ghi CSV qua file tạm rồi replace để không để lại output dở dang."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     frame.to_csv(temporary, index=False, encoding="utf-8", lineterminator="\n")
@@ -109,6 +117,7 @@ def atomic_write_csv(frame: pd.DataFrame, path: Path) -> None:
 
 
 def atomic_write_json(payload: dict[str, Any], path: Path) -> None:
+    """Ghi JSON UTF-8 theo cơ chế atomic và giữ nguyên ký tự tiếng Việt."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -116,12 +125,14 @@ def atomic_write_json(payload: dict[str, Any], path: Path) -> None:
 
 
 def main() -> None:
+    """Điều phối bước lọc, gộp duplicate, kiểm tra chất lượng và xuất dataset modeling."""
     args = parse_args()
     input_path = args.input.resolve()
     base_output = args.base_output.resolve()
     rejected_output = args.rejected_output.resolve()
     report_output = args.report_output.resolve()
 
+    # 1. Đọc dữ liệu canonical và fail-fast nếu thiếu cột bắt buộc.
     source = pd.read_csv(input_path, low_memory=False)
     missing_columns = sorted(REQUIRED_COLUMNS.difference(source.columns))
     if missing_columns:
@@ -143,6 +154,7 @@ def main() -> None:
     normalized_combo = data["subject_combination"].fillna("").str.upper()
     data["subject_combination"] = normalized_combo
 
+    # 2. Mỗi điều kiện loại được giữ thành một mask riêng để có thể audit lý do.
     reason_masks = {
         "non_thpt_admission_method": ~normalized_method.str.contains("THPTQG", regex=False),
         "missing_or_non_numeric_cutoff_score_30": data["cutoff_score_30"].isna(),
@@ -163,6 +175,7 @@ def main() -> None:
     eligible["year"] = eligible["year"].astype("int64")
     eligible["model_key"] = eligible[MODEL_KEY_COLUMNS].astype("string").agg("|".join, axis=1)
 
+    # Thống kê biến thể tên giúp phát hiện một mã ngành bị dùng cho nhiều cách gọi.
     program_variants = (
         eligible.groupby(PROGRAM_KEY_COLUMNS, dropna=False)
         .agg(
@@ -176,8 +189,9 @@ def main() -> None:
         eligible["program_name_variant_count"].gt(1) | eligible["program_group_variant_count"].gt(1)
     )
 
+    # 3. Không lấy trung bình các target xung đột: loại toàn bộ khóa mơ hồ.
     grouped = eligible.groupby(MODEL_KEY_COLUMNS, dropna=False, sort=False)
-    target_variants = grouped["cutoff_score_30"].transform("nunique")
+    target_variants = grouped["cutoff_score_30"].transform("nunique")  # >1 nghĩa là nhãn xung đột.
     ambiguous_mask = target_variants.gt(1)
 
     ambiguous = eligible.loc[ambiguous_mask].copy()
@@ -192,6 +206,7 @@ def main() -> None:
     ].transform(lambda values: ";".join(str(value) for value in sorted(values)))
     unambiguous["duplicate_same_target_collapsed"] = unambiguous["source_row_count"].gt(1)
 
+    # 4. Duplicate cùng target được gộp về một dòng nhưng vẫn lưu số dòng nguồn.
     base = (
         unambiguous.sort_values("_source_row_number")
         .drop_duplicates(MODEL_KEY_COLUMNS, keep="first")
@@ -212,6 +227,7 @@ def main() -> None:
     rejected = pd.concat([hard_rejected, ambiguous], ignore_index=True, sort=False)
     rejected = rejected.sort_values("_source_row_number", kind="stable").reset_index(drop=True)
 
+    # 5. Các assertion là cổng chất lượng cuối trước khi ghi file.
     if base.duplicated(MODEL_KEY_COLUMNS).any():
         raise AssertionError("The prepared dataset still contains duplicate model keys.")
     if not base["cutoff_score_30"].between(SCORE_MIN, SCORE_MAX, inclusive="both").all():
@@ -301,6 +317,7 @@ def main() -> None:
         },
     }
 
+    # 6. Ghi file theo kiểu atomic để tránh tạo output dở dang khi chương trình lỗi.
     atomic_write_csv(base, base_output)
     atomic_write_csv(rejected, rejected_output)
     atomic_write_json(report, report_output)

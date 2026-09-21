@@ -1,1 +1,1 @@
-"""Automated tests for the admission cutoff ML pipeline."""
+"""Bộ test tự động cho pipeline Machine Learning dự báo điểm chuẩn."""

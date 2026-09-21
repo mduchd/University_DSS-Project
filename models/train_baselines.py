@@ -1,4 +1,8 @@
-"""Train and evaluate the Step 6 cutoff baselines with fixed time splits."""
+"""Bước 6 - Huấn luyện và đánh giá baseline với time split cố định.
+
+Baseline là mốc tối thiểu để biết model phức tạp có thật sự tạo thêm giá trị hay
+không. File này triển khai Historical Mean, Last Value, Group Mean, Hybrid và OLS.
+"""
 
 from __future__ import annotations
 
@@ -19,6 +23,7 @@ DEFAULT_MODEL = ROOT / "models/baseline_linear_model.json"
 DEFAULT_EVALUATION = ROOT / "models/evaluation.json"
 TARGET = "cutoff_score_30"
 
+# Chỉ dùng feature được tạo từ quá khứ; target hiện tại nằm trong danh sách cấm bên dưới.
 LINEAR_FEATURES = [
     "year",
     "cutoff_lag_1",
@@ -46,6 +51,7 @@ TARGET_DERIVED_COLUMNS_FORBIDDEN = {
 
 
 def parse_args() -> argparse.Namespace:
+    """Đọc feature dataset và đường dẫn lưu prediction, metric, model baseline."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--predictions-output", type=Path, default=DEFAULT_PREDICTIONS)
@@ -56,6 +62,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
+    """Ghi bảng kết quả CSV qua file tạm rồi thay thế atomically."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     frame.to_csv(temporary, index=False, encoding="utf-8", lineterminator="\n")
@@ -63,6 +70,7 @@ def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
 
 
 def atomic_json(payload: dict[str, Any], path: Path) -> None:
+    """Ghi tham số baseline hoặc evaluation JSON theo cơ chế atomic."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(
@@ -73,6 +81,7 @@ def atomic_json(payload: dict[str, Any], path: Path) -> None:
 
 
 def fit_linear_regression(frame: pd.DataFrame) -> dict[str, Any]:
+    """Fit OLS bằng nghiệm bình phương tối thiểu sau impute và standardize."""
     x = frame[LINEAR_FEATURES].astype(float)
     missing = x.isna().astype(float)
     medians = x.median(axis=0).fillna(0.0)
@@ -88,6 +97,7 @@ def fit_linear_regression(frame: pd.DataFrame) -> dict[str, Any]:
         ]
     )
     target = frame[TARGET].to_numpy(dtype=float)
+    # Nghiệm beta tối thiểu hóa tổng bình phương sai số ||X beta - y||^2.
     coefficients, residuals, rank, singular_values = np.linalg.lstsq(
         design, target, rcond=None
     )
@@ -115,6 +125,7 @@ def fit_linear_regression(frame: pd.DataFrame) -> dict[str, Any]:
 
 
 def predict_linear(frame: pd.DataFrame, model: dict[str, Any]) -> tuple[np.ndarray, np.ndarray]:
+    """Áp dụng đúng median, scale và coefficient đã fit; trả cả raw và clipped prediction."""
     features = model["feature_names"]
     x = frame[features].astype(float)
     missing = x.isna().astype(float)
@@ -127,6 +138,7 @@ def predict_linear(frame: pd.DataFrame, model: dict[str, Any]) -> tuple[np.ndarr
         [model["missing_coefficients"][f"{name}__missing"] for name in features],
         dtype=float,
     )
+    # Công thức dự báo OLS: intercept + X chuẩn hóa nhân beta + cờ missing nhân beta_missing.
     raw = (
         float(model["intercept"])
         + standardized.to_numpy(dtype=float) @ beta
@@ -137,6 +149,7 @@ def predict_linear(frame: pd.DataFrame, model: dict[str, Any]) -> tuple[np.ndarr
 
 
 def add_group_mean_baseline(frame: pd.DataFrame) -> pd.DataFrame:
+    """Dự báo fallback theo cấp chi tiết nhất đang có dữ liệu lịch sử."""
     result = frame.copy()
     hierarchy = [
         ("school_combination_historical_mean", "school_combination_history"),
@@ -162,6 +175,7 @@ def metric_row(
     split: str,
     segment: str,
 ) -> dict[str, Any]:
+    """Tính coverage, MAE, RMSE và R² cho một model trên một segment."""
     available = frame[prediction_column].notna() & frame[TARGET].notna()
     evaluated = frame.loc[available]
     total = int(len(frame))
@@ -196,6 +210,7 @@ def metric_row(
 
 
 def evaluate_predictions(frame: pd.DataFrame) -> pd.DataFrame:
+    """Tính metric của từng baseline theo split và segment cold start/known history."""
     models = {
         "historical_mean": "prediction_historical_mean",
         "last_value": "prediction_last_value",
@@ -232,6 +247,7 @@ def evaluate_predictions(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
+    """Huấn luyện baseline, đánh giá theo thời gian và ghi toàn bộ artifact bước 6."""
     args = parse_args()
     data = pd.read_csv(args.input.resolve(), low_memory=False)
     missing = sorted(set(LINEAR_FEATURES + [TARGET, "model_split", "history_segment", "history_depth_group"]).difference(data.columns))
@@ -250,6 +266,7 @@ def main() -> None:
     data["prediction_linear_regression_raw"] = np.nan
     data["prediction_linear_regression"] = np.nan
 
+    # Train <= 2022, chọn/đánh giá cấu hình trên 2023, test cuối trên 2024.
     train = data.loc[data["model_split"].eq("train")]
     validation = data.loc[data["model_split"].eq("validation")]
     test = data.loc[data["model_split"].eq("test")]
@@ -258,6 +275,7 @@ def main() -> None:
     data.loc[validation.index, "prediction_linear_regression_raw"] = validation_raw
     data.loc[validation.index, "prediction_linear_regression"] = validation_clipped
 
+    # Sau khi đặc tả baseline đã khóa, refit train+validation để đánh giá 2024.
     train_validation = data.loc[data["model_split"].isin(["train", "validation"])]
     final_model = fit_linear_regression(train_validation)
     final_model["trained_through_year"] = 2023

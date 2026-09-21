@@ -1,4 +1,8 @@
-"""Review high-priority identity issues from Step 2 without unsafe auto-merges."""
+"""Bước 3 - Rà soát identity ưu tiên cao mà không auto-merge thiếu an toàn.
+
+Độ giống tên chỉ tạo alias candidate. Chỉ nguồn chính thức mới đủ căn cứ merge;
+các target xung đột tiếp tục bị loại để tránh tạo nhãn huấn luyện giả.
+"""
 
 from __future__ import annotations
 
@@ -22,6 +26,7 @@ DEFAULT_REPORT = ROOT / "data/processed/admission_ml_high_priority_report.json"
 
 
 def parse_args() -> argparse.Namespace:
+    """Đọc input và output của bước rà soát identity ưu tiên cao."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--step2-input", type=Path, default=DEFAULT_STEP2)
     parser.add_argument("--queue-input", type=Path, default=DEFAULT_QUEUE)
@@ -33,10 +38,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def text(value: Any) -> str:
+    """Chuẩn hóa giá trị về chuỗi và đổi missing thành chuỗi rỗng."""
     return "" if pd.isna(value) else str(value).strip()
 
 
 def token_similarity(left: str, right: str) -> tuple[float, float, float]:
+    """Tính độ giống chuỗi và Jaccard token, sau đó lấy tín hiệu mạnh hơn."""
     left = text(left)
     right = text(right)
     sequence = SequenceMatcher(None, left, right).ratio() if left and right else 0.0
@@ -48,10 +55,12 @@ def token_similarity(left: str, right: str) -> tuple[float, float, float]:
 
 
 def parse_years(values: pd.Series) -> set[int]:
+    """Đổi cột năm thành tập số nguyên để kiểm tra hai identity có cùng tồn tại hay không."""
     return {int(value) for value in values.dropna().unique()}
 
 
 def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
+    """Ghi CSV bằng file tạm rồi replace để tránh output không hoàn chỉnh."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     frame.to_csv(temporary, index=False, encoding="utf-8", lineterminator="\n")
@@ -59,6 +68,7 @@ def atomic_csv(frame: pd.DataFrame, path: Path) -> None:
 
 
 def atomic_json(payload: dict[str, Any], path: Path) -> None:
+    """Ghi báo cáo JSON UTF-8 theo cơ chế atomic."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -66,6 +76,7 @@ def atomic_json(payload: dict[str, Any], path: Path) -> None:
 
 
 def pairwise_institution_review(data: pd.DataFrame) -> list[dict[str, Any]]:
+    """So sánh từng cặp trường dùng chung mã tuyển sinh qua các năm."""
     rows: list[dict[str, Any]] = []
     reused = data.loc[data["institution_code_reuse"].fillna(False)]
     for admission_code, code_group in reused.groupby("university_admission_code", sort=True):
@@ -79,6 +90,7 @@ def pairwise_institution_review(data: pd.DataFrame) -> list[dict[str, Any]]:
             left_name = text(left["institution_name_normalized"].iloc[0])
             right_name = text(right["institution_name_normalized"].iloc[0])
             sequence, jaccard, similarity = token_similarity(left_name, right_name)
+            # Cùng tồn tại trong một năm là bằng chứng mạnh rằng đây là hai entity khác nhau.
             if overlap:
                 decision = "keep_split_same_year_coexistence"
                 evidence = "strong_local_evidence"
@@ -111,6 +123,7 @@ def pairwise_institution_review(data: pd.DataFrame) -> list[dict[str, Any]]:
 
 
 def pairwise_program_review(data: pd.DataFrame) -> list[dict[str, Any]]:
+    """So sánh từng cặp program series cùng trường và cùng mã xét tuyển cha."""
     rows: list[dict[str, Any]] = []
     reused = data.loc[data["program_code_reuse"].fillna(False)]
     parent_columns = ["institution_entity_key", "major_admission_code"]
@@ -128,6 +141,7 @@ def pairwise_program_review(data: pd.DataFrame) -> list[dict[str, Any]]:
             left_codes = {text(value) for value in left["major_code"].dropna() if text(value)}
             right_codes = {text(value) for value in right["major_code"].dropna() if text(value)}
             code_overlap = bool(left_codes & right_codes)
+            # Threshold chỉ xếp mức ưu tiên xác minh, không bao giờ kích hoạt merge tự động.
             if overlap:
                 decision = "keep_split_same_year_coexistence"
                 evidence = "strong_local_evidence"
@@ -164,6 +178,7 @@ def pairwise_program_review(data: pd.DataFrame) -> list[dict[str, Any]]:
 
 
 def annotate_high_queue(queue: pd.DataFrame) -> pd.DataFrame:
+    """Gắn quyết định bảo thủ cho từng mục ưu tiên cao trong review queue."""
     high = queue.loc[queue["priority"].eq("high")].copy()
     decisions = {
         "institution_code_reuse": (
@@ -198,15 +213,18 @@ def annotate_high_queue(queue: pd.DataFrame) -> pd.DataFrame:
 
 
 def count_dict(series: pd.Series) -> dict[str, int]:
+    """Đếm số mục theo từng nhãn để đưa vào report tổng hợp."""
     return {str(key): int(value) for key, value in series.value_counts(dropna=False).items()}
 
 
 def main() -> None:
+    """Chạy pairwise review, cập nhật queue và xuất quyết định rà soát bước 3."""
     args = parse_args()
     data = pd.read_csv(args.step2_input.resolve(), low_memory=False)
     queue = pd.read_csv(args.queue_input.resolve(), low_memory=False)
     rejections = pd.read_csv(args.rejections_input.resolve(), low_memory=False)
 
+    # Ghép kết quả rà soát trường và ngành vào cùng một bảng bằng chứng.
     pair_rows = pairwise_institution_review(data) + pairwise_program_review(data)
     pair_review = pd.DataFrame(pair_rows)
     pair_review = pair_review.sort_values(
