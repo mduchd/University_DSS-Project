@@ -245,14 +245,26 @@ def recommend_api():
 def validate_payload(data):
     errors = []
     
+    combination = str(data.get("combination", "")).strip().upper()
+    if not combination:
+        errors.append({"field": "combination", "message": "Bắt buộc phải chọn tổ hợp môn."})
+    elif combination not in COMBINATIONS:
+        errors.append({"field": "combination", "message": f"Tổ hợp {combination} chưa được hỗ trợ."})
+
     scores = data.get("scores", {})
     if not scores:
         errors.append({"field": "scores", "message": "Bắt buộc phải có điểm thi."})
-    else:
-        for subject, score in scores.items():
-            if not isinstance(score, (int, float)) or score < 0 or score > 10:
-                errors.append({"field": f"scores.{subject}", "message": "Điểm phải là số nằm trong khoảng 0-10."})
-                
+    elif combination in COMBINATIONS:
+        required_subjects = COMBINATIONS[combination]
+        for subject in required_subjects:
+            if subject not in scores:
+                subj_name = SUBJECT_NAMES.get(subject, subject)
+                errors.append({"field": f"scores.{subject}", "message": f"Bắt buộc phải nhập điểm môn {subj_name} cho tổ hợp {combination}."})
+            else:
+                score = scores[subject]
+                if not isinstance(score, (int, float)) or score < 0 or score > 10:
+                    errors.append({"field": f"scores.{subject}", "message": "Điểm phải là số nằm trong khoảng 0-10."})
+
     priorities = data.get("priorities", {})
     for key, value in priorities.items():
         if not isinstance(value, (int, float)) or value < 0:

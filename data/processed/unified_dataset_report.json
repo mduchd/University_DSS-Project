@@ -1,0 +1,48 @@
+{
+  "status": "success",
+  "created_at": "2026-09-21T22:06:44.999154",
+  "master_admission": {
+    "total_admissions_records": 19983,
+    "preserved_100_pct_2024": true,
+    "unique_universities": 291,
+    "unique_majors": 1599,
+    "unique_combinations": 181,
+    "mapping_breakdown": {
+      "exact_tuple_count": 18957,
+      "exact_tuple_pct": 94.87,
+      "exact_name_count": 20,
+      "exact_name_pct": 0.1,
+      "ambiguous_count": 536,
+      "ambiguous_pct": 2.68,
+      "unmapped_count": 470,
+      "unmapped_pct": 2.35
+    },
+    "history_coverage": {
+      "cutoff_2024_pct": 100.0,
+      "cutoff_2023_pct": 42.45,
+      "cutoff_2022_pct": 47.19,
+      "cutoff_2021_pct": 41.98,
+      "with_2_or_more_years_pct": 65.31
+    },
+    "trend_distribution": {
+      "Không đủ dữ liệu": 6932,
+      "Ổn định": 5979,
+      "Tăng": 5330,
+      "Giảm": 1742
+    }
+  },
+  "exam_processed": {
+    "total_exam_summary_rows": 384,
+    "province_level_rows": 378,
+    "national_level_rows": 6,
+    "national_groups": [
+      "2021_pre_2025",
+      "2022_pre_2025",
+      "2023_pre_2025",
+      "2024_pre_2025",
+      "2025_ct_2006",
+      "2025_ct_2018"
+    ],
+    "is_weighted_mean": true
+  }
+}
