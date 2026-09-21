@@ -1,0 +1,113 @@
+{
+  "step": "02_identity_and_review_analysis",
+  "policy": {
+    "identity": "Use normalized institution and major names to split reused codes. Never merge conflicting names automatically.",
+    "rejected_rows": "Annotate only; no rejected row is restored automatically.",
+    "group_taxonomy": "A changing major group is a review signal, not by itself proof that the program identity changed."
+  },
+  "accepted_data": {
+    "input_rows": 86064,
+    "output_rows": 86064,
+    "institution_entities": 357,
+    "admission_codes_used_by_multiple_institution_entities": 52,
+    "program_series": 9130,
+    "program_parent_keys_split_by_name": 913,
+    "program_series_with_major_code_conflict": 88,
+    "program_series_with_group_taxonomy_change": 2517,
+    "review_priority_counts": {
+      "medium": 39288,
+      "high": 38539,
+      "none": 8237
+    },
+    "note_category_counts": {
+      "empty": 42216,
+      "exam_method_description": 25831,
+      "other_note": 4543,
+      "program_variant": 2724,
+      "program_variant|exam_method_description": 2428,
+      "eligibility_or_tiebreak": 2029,
+      "eligibility_or_tiebreak|exam_method_description": 1700,
+      "method_or_target_mismatch": 1422,
+      "location_or_candidate_scope": 1108,
+      "score_scale_description": 539,
+      "score_scale_description|exam_method_description": 385,
+      "location_or_candidate_scope|exam_method_description": 201,
+      "program_variant|eligibility_or_tiebreak": 174,
+      "eligibility_or_tiebreak|score_scale_description|exam_method_description": 110,
+      "program_variant|score_scale_description": 90,
+      "program_variant|eligibility_or_tiebreak|exam_method_description": 86,
+      "method_or_target_mismatch|program_variant": 78,
+      "location_or_candidate_scope|eligibility_or_tiebreak": 69,
+      "eligibility_or_tiebreak|score_scale_description": 65,
+      "program_variant|score_scale_description|exam_method_description": 53,
+      "method_or_target_mismatch|eligibility_or_tiebreak": 43,
+      "method_or_target_mismatch|exam_method_description": 40,
+      "method_or_target_mismatch|program_variant|exam_method_description": 39,
+      "program_variant|eligibility_or_tiebreak|score_scale_description": 32,
+      "program_variant|location_or_candidate_scope|score_scale_description": 30,
+      "program_variant|location_or_candidate_scope": 9,
+      "location_or_candidate_scope|score_scale_description": 7,
+      "program_variant|eligibility_or_tiebreak|score_scale_description|exam_method_description": 7,
+      "location_or_candidate_scope|eligibility_or_tiebreak|exam_method_description": 4,
+      "program_variant|location_or_candidate_scope|exam_method_description": 2
+    },
+    "series_year_count_distribution": {
+      "1": 17934,
+      "5": 16930,
+      "4": 13852,
+      "6": 12342,
+      "3": 10755,
+      "2": 9316,
+      "7": 4935
+    }
+  },
+  "rejected_data": {
+    "input_rows": 39513,
+    "output_rows": 39513,
+    "category_counts": {
+      "out_of_scope_non_thpt": 29633,
+      "unresolved_conflicting_cutoffs": 9193,
+      "unsupported_nonstandard_combination": 378,
+      "candidate_split_by_program_identity": 247,
+      "candidate_split_by_gender_or_campus": 58,
+      "score_scale_mismatch": 4
+    },
+    "ambiguous_group_counts": {
+      "unresolved_conflicting_cutoffs": 4333,
+      "candidate_split_by_program_identity": 119,
+      "candidate_split_by_gender_or_campus": 29
+    },
+    "automatically_recovered_rows": 0
+  },
+  "review_queue": {
+    "items": 8177,
+    "priority_counts": {
+      "high": 8002,
+      "medium": 175
+    },
+    "type_counts": {
+      "ambiguous_cutoff": 4481,
+      "sensitive_source_note": 2464,
+      "program_code_reuse": 913,
+      "out_of_scope_non_thpt": 138,
+      "major_code_conflict": 88,
+      "institution_code_reuse": 52,
+      "unsupported_nonstandard_combination": 37,
+      "score_scale_mismatch": 4
+    }
+  },
+  "validation": {
+    "accepted_row_count_preserved": true,
+    "rejected_row_count_preserved": true,
+    "step2_temporal_key_is_unique": true,
+    "no_rejected_row_was_auto_recovered": true
+  },
+  "outputs": {
+    "step2_dataset": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_step2.csv",
+    "institution_map": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_institution_map.csv",
+    "program_map": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_program_map.csv",
+    "rejection_review": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_rejection_review.csv",
+    "review_queue": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_review_queue.csv",
+    "report": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_step2_report.json"
+  }
+}

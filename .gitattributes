@@ -5,3 +5,6 @@ data/cleaned/exam/*.csv filter=lfs diff=lfs merge=lfs -text
 data/processed/exam/*.csv filter=lfs diff=lfs merge=lfs -text
 data/processed/admission/*.csv filter=lfs diff=lfs merge=lfs -text
 data/processed/jobs/*.csv filter=lfs diff=lfs merge=lfs -text
+data/processed/admission_ml_*.csv filter=lfs diff=lfs merge=lfs -text
+data/cleaned/admission/*.csv filter=lfs diff=lfs merge=lfs -text
+models/*.joblib filter=lfs diff=lfs merge=lfs -text
