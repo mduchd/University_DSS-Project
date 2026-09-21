@@ -132,7 +132,7 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
 
     logging.info(f"   - Số khóa tuple xung đột nhóm nghề: {len(tuple_conflicts)}")
 
-    logging.info("3. Đang ghép nối lịch sử có phân nhóm giới tính, cơ sở và ghi nhận đa điểm...")
+    logging.info("3. Đang ghép nối lịch sử có phân nhóm giới tính, cơ sở, phương thức và ghi nhận đa điểm...")
     past_df = df_adm[df_adm["year"].isin([2021, 2022, 2023]) & df_adm["cutoff_score_30"].notna()].copy()
     past_df["uac"] = past_df["university_admission_code"].astype(str).str.strip().str.upper()
     past_df["mac"] = past_df["major_admission_code"].astype(str).str.strip().str.upper()
@@ -140,16 +140,22 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
     past_df["comb"] = past_df["subject_combination"].astype(str).str.strip().str.upper()
     past_df["gender"] = past_df["gender_requirement"].fillna("").astype(str).str.strip().str.upper()
     past_df["honors"] = past_df["honors_program"].fillna("").astype(str).str.strip().str.upper()
+    past_df["method"] = past_df["admission_method"].fillna("").astype(str).str.strip().str.upper()
+    past_df["campus"] = past_df["campus"].fillna("").astype(str).str.strip().str.upper()
 
-    # Nhóm lịch sử theo khóa chi tiết bao gồm giới tính và honors
-    # Tính mean và kiểm tra xem có xung đột điểm hay không
-    grp_detailed = past_df.groupby(["year", "uac", "mac", "comb", "gender", "honors"])["cutoff_score_30"]
-    history_detailed_mean = grp_detailed.mean().to_dict()
-    history_detailed_spread = (grp_detailed.max() - grp_detailed.min()).to_dict()
+    # Nhóm lịch sử theo khóa chi tiết bao gồm giới tính, honors, phương thức, cơ sở
+    # Tuyệt đối không dùng mean() để tạo điểm ảo khi có nhiều mức điểm khác nhau
+    grp_detailed = past_df.groupby(["year", "uac", "mac", "comb", "gender", "honors", "method", "campus"])["cutoff_score_30"]
+    history_detailed_nunique = grp_detailed.nunique().to_dict()
+    history_detailed_first = grp_detailed.first().to_dict()
+
+    grp_detailed_no_mc = past_df.groupby(["year", "uac", "mac", "comb", "gender", "honors"])["cutoff_score_30"]
+    history_detailed_no_mc_nunique = grp_detailed_no_mc.nunique().to_dict()
+    history_detailed_no_mc_first = grp_detailed_no_mc.first().to_dict()
 
     grp_generic = past_df.groupby(["year", "uac", "mc", "comb"])["cutoff_score_30"]
-    history_generic_mean = grp_generic.mean().to_dict()
-    history_generic_spread = (grp_generic.max() - grp_generic.min()).to_dict()
+    history_generic_nunique = grp_generic.nunique().to_dict()
+    history_generic_first = grp_generic.first().to_dict()
 
     cutoff_2021_list = []
     cutoff_2022_list = []
@@ -168,29 +174,41 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
         comb = str(row.get("subject_combination", "")).strip().upper()
         gender = str(row.get("gender_requirement", "")).strip().upper()
         honors = str(row.get("honors_program", "")).strip().upper()
+        method = str(row.get("admission_method", "")).strip().upper()
+        campus = str(row.get("campus", "")).strip().upper()
 
         score_24 = float(row["cutoff_score_30"]) if pd.notna(row.get("cutoff_score_30")) else np.nan
         cutoff_2024_list.append(score_24)
 
         has_ambiguous_history = False
 
-        # Hàm tra cứu điểm từng năm trong quá khứ
+        # Hàm tra cứu điểm từng năm trong quá khứ - Tuyệt đối không tạo điểm trung bình ảo
         def get_year_score(yr: int):
             nonlocal has_ambiguous_history
-            # 1. Chi tiết theo uac, mac, comb, gender, honors
-            s = history_detailed_mean.get((yr, uac, mac, comb, gender, honors))
-            spread = history_detailed_spread.get((yr, uac, mac, comb, gender, honors), 0.0)
-            if s is not None:
-                if spread >= 0.5:
+            # 1. Chi tiết theo uac, mac, comb, gender, honors, method, campus
+            k1 = (yr, uac, mac, comb, gender, honors, method, campus)
+            if k1 in history_detailed_nunique:
+                if history_detailed_nunique[k1] > 1:
                     has_ambiguous_history = True
-                return s
-            # 2. Chi tiết theo generic uac, mc, comb
-            s_gen = history_generic_mean.get((yr, uac, mc, comb))
-            spread_gen = history_generic_spread.get((yr, uac, mc, comb), 0.0)
-            if s_gen is not None:
-                if spread_gen >= 0.5:
+                    return np.nan
+                return float(history_detailed_first[k1])
+
+            # 2. Chi tiết phụ theo uac, mac, comb, gender, honors
+            k2 = (yr, uac, mac, comb, gender, honors)
+            if k2 in history_detailed_no_mc_nunique:
+                if history_detailed_no_mc_nunique[k2] > 1:
                     has_ambiguous_history = True
-                return s_gen
+                    return np.nan
+                return float(history_detailed_no_mc_first[k2])
+
+            # 3. Chi tiết theo generic uac, mc, comb
+            k3 = (yr, uac, mc, comb)
+            if k3 in history_generic_nunique:
+                if history_generic_nunique[k3] > 1:
+                    has_ambiguous_history = True
+                    return np.nan
+                return float(history_generic_first[k3])
+
             return np.nan
 
         s23 = get_year_score(2023)
@@ -208,39 +226,45 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
 
         recent_scores = [s for s in [s22, s23, score_24] if pd.notna(s)]
 
-        # KHẮC PHỤC TRIỆT ĐỂ: Nếu dưới 2 năm quan sát, cutoff_std_recent là NaN (KHÔNG dùng 0.0!)
-        if len(recent_scores) >= 2:
-            cutoff_avg_recent_list.append(round(float(np.mean(recent_scores)), 2))
-            cutoff_std_recent_list.append(round(float(np.std(recent_scores)), 2))
-        elif len(recent_scores) == 1:
-            cutoff_avg_recent_list.append(round(float(recent_scores[0]), 2))
+        # Nếu có lịch sử xung đột/ambiguous: Không tính std hay trend giả
+        if has_ambiguous_history:
+            cutoff_avg_recent_list.append(round(float(score_24), 2) if pd.notna(score_24) else np.nan)
             cutoff_std_recent_list.append(np.nan)
-        else:
-            cutoff_avg_recent_list.append(np.nan)
-            cutoff_std_recent_list.append(np.nan)
-
-        # Xu hướng: Nếu dưới 2 năm: BẮT BUỘC 'Không đủ dữ liệu'
-        if n_years < 2:
             cutoff_trend_list.append("Không đủ dữ liệu")
         else:
-            diff = np.nan
-            if pd.notna(score_24) and pd.notna(s23):
-                diff = score_24 - s23
-            elif pd.notna(score_24) and pd.notna(s22):
-                diff = (score_24 - s22) / 2.0
-            elif pd.notna(score_24) and pd.notna(s21):
-                diff = (score_24 - s21) / 3.0
-
-            if pd.notna(diff):
-                if diff >= 0.5:
-                    trend = "Tăng"
-                elif diff <= -0.5:
-                    trend = "Giảm"
-                else:
-                    trend = "Ổn định"
+            # Nếu dưới 2 năm quan sát, cutoff_std_recent là NaN
+            if len(recent_scores) >= 2:
+                cutoff_avg_recent_list.append(round(float(np.mean(recent_scores)), 2))
+                cutoff_std_recent_list.append(round(float(np.std(recent_scores)), 2))
+            elif len(recent_scores) == 1:
+                cutoff_avg_recent_list.append(round(float(recent_scores[0]), 2))
+                cutoff_std_recent_list.append(np.nan)
             else:
-                trend = "Không đủ dữ liệu"
-            cutoff_trend_list.append(trend)
+                cutoff_avg_recent_list.append(np.nan)
+                cutoff_std_recent_list.append(np.nan)
+
+            # Xu hướng: Nếu dưới 2 năm: BẮT BUỘC 'Không đủ dữ liệu'
+            if n_years < 2:
+                cutoff_trend_list.append("Không đủ dữ liệu")
+            else:
+                diff = np.nan
+                if pd.notna(score_24) and pd.notna(s23):
+                    diff = score_24 - s23
+                elif pd.notna(score_24) and pd.notna(s22):
+                    diff = (score_24 - s22) / 2.0
+                elif pd.notna(score_24) and pd.notna(s21):
+                    diff = (score_24 - s21) / 3.0
+
+                if pd.notna(diff):
+                    if diff >= 0.5:
+                        trend = "Tăng"
+                    elif diff <= -0.5:
+                        trend = "Giảm"
+                    else:
+                        trend = "Ổn định"
+                else:
+                    trend = "Không đủ dữ liệu"
+                cutoff_trend_list.append(trend)
 
     df_base["cutoff_2021"] = cutoff_2021_list
     df_base["cutoff_2022"] = cutoff_2022_list

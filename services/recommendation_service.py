@@ -105,16 +105,56 @@ class RecommendationEngine:
         # TÁCH PHƯƠNG ÁN THANG 40 KHỎI RANKING THANG 30
         matched_df = matched_df[matched_df["is_scale_40"] == False].copy()
 
-        # Lọc theo sở thích nếu có
-        if interest:
-            norm_interest = remove_accents(interest)
-            match_mask = (
-                matched_df["major_name"].apply(lambda x: norm_interest in remove_accents(str(x)))
-                | matched_df["major_group_name"].apply(lambda x: norm_interest in remove_accents(str(x)))
-                | matched_df["university_name"].apply(lambda x: norm_interest in remove_accents(str(x)))
+        # Lọc theo Nhóm ngành (group) từ giao diện nếu có
+        group_filter = str(user_payload.get("group", "")).strip()
+        if group_filter:
+            norm_grp = remove_accents(group_filter)
+            group_mask = matched_df["major_group_name"].apply(
+                lambda x: norm_grp in remove_accents(str(x)) or remove_accents(str(x)) in norm_grp
             )
-            if match_mask.any():
-                matched_df = matched_df[match_mask].copy()
+            if group_mask.any():
+                matched_df = matched_df[group_mask].copy()
+            else:
+                matched_df = matched_df.iloc[0:0].copy()
+
+        # Lọc theo Khu vực (region) từ profile nếu có
+        region_pref = ""
+        if isinstance(preferences, dict) and preferences.get("region"):
+            region_pref = str(preferences["region"]).strip()
+        elif user_payload.get("region"):
+            region_pref = str(user_payload.get("region")).strip()
+
+        if region_pref:
+            reg_mask = matched_df["region"].astype(str).str.strip().str.lower() == region_pref.lower()
+            if reg_mask.any():
+                matched_df = matched_df[reg_mask].copy()
+
+        # Lọc theo sở thích hoặc danh sách interests từ profile
+        user_interests = []
+        if isinstance(preferences, dict):
+            if isinstance(preferences.get("interests"), list):
+                user_interests = [str(i).strip() for i in preferences["interests"] if str(i).strip()]
+            elif isinstance(preferences.get("interests"), str) and preferences.get("interests"):
+                user_interests = [preferences["interests"].strip()]
+
+        search_terms = []
+        if interest:
+            search_terms.append(interest)
+        search_terms.extend(user_interests)
+
+        if search_terms:
+            term_masks = []
+            for term in search_terms:
+                nt = remove_accents(term)
+                tm = (
+                    matched_df["major_name"].apply(lambda x: nt in remove_accents(str(x)))
+                    | matched_df["major_group_name"].apply(lambda x: nt in remove_accents(str(x)))
+                    | matched_df["university_name"].apply(lambda x: nt in remove_accents(str(x)))
+                )
+                term_masks.append(tm)
+            combined_mask = pd.concat(term_masks, axis=1).any(axis=1)
+            if combined_mask.any():
+                matched_df = matched_df[combined_mask].copy()
 
         if matched_df.empty:
             matched_df = df[
@@ -142,40 +182,67 @@ class RecommendationEngine:
         salaries = matched_df["job_avg_salary_million"].fillna(15.0).clip(lower=5.0).to_numpy()
         postings = matched_df["job_posting_count"].fillna(500.0).clip(lower=10.0).to_numpy()
 
-        # KHẮC PHỤC TRIỆT ĐỂ: Nếu thiếu lịch sử quan sát (< 2 năm), gán stability trung tính 0.5
+        # KHẮC PHỤC TRIỆT ĐỂ: Nếu thiếu lịch sử quan sát (< 2 năm) hoặc có xung đột, gán stability trung tính 0.5
         years_obs = matched_df["years_observed"].fillna(1).to_numpy()
         stds = matched_df["cutoff_std_recent"].to_numpy()
+        is_ambig = (
+            matched_df["history_ambiguous"].fillna(False).astype(bool).to_numpy()
+            if "history_ambiguous" in matched_df.columns
+            else np.zeros(len(matched_df), dtype=bool)
+        )
         stabilities = np.where(
-            (years_obs >= 2) & pd.notna(stds),
+            (years_obs >= 2) & pd.notna(stds) & (~is_ambig),
             1.0 / (1.0 + np.nan_to_num(stds, nan=0.5)),
-            0.5  # Mức trung tính khi thiếu dữ liệu lịch sử
+            0.5  # Mức trung tính khi thiếu dữ liệu lịch sử hoặc xung đột
         )
 
         X = np.column_stack([gap_scores, salaries, postings, stabilities])
 
-        # ĐIỀU CHỈNH TRỌNG SỐ THEO PREFERENCES NGƯỜI DÙNG
-        # Mặc định: score_fit=0.40, salary=0.25, demand=0.20, stability=0.15
+        # ĐIỀU CHỈNH TRỌNG SỐ THEO PREFERENCES NGƯỜI DÙNG (Phân biệt chính xác từng tag)
         w_fit = 0.40
         w_sal = 0.25
         w_dem = 0.20
         w_stab = 0.15
 
-        # Đọc preferences từ payload (profile / priorities)
-        combined_pref = {**preferences, **priorities}
-        pref_str = " ".join(f"{k}:{v}" for k, v in combined_pref.items()).lower()
+        # Đọc preferences dạng list/dict từ frontend (state.profile) và priorities
+        user_priorities = set()
+        if isinstance(preferences, dict):
+            p_val = preferences.get("priorities", [])
+            if isinstance(p_val, list):
+                for p in p_val:
+                    user_priorities.add(str(p).strip().lower())
+            elif isinstance(p_val, dict):
+                for p in p_val.keys():
+                    user_priorities.add(str(p).strip().lower())
+            elif isinstance(p_val, str):
+                user_priorities.add(p_val.strip().lower())
 
-        if "thu nhập" in pref_str or "salary" in pref_str or "income" in pref_str:
+            if preferences.get("priority"):
+                user_priorities.add(str(preferences["priority"]).strip().lower())
+
+        if isinstance(priorities, dict):
+            for k in priorities.keys():
+                user_priorities.add(str(k).strip().lower())
+        elif isinstance(priorities, list):
+            for p in priorities:
+                user_priorities.add(str(p).strip().lower())
+
+        if any(x in user_priorities for x in ["thu nhập", "salary", "income"]):
             w_sal += 0.15
             w_fit -= 0.10
             w_stab -= 0.05
-        if "ổn định" in pref_str or "stability" in pref_str:
+        if any(x in user_priorities for x in ["ổn định", "stability"]):
             w_stab += 0.15
             w_sal -= 0.05
             w_dem -= 0.10
-        if "cơ hội" in pref_str or "opportunities" in pref_str or "demand" in pref_str:
+        if any(x in user_priorities for x in ["cơ hội việc làm", "employment", "demand"]):
             w_dem += 0.15
             w_fit -= 0.10
             w_sal -= 0.05
+        if any(x in user_priorities for x in ["cơ hội quốc tế", "international"]):
+            w_dem += 0.10
+            w_sal += 0.05
+            w_fit -= 0.15
 
         weights = np.array([w_fit, w_sal, w_dem, w_stab])
         weights = weights / np.sum(weights)
@@ -195,17 +262,22 @@ class RecommendationEngine:
         # KHẮC PHỤC TRIỆT ĐỂ CHO TRƯỜNG HỢP 1 PHƯƠNG ÁN (m = 1)
         if len(matched_df) == 1:
             g = float(matched_df["gap"].iloc[0])
-            # Tính closeness trực tiếp dựa trên gap an toàn
             single_closeness = max(0.2, min(0.95, 0.70 + (g * 0.05)))
             closeness = np.array([single_closeness])
+            ranking_algo = "TOPSIS_fallback_heuristic"
         else:
             denom = dist_best + dist_worst
             closeness = np.where(denom > 1e-9, dist_worst / np.maximum(denom, 1e-9), 0.5)
+            ranking_algo = "TOPSIS_multi_criteria"
 
         matched_df["topsis_closeness"] = closeness
         matched_df["match_score"] = (closeness * 100).round(1)
 
         # 4. PHÂN CHIA VÀO CÁC NHÓM SAFE / MATCH / REACH CHO FRONTEND
+        # Nghiệp vụ:
+        # - safe: gap >= +1.0
+        # - match: -1.0 <= gap < +1.0
+        # - reach: -3.0 <= gap < -1.0 (Có chặn cận dưới -3.0!)
         buckets = {"safe": [], "match": [], "reach": []}
         for _, r in matched_df.iterrows():
             gap = float(r["gap"])
@@ -221,13 +293,14 @@ class RecommendationEngine:
                 "note": str(r.get("note", "")),
                 "topsis_score": float(r.get("match_score", 0.0)),
                 "cutoff_trend": str(r.get("cutoff_trend", "")),
+                "history_ambiguous": bool(r.get("history_ambiguous", False)),
                 "job_category": str(r.get("job_category", "")),
             }
             if gap >= 1.0:
                 buckets["safe"].append(item)
             elif gap >= -1.0:
                 buckets["match"].append(item)
-            else:
+            elif gap >= -3.0:
                 buckets["reach"].append(item)
 
         # Sắp xếp từng bucket theo điểm TOPSIS và giới hạn tối đa 15 mục
@@ -252,6 +325,7 @@ class RecommendationEngine:
                 "match_score": float(r.get("match_score", 0.0)),
                 "job_category": str(r.get("job_category", "")),
                 "cutoff_trend": str(r.get("cutoff_trend", "")),
+                "history_ambiguous": bool(r.get("history_ambiguous", False)),
             })
 
         top_choice = ranking[0] if ranking else {}
@@ -325,24 +399,23 @@ class RecommendationEngine:
         else:
             career_context.append("Chưa đủ dữ liệu thị trường việc làm đã xác minh cho ngành này trong khảo sát VietJobs.")
 
-        # 8. LỜI KHUYÊN TƯ VẤN (TUÂN THỦ: Không bao giờ nói 'chắc chắn đỗ')
-        advice_parts = []
-        if top_choice:
-            trend_str = top_choice.get("cutoff_trend", "Ổn định")
-            if top_gap >= 2.0:
-                comp_text = f"Với mức điểm {user_total_score} (cao hơn điểm chuẩn 2024 là +{top_gap} điểm), bạn có khả năng cạnh tranh rất thuận lợi vào ngành {top_choice.get('ten_nganh')} tại {top_choice.get('ten_truong')}."
-            elif top_gap >= 0.0:
-                comp_text = f"Với mức điểm {user_total_score} (chênh lệch +{top_gap} so với điểm chuẩn 2024), bạn nằm trong vùng cạnh tranh tốt, tuy nhiên xu hướng điểm chuẩn đang ở trạng thái '{trend_str}' nên vẫn cần đăng ký thêm nguyện vọng dự phòng an toàn."
-            else:
-                comp_text = f"Mức điểm {user_total_score} hiện thấp hơn điểm chuẩn năm trước ({top_gap} điểm) đối với {top_choice.get('ten_truong')}. Đây là nguyện vọng mang tính thử thách (vùng với tới), bạn nên cân nhắc đặt ở nguyện vọng ưu tiên và bổ sung các trường có ngưỡng điểm an toàn hơn."
-            advice_parts.append(comp_text)
-
-        if strong_subjects:
-            advice_parts.append(f"Điểm số môn {', '.join(strong_subjects)} là lợi thế cạnh tranh rõ rệt của bạn so với mặt bằng chung toàn quốc.")
-        if weak_subjects:
-            advice_parts.append(f"Bạn nên cân nhắc cải thiện thêm môn {', '.join(weak_subjects)} nếu có kế hoạch xét tuyển ở các phương thức phụ hoặc các tổ hợp mở rộng.")
-
-        advice_text = " ".join(advice_parts)
+        # 8. LỜI KHUYÊN TƯ VẤN (Tích hợp AdviceService & RAG Service - Không cam kết tuyệt đối)
+        from services.advice_service import advice_service
+        current_res = {
+            "user_score": user_total_score,
+            "combination": combination,
+            "ranking": ranking,
+            "prediction": prediction,
+            "feature_attributions": feature_attributions,
+            "criteria_weights": {
+                "score_fit": round(float(weights[0]), 3),
+                "salary": round(float(weights[1]), 3),
+                "job_demand": round(float(weights[2]), 3),
+                "stability": round(float(weights[3]), 3),
+            },
+        }
+        adv_res = advice_service.generate_advice(current_res)
+        advice_text = adv_res.get("advice", "")
 
         return {
             "user_score": user_total_score,
@@ -351,7 +424,7 @@ class RecommendationEngine:
             "counts": counts,
             "results": buckets,
             "total_count": total_count,
-            "ranking_algorithm": "TOPSIS_multi_criteria",
+            "ranking_algorithm": ranking_algo,
             "ranking": ranking,
             "criteria_weights": {
                 "score_fit": round(float(weights[0]), 3),
@@ -363,6 +436,8 @@ class RecommendationEngine:
             "feature_attributions": feature_attributions,
             "career_context": career_context,
             "advice": advice_text,
+            "detailed_advice": adv_res.get("sections", {}),
+            "rag_evidence": adv_res.get("rag_evidence", {}),
             "what_if": {},
         }
 

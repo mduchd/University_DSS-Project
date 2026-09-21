@@ -1,0 +1,338 @@
+{
+  "công_nghệ_thông_tin_kỹ_thuật_số": {
+    "top_technical_skills": [
+      "Photoshop",
+      "Illustrator",
+      "Python",
+      "Java",
+      "SQL",
+      "Docker",
+      "Git",
+      "Figma",
+      "Adobe Photoshop",
+      "MySQL"
+    ],
+    "top_soft_skills": [
+      "Kỹ năng giao tiếp",
+      "Làm việc nhóm",
+      "Sáng tạo",
+      "Giao tiếp",
+      "Tư duy logic"
+    ]
+  },
+  "du_lịch_nhà_hàng_khách_sạn_dịch_vụ": {
+    "top_technical_skills": [
+      "Kỹ năng giao tiếp",
+      "Photoshop",
+      "After Effects",
+      "Adobe Premiere",
+      "Kỹ năng bán hàng",
+      "Capcut",
+      "Premiere",
+      "Kỹ năng đàm phán",
+      "Tin học văn phòng",
+      "Excel"
+    ],
+    "top_soft_skills": [
+      "Trung thực",
+      "Giao tiếp tốt",
+      "Nhanh nhẹn",
+      "Kỹ năng giao tiếp",
+      "Chăm chỉ"
+    ]
+  },
+  "giáo_dục_đào_tạo_nghiên_cứu": {
+    "top_technical_skills": [
+      "Kỹ năng giao tiếp",
+      "Tin học văn phòng",
+      "Excel",
+      "Thành thạo tin học văn phòng",
+      "Kỹ năng thuyết phục",
+      "Canva",
+      "Google Sheets",
+      "Kỹ năng đàm phán",
+      "Word",
+      "PowerPoint"
+    ],
+    "top_soft_skills": [
+      "Kỹ năng giao tiếp",
+      "Nhanh nhẹn",
+      "Giao tiếp tốt",
+      "Nhiệt tình",
+      "Chủ động"
+    ]
+  },
+  "kinh_doanh_bán_hàng_chăm_sóc_khách_hàng": {
+    "top_technical_skills": [
+      "Kỹ năng giao tiếp",
+      "Kỹ năng đàm phán",
+      "Excel",
+      "Tin học văn phòng",
+      "Kỹ năng bán hàng",
+      "Thành thạo tin học văn phòng",
+      "Kỹ năng thuyết phục",
+      "Word",
+      "Tin học văn phòng (Word, Excel, PowerPoint)",
+      "Kỹ năng lập kế hoạch"
+    ],
+    "top_soft_skills": [
+      "Kỹ năng giao tiếp",
+      "Giao tiếp tốt",
+      "Trung thực",
+      "Nhanh nhẹn",
+      "Năng động"
+    ]
+  },
+  "kỹ_thuật_điện_điện_tử_viễn_thông": {
+    "top_technical_skills": [
+      "AutoCAD",
+      "Autocad",
+      "Excel",
+      "Revit",
+      "Tin học văn phòng",
+      "PLC",
+      "Điện",
+      "Word",
+      "MS Office",
+      "Microsoft Office"
+    ],
+    "top_soft_skills": [
+      "Trung thực",
+      "Cẩn thận",
+      "Kỹ năng giao tiếp",
+      "Nhanh nhẹn",
+      "Nhiệt tình"
+    ]
+  },
+  "logistics_vận_tải_chuỗi_cung_ứng": {
+    "top_technical_skills": [
+      "Excel",
+      "Kỹ năng đàm phán",
+      "Tin học văn phòng",
+      "Thành thạo tin học văn phòng",
+      "Kỹ năng giao tiếp",
+      "Word",
+      "Quản lý kho",
+      "Thành thạo vi tính văn phòng",
+      "Quản Lý Kho",
+      "Tin học văn phòng (Word, Excel, PowerPoint)"
+    ],
+    "top_soft_skills": [
+      "Trung thực",
+      "Cẩn thận",
+      "Nhanh nhẹn",
+      "Kỹ năng giao tiếp",
+      "Chăm chỉ"
+    ]
+  },
+  "marketing_truyền_thông_quảng_cáo_nội_dung": {
+    "top_technical_skills": [
+      "Photoshop",
+      "Canva",
+      "SEO",
+      "Google Ads",
+      "Illustrator",
+      "Google Analytics",
+      "Facebook Ads",
+      "Capcut",
+      "After Effects",
+      "Premiere"
+    ],
+    "top_soft_skills": [
+      "Sáng tạo",
+      "Chủ động",
+      "Kỹ năng giao tiếp",
+      "Làm việc nhóm",
+      "Năng động"
+    ]
+  },
+  "ngôn_ngữ_dịch_thuật": {
+    "top_technical_skills": [
+      "Tin học văn phòng",
+      "Excel",
+      "Tiếng Trung (nghe, nói, đọc, viết)",
+      "Thành thạo tiếng Trung (nghe – nói – đọc – viết)",
+      "Thành thạo tin học văn phòng",
+      "Tin học văn phòng (Word, Excel, PowerPoint)",
+      "Thành thạo tiếng Trung",
+      "Tiếng Nhật N2",
+      "Sử dụng thành thạo tin học văn phòng",
+      "Thành thạo tiếng Trung (nghe, nói, đọc, viết)"
+    ],
+    "top_soft_skills": [
+      "Cẩn thận",
+      "Nhanh nhẹn",
+      "Kỹ năng giao tiếp tốt",
+      "Giao tiếp tốt",
+      "Trung thực"
+    ]
+  },
+  "nhân_sự_hành_chính_pháp_chế_tư_vấn": {
+    "top_technical_skills": [
+      "Excel",
+      "Tin học văn phòng",
+      "Thành thạo tin học văn phòng",
+      "Word",
+      "Tin học văn phòng (Word, Excel, PowerPoint)",
+      "Kỹ năng giao tiếp",
+      "PowerPoint",
+      "Canva",
+      "Microsoft Office",
+      "Kỹ năng tin học văn phòng"
+    ],
+    "top_soft_skills": [
+      "Kỹ năng giao tiếp",
+      "Cẩn thận",
+      "Trung thực",
+      "Nhanh nhẹn",
+      "Giao tiếp tốt"
+    ]
+  },
+  "nhóm_nghề_khác": {
+    "top_technical_skills": [
+      "Excel",
+      "Tin học văn phòng",
+      "Word",
+      "Thành thạo tin học văn phòng",
+      "Kỹ năng giao tiếp",
+      "Thành thạo vi tính văn phòng",
+      "Phân tích dữ liệu",
+      "C#",
+      "Git",
+      "SQL"
+    ],
+    "top_soft_skills": [
+      "Cẩn thận",
+      "Trung thực",
+      "Kỹ năng giao tiếp",
+      "Nhanh nhẹn",
+      "Giao tiếp tốt"
+    ]
+  },
+  "nông_nghiệp_năng_lượng_môi_trường": {
+    "top_technical_skills": [
+      "AutoCAD",
+      "Autocad",
+      "Excel",
+      "Tin học văn phòng",
+      "Word",
+      "Revit",
+      "Vận hành hệ thống xử lý nước thải",
+      "MS Office",
+      "Thành thạo tin học văn phòng",
+      "PowerPoint"
+    ],
+    "top_soft_skills": [
+      "Trung thực",
+      "Kỹ năng giao tiếp",
+      "Cẩn thận",
+      "Nhanh nhẹn",
+      "Nhiệt tình"
+    ]
+  },
+  "sản_xuất_lao_động_phổ_thông_cơ_khí": {
+    "top_technical_skills": [
+      "Excel",
+      "Tin học văn phòng",
+      "AutoCAD",
+      "Kỹ năng giao tiếp",
+      "Thành thạo tin học văn phòng",
+      "Kỹ năng đàm phán",
+      "Autocad",
+      "Word",
+      "Phân tích dữ liệu",
+      "Solidworks"
+    ],
+    "top_soft_skills": [
+      "Trung thực",
+      "Cẩn thận",
+      "Nhanh nhẹn",
+      "Kỹ năng giao tiếp",
+      "Chăm chỉ"
+    ]
+  },
+  "thiết_kế_nghệ_thuật_giải_trí_truyền_hình_báo_chí": {
+    "top_technical_skills": [
+      "Photoshop",
+      "Illustrator",
+      "AutoCAD",
+      "After Effects",
+      "Adobe Premiere",
+      "Autocad",
+      "Premiere",
+      "Adobe Photoshop",
+      "Capcut",
+      "Revit"
+    ],
+    "top_soft_skills": [
+      "Sáng tạo",
+      "Làm việc nhóm",
+      "Cẩn thận",
+      "Chủ động",
+      "Trung thực"
+    ]
+  },
+  "tài_chính_kế_toán_ngân_hàng_bảo_hiểm": {
+    "top_technical_skills": [
+      "Excel",
+      "Phần mềm kế toán",
+      "Tin học văn phòng",
+      "Word",
+      "Phần mềm kế toán Misa",
+      "Sử dụng phần mềm kế toán",
+      "Misa",
+      "Thành thạo Excel",
+      "Thành thạo tin học văn phòng",
+      "Kế Toán Tổng Hợp"
+    ],
+    "top_soft_skills": [
+      "Cẩn thận",
+      "Trung thực",
+      "Tỉ mỉ",
+      "Kỹ năng giao tiếp",
+      "Nhanh nhẹn"
+    ]
+  },
+  "xây_dựng_kiến_trúc_bất_động_sản": {
+    "top_technical_skills": [
+      "AutoCAD",
+      "Autocad",
+      "Excel",
+      "Revit",
+      "Sketchup",
+      "Photoshop",
+      "Word",
+      "Tin học văn phòng",
+      "SketchUp",
+      "AutoCad"
+    ],
+    "top_soft_skills": [
+      "Trung thực",
+      "Làm việc nhóm",
+      "Kỹ năng giao tiếp",
+      "Cẩn thận",
+      "Giao tiếp"
+    ]
+  },
+  "y_tế_dược_chăm_sóc_sức_khỏe_công_nghệ_sinh_học": {
+    "top_technical_skills": [
+      "Kỹ năng giao tiếp",
+      "Tin học văn phòng",
+      "Kỹ năng bán hàng",
+      "Kỹ năng đàm phán",
+      "Kỹ năng thuyết phục",
+      "Thành thạo tin học văn phòng",
+      "Excel",
+      "Kỹ năng tư vấn",
+      "Kỹ năng chăm sóc khách hàng",
+      "Kỹ năng thuyết trình"
+    ],
+    "top_soft_skills": [
+      "Trung thực",
+      "Kỹ năng giao tiếp",
+      "Nhanh nhẹn",
+      "Giao tiếp tốt",
+      "Cẩn thận"
+    ]
+  }
+}

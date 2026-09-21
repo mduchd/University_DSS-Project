@@ -216,8 +216,11 @@ def recommend_api():
         # KIỂM TRA ĐẦU VÀO (Validation)
         errors = validate_payload(payload)
         if errors:
+            err_msg = errors[0]["message"] if errors else "Dữ liệu yêu cầu không hợp lệ."
             return jsonify({
                 "status": "error",
+                "error": err_msg,
+                "message": err_msg,
                 "data": None,
                 "errors": errors
             }), 400

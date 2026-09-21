@@ -156,6 +156,25 @@ class TestUnifiedDatasetSemantics(unittest.TestCase):
             self.assertNotIn(phrase, r1["advice"].lower(), f"Lời khuyên chứa từ cấm: {phrase}")
             self.assertNotIn(phrase, r2["advice"].lower(), f"Lời khuyên chứa từ cấm: {phrase}")
 
+    def test_ambiguous_history_does_not_synthesize_fake_means(self):
+        """7. Kiểm tra dữ liệu lịch sử điểm chuẩn không bị tổng hợp mean() ảo khi có xung đột."""
+        # Trường KHA ngành 7310101 A00 năm 2022 có 3 mức điểm khác nhau trong dữ liệu gốc
+        kha_a00 = self.df_master[
+            (self.df_master["university_admission_code"] == "KHA")
+            & (self.df_master["major_code"] == "7310101")
+            & (self.df_master["subject_combination"] == "A00")
+        ]
+        self.assertGreater(len(kha_a00), 0)
+        for _, row in kha_a00.iterrows():
+            # Điểm 2022 không được là giá trị trung bình nhân tạo 27.333333
+            val_2022 = str(row["cutoff_2022"])
+            self.assertNotIn("27.33", val_2022)
+            # Cờ history_ambiguous phải là True
+            self.assertEqual(str(row["history_ambiguous"]).lower(), "true")
+            # Khi có xung đột lịch sử, xu hướng không được gán Tăng/Giảm/Ổn định
+            self.assertEqual(row["cutoff_trend"], "Không đủ dữ liệu")
+
 
 if __name__ == "__main__":
     unittest.main()
+

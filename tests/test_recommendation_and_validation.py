@@ -119,6 +119,69 @@ class TestRecommendationAndValidation(unittest.TestCase):
         self.assertGreater(r_income["criteria_weights"]["salary"], r_stab["criteria_weights"]["salary"])
         self.assertGreater(r_stab["criteria_weights"]["stability"], r_income["criteria_weights"]["stability"])
 
+    def test_reach_bucket_lower_bound(self):
+        """Kiểm tra: nhóm Thử sức (reach) chỉ chứa gap trong khoảng [-3.0, -1.0), không chứa gap < -3.0."""
+        # Thí sinh có điểm rất thấp (10.0đ)
+        payload = {
+            "combination": "A00",
+            "scores": {"toan": 3.0, "vatly": 3.5, "hoahoc": 3.5},
+            "interest": "Công nghệ thông tin",
+        }
+        res = recommendation_engine.process_recommendation(payload)
+        for item in res["results"]["reach"]:
+            self.assertGreaterEqual(item["gap"], -3.0, "Nhóm reach không được chứa ngành có gap < -3.0")
+            self.assertLess(item["gap"], -1.0, "Nhóm reach chỉ chứa ngành có gap < -1.0")
+
+    def test_group_filter(self):
+        """Kiểm tra: bộ lọc group từ giao diện chỉ trả về ngành thuộc đúng nhóm ngành."""
+        payload = {
+            "combination": "A00",
+            "scores": {"toan": 8.0, "vatly": 8.0, "hoahoc": 8.0},
+            "group": "Công nghệ thông tin - Tin học",
+        }
+        res = recommendation_engine.process_recommendation(payload)
+        self.assertGreater(res["total_count"], 0)
+        for bucket in ["safe", "match", "reach"]:
+            for item in res["results"][bucket]:
+                self.assertIn("Công nghệ thông tin", item["group"])
+
+    def test_frontend_profile_preferences_format(self):
+        """Kiểm tra: nhận đúng payload preferences từ state.profile của frontend (interests, priorities mảng, region)."""
+        payload = {
+            "combination": "A00",
+            "scores": {"toan": 8.0, "vatly": 8.0, "hoahoc": 8.0},
+            "preferences": {
+                "interests": ["Công nghệ", "Kinh doanh"],
+                "priorities": ["Cơ hội quốc tế", "Thu nhập"],
+                "region": "Miền Bắc",
+            },
+        }
+        res = recommendation_engine.process_recommendation(payload)
+        self.assertGreater(res["total_count"], 0)
+        # Kiểm tra ưu tiên Thu nhập được tăng trọng số
+        self.assertGreater(res["criteria_weights"]["salary"], 0.25)
+
+    def test_api_400_validation_error_format(self):
+        """Kiểm tra: khi lỗi validation 400, API trả về trường 'error' dạng chuỗi để app.js hiển thị."""
+        client = app.test_client()
+        resp = client.post("/api/recommend", json={"combination": "A00", "scores": {}})
+        self.assertEqual(resp.status_code, 400)
+        data = resp.get_json()
+        self.assertIn("error", data)
+        self.assertIsInstance(data["error"], str)
+        self.assertGreater(len(data["error"]), 0)
+
+    def test_single_alternative_algorithm_name(self):
+        """Kiểm tra: khi m=1, tên thuật toán là TOPSIS_fallback_heuristic."""
+        payload = {
+            "combination": "A00",
+            "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
+            "interest": "Kỹ thuật phần mềm liên kết quốc tế - KNU",
+        }
+        res = recommendation_engine.process_recommendation(payload)
+        self.assertEqual(res["ranking_algorithm"], "TOPSIS_fallback_heuristic")
+
 
 if __name__ == "__main__":
     unittest.main()
+
