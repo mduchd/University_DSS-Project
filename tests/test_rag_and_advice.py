@@ -178,6 +178,54 @@ class TestRAGAndAdviceService(unittest.TestCase):
         self.assertGreater(len(res["advice"]), 50)
         self.assertIn("labor_market", res["rag_evidence"])
 
+    def test_rag_strict_retrieval_fail_closed(self):
+        """11. Kiểm tra cơ chế fail-closed: Khi query trường/ngành không tồn tại, trả về found: False, tuyệt đối không lấy nhầm trường khác."""
+        probe = rag_service.retrieve_context(
+            major_name="Ngành Không Tồn Tại XYZ",
+            school_code="ZZZ",
+            combination="A00",
+        )
+        self.assertFalse(probe.get("found", True))
+        self.assertIsNone(probe["admission_data"]["cutoff_2024"])
+        self.assertIn("Không tìm thấy dữ liệu", probe["formatted_context"])
+        # Đảm bảo không fallback trả về trường khác (như KHA)
+        self.assertEqual(probe["metadata"]["school_code"], "ZZZ")
+
+    def test_llm_hallucination_salary_rejection(self):
+        """12. Kiểm tra bộ lọc Grounding: Phát hiện và từ chối phát ngôn bịa đặt số liệu lương (ví dụ: '999 triệu')."""
+        def hallucinating_llm(prompt: str) -> str:
+            return "Ngành này có mức lương khởi điểm trung bình là 999 triệu đồng/tháng theo khảo sát VietJobs."
+
+        rec = recommendation_engine.process_recommendation({
+            "combination": "A00",
+            "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
+            "interest": "Công nghệ thông tin",
+        })
+        adv = advice_service.generate_advice(rec, llm_callable=hallucinating_llm)
+        self.assertTrue(adv.get("fallback_applied", False))
+        self.assertFalse(adv.get("safety_compliance", True))
+        self.assertIn("hallucination_detected", adv.get("rejection_reasons", []))
+        self.assertNotIn("999 triệu", adv["advice"])
+
+    def test_forbidden_phrases_case_insensitive(self):
+        """13. Kiểm tra bộ lọc an toàn: Bắt cả chữ hoa/thường cho từ cấm ('Chắc Chắn Đỗ', '100% ĐỖ')."""
+        def risky_llm(prompt: str) -> str:
+            return "Với mức điểm này, bạn Chắc Chắn Đỗ 100% ĐỖ vào ngành Công nghệ thông tin."
+
+        rec = recommendation_engine.process_recommendation({
+            "combination": "A00",
+            "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
+            "interest": "Công nghệ thông tin",
+        })
+        adv = advice_service.generate_advice(rec, llm_callable=risky_llm)
+        self.assertTrue(adv.get("fallback_applied", False))
+        self.assertFalse(adv.get("safety_compliance", True))
+        self.assertGreater(len(adv["forbidden_terms_detected"]), 0)
+        # Lời khuyên cuối cùng đã được thay thế bằng fallback chuẩn tắc
+        for term in FORBIDDEN_PHRASES:
+            self.assertNotIn(term, adv["advice"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()
+

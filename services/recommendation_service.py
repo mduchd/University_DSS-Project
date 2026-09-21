@@ -112,10 +112,13 @@ class RecommendationEngine:
             group_mask = matched_df["major_group_name"].apply(
                 lambda x: norm_grp in remove_accents(str(x)) or remove_accents(str(x)) in norm_grp
             )
-            if group_mask.any():
-                matched_df = matched_df[group_mask].copy()
-            else:
-                matched_df = matched_df.iloc[0:0].copy()
+            matched_df = matched_df[group_mask].copy()
+            if matched_df.empty:
+                return self._fallback_empty_response(
+                    user_total_score,
+                    combination,
+                    msg=f"Không tìm thấy phương án tuyển sinh nào thuộc nhóm ngành '{group_filter}' cho tổ hợp {combination}."
+                )
 
         # Lọc theo Khu vực (region) từ profile nếu có
         region_pref = ""
@@ -125,9 +128,17 @@ class RecommendationEngine:
             region_pref = str(user_payload.get("region")).strip()
 
         if region_pref:
-            reg_mask = matched_df["region"].astype(str).str.strip().str.lower() == region_pref.lower()
-            if reg_mask.any():
-                matched_df = matched_df[reg_mask].copy()
+            norm_reg = remove_accents(region_pref)
+            reg_mask = matched_df["region"].apply(
+                lambda x: norm_reg in remove_accents(str(x)) or remove_accents(str(x)) in norm_reg
+            )
+            matched_df = matched_df[reg_mask].copy()
+            if matched_df.empty:
+                return self._fallback_empty_response(
+                    user_total_score,
+                    combination,
+                    msg=f"Không tìm thấy phương án tuyển sinh nào tại khu vực '{region_pref}' cho tổ hợp {combination}."
+                )
 
         # Lọc theo sở thích hoặc danh sách interests từ profile
         user_interests = []
@@ -153,14 +164,13 @@ class RecommendationEngine:
                 )
                 term_masks.append(tm)
             combined_mask = pd.concat(term_masks, axis=1).any(axis=1)
-            if combined_mask.any():
-                matched_df = matched_df[combined_mask].copy()
-
-        if matched_df.empty:
-            matched_df = df[
-                (df["subject_combination"].astype(str).str.upper() == combination)
-                & (df["is_scale_40"] == False)
-            ].copy()
+            matched_df = matched_df[combined_mask].copy()
+            if matched_df.empty:
+                return self._fallback_empty_response(
+                    user_total_score,
+                    combination,
+                    msg=f"Không tìm thấy phương án tuyển sinh nào phù hợp với từ khóa sở thích '{', '.join(search_terms)}' cho tổ hợp {combination}."
+                )
 
         if matched_df.empty:
             return self._fallback_empty_response(user_total_score, combination)
@@ -168,6 +178,15 @@ class RecommendationEngine:
         matched_df["cutoff_numeric"] = pd.to_numeric(matched_df["cutoff_score_30"], errors="coerce")
         matched_df = matched_df.dropna(subset=["cutoff_numeric"])
         matched_df["gap"] = (user_total_score - matched_df["cutoff_numeric"]).round(2)
+
+        # KHẮC PHỤC TRIỆT ĐỂ: Loại bỏ các phương án quá tầm với (gap < -3.0) trước khi chạy TOPSIS và xếp hạng
+        matched_df = matched_df[matched_df["gap"] >= -3.0].copy()
+        if matched_df.empty:
+            return self._fallback_empty_response(
+                user_total_score,
+                combination,
+                msg=f"Mức điểm {user_total_score:.2f} hiện thấp hơn điểm chuẩn tối thiểu của các trường (vượt ngoài ngưỡng thử sức -3.0 điểm). Hệ thống khuyến nghị bạn cân nhắc cải thiện điểm thi hoặc lựa chọn các phương thức xét tuyển khác."
+            )
 
         # 3. THUẬT TOÁN TOPSIS (Đa tiêu chí có tích hợp Preferences người dùng)
         # Tiêu chí:
@@ -295,6 +314,8 @@ class RecommendationEngine:
                 "cutoff_trend": str(r.get("cutoff_trend", "")),
                 "history_ambiguous": bool(r.get("history_ambiguous", False)),
                 "job_category": str(r.get("job_category", "")),
+                "region": str(r.get("region", "")),
+                "province": str(r.get("province", "")),
             }
             if gap >= 1.0:
                 buckets["safe"].append(item)
@@ -441,7 +462,12 @@ class RecommendationEngine:
             "what_if": {},
         }
 
-    def _fallback_empty_response(self, user_total_score: float, combination: str) -> dict:
+    def _fallback_empty_response(
+        self,
+        user_total_score: float,
+        combination: str,
+        msg: str = "Chưa tìm thấy phương án tuyển sinh phù hợp với điều kiện lọc."
+    ) -> dict:
         return {
             "user_score": user_total_score,
             "combination": combination,
@@ -452,10 +478,12 @@ class RecommendationEngine:
             "ranking_algorithm": "TOPSIS_multi_criteria",
             "ranking": [],
             "criteria_weights": {"score_fit": 0.40, "salary": 0.25, "job_demand": 0.20, "stability": 0.15},
-            "prediction": {"chance_of_admission": 0.5, "predicted_score": user_total_score},
+            "prediction": {"chance_of_admission": 0.05 if user_total_score <= 10.0 else 0.5, "predicted_score": user_total_score},
             "feature_attributions": [],
             "career_context": [],
-            "advice": "Chưa tìm thấy phương án tuyển sinh phù hợp với điều kiện lọc.",
+            "advice": msg,
+            "detailed_advice": {},
+            "rag_evidence": {},
             "what_if": {},
         }
 

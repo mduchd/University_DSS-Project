@@ -84,6 +84,83 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
     # Không deduplicate tùy tiện, giữ trọn vẹn mọi phương án
     df_base = df_2024.drop_duplicates().copy()
 
+    # Phục hồi thông tin Vùng miền (region) và Tỉnh thành (province) từ dữ liệu lịch sử các năm trước
+    logging.info("   - Đang phục hồi thông tin Vùng miền (region) và Tỉnh thành cho năm 2024...")
+    past_adm = df_adm[df_adm["region"].notna()]
+    uac_region = past_adm.groupby("university_admission_code")["region"].first().to_dict()
+    uac_province = past_adm.groupby("university_admission_code")["province"].first().to_dict()
+    name_region = past_adm.groupby("university_name")["region"].first().to_dict()
+    name_province = past_adm.groupby("university_name")["province"].first().to_dict()
+
+    extra_school_info = {
+        "TMU": ("Miền Bắc", "Hà Nội"),
+        "HCS": ("Miền Nam", "TP. Hồ Chí Minh"),
+        "TDH": ("Miền Bắc", "Hà Nội"),
+        "HVC": ("Miền Nam", "TP. Hồ Chí Minh"),
+        "NHB": ("Miền Bắc", "Bắc Ninh"),
+        "DTC": ("Miền Bắc", "Thái Nguyên"),
+        "HGH": ("Miền Bắc", "Hà Nội"),
+        "HIU": ("Miền Nam", "TP. Hồ Chí Minh"),
+        "KSV": ("Miền Nam", "Vĩnh Long"),
+        "PCS": ("Miền Nam", "TP. Hồ Chí Minh"),
+        "NLN": ("Miền Trung - Tây Nguyên", "Ninh Thuận"),
+        "DDU": ("Miền Bắc", "Hà Nội"),
+        "DTV": ("Miền Bắc", "Nam Định"),
+        "VJU": ("Miền Bắc", "Hà Nội"),
+        "UEF": ("Miền Nam", "TP. Hồ Chí Minh"),
+        "HSU": ("Miền Nam", "TP. Hồ Chí Minh"),
+        "TDB": ("Miền Bắc", "Bắc Ninh"),
+        "HVD": ("Miền Bắc", "Hà Nội"),
+        "SIU": ("Miền Nam", "TP. Hồ Chí Minh"),
+        "DCA": ("Miền Bắc", "Hưng Yên"),
+        "DHP": ("Miền Bắc", "Hải Phòng"),
+        "DKT": ("Miền Trung - Tây Nguyên", "Quảng Ngãi"),
+        "XDT": ("Miền Trung - Tây Nguyên", "Đà Nẵng"),
+        "DTH": ("Miền Bắc", "Hà Giang"),
+        "SNH": ("Miền Nam", "Đồng Nai"),
+        "NVH": ("Miền Bắc", "Hà Nội"),
+        "NVS": ("Miền Nam", "TP. Hồ Chí Minh"),
+        "HHT": ("Miền Bắc", "Hà Nam"),
+        "MTS": ("Miền Nam", "TP. Hồ Chí Minh"),
+        "MTH": ("Miền Bắc", "Hà Nội"),
+        "SKD": ("Miền Bắc", "Hà Nội"),
+    }
+
+    def resolve_region(row):
+        u = str(row.get("university_admission_code", "")).strip().upper()
+        name = str(row.get("university_name", "")).strip()
+        if u in extra_school_info:
+            return extra_school_info[u][0]
+        if "TPHCM" in name or "Sài Gòn" in name or "Cần Thơ" in name:
+            return "Miền Nam"
+        if "Đà Nẵng" in name or "Huế" in name or "Quy Nhơn" in name:
+            return "Miền Trung - Tây Nguyên"
+        if u in uac_region:
+            return uac_region[u]
+        if name in name_region:
+            return name_region[name]
+        return "Miền Bắc"
+
+    def resolve_province(row):
+        u = str(row.get("university_admission_code", "")).strip().upper()
+        name = str(row.get("university_name", "")).strip()
+        if u in extra_school_info:
+            return extra_school_info[u][1]
+        if "TPHCM" in name or "Sài Gòn" in name:
+            return "TP. Hồ Chí Minh"
+        if "Cần Thơ" in name:
+            return "Cần Thơ"
+        if "Đà Nẵng" in name:
+            return "Đà Nẵng"
+        if u in uac_province:
+            return uac_province[u]
+        if name in name_province:
+            return name_province[name]
+        return ""
+
+    df_base["region"] = df_base.apply(resolve_region, axis=1)
+    df_base["province"] = df_base.apply(resolve_province, axis=1)
+
     logging.info("2. Đang nạp mapping ngành - nghề và phát hiện xung đột nhóm nghề...")
     df_mapping = pd.read_csv(MAJOR_JOB_MAPPING_PATH, encoding="utf-8-sig", dtype=str)
     df_jobs = pd.read_csv(JOB_SUMMARY_PATH, encoding="utf-8-sig")
