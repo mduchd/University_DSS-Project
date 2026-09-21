@@ -100,44 +100,72 @@ class RAGService:
         major_code_clean = str(major_code).strip().upper() if major_code else ""
         combo_clean = str(combination).strip().upper() if combination else ""
 
-        # 1. Tìm phương án tuyển sinh trong master_admission
+        # 1. Tìm phương án tuyển sinh trong master_admission (Áp dụng phép giao chặt chẽ - Strict Conjunction)
         matched_rows = pd.DataFrame()
         if self.master_df is not None and not self.master_df.empty:
-            df = self.master_df
+            df = self.master_df.copy()
 
             # Lọc theo trường nếu có
             if school_clean:
-                df_school = df[df["university_admission_code"].astype(str).str.upper() == school_clean]
-                if not df_school.empty:
-                    df = df_school
+                df = df[df["university_admission_code"].astype(str).str.upper() == school_clean]
 
             # Lọc theo mã ngành nếu có
             if major_code_clean:
-                df_code = df[df["major_code"].astype(str).str.upper() == major_code_clean]
-                if not df_code.empty:
-                    df = df_code
+                df = df[df["major_code"].astype(str).str.upper() == major_code_clean]
 
             # Lọc theo tổ hợp nếu có
             if combo_clean:
-                df_combo = df[df["subject_combination"].astype(str).str.upper() == combo_clean]
-                if not df_combo.empty:
-                    df = df_combo
+                df = df[df["subject_combination"].astype(str).str.upper() == combo_clean]
 
-            # Khớp theo tên ngành
-            if norm_query:
-                name_mask = df["major_name"].apply(lambda x: norm_query in normalize_str(str(x)))
-                if name_mask.any():
-                    matched_rows = df[name_mask]
-                else:
-                    # Fallback tìm trong toàn bộ master_df
-                    global_mask = self.master_df["major_name"].apply(lambda x: norm_query in normalize_str(str(x)))
-                    if global_mask.any():
-                        matched_rows = self.master_df[global_mask]
-            else:
-                matched_rows = df
+            # Khớp theo tên ngành nếu có
+            if norm_query and not df.empty:
+                name_mask = df["major_name"].apply(
+                    lambda x: norm_query in normalize_str(str(x)) or normalize_str(str(x)) in norm_query
+                )
+                df = df[name_mask]
 
-        # Lấy dòng đại diện
-        target_row = matched_rows.iloc[0] if not matched_rows.empty else pd.Series(dtype=object)
+            matched_rows = df
+
+        # NẾU KHÔNG TÌM THẤY: Fail-closed, báo rõ not_found, TUYỆT ĐỐI không lấy dữ liệu trường khác
+        if matched_rows.empty:
+            return {
+                "found": False,
+                "metadata": {
+                    "major_name": major_name,
+                    "major_code": major_code_clean,
+                    "school_name": "",
+                    "school_code": school_clean,
+                    "major_group": "",
+                },
+                "admission_data": {
+                    "cutoff_2024": None,
+                    "cutoff_2023": None,
+                    "cutoff_2022": None,
+                    "cutoff_2021": None,
+                    "cutoff_trend": "Không đủ dữ liệu",
+                    "history_ambiguous": False,
+                },
+                "labor_market": {
+                    "job_category": "",
+                    "demand_level": "Chưa xác định",
+                    "posting_count": 0,
+                    "average_salary_million_vnd": 0.0,
+                    "median_salary_million_vnd": 0.0,
+                    "average_experience_months": 0.0,
+                },
+                "skills": {
+                    "technical_skills": [],
+                    "soft_skills": [],
+                },
+                "formatted_context": (
+                    f"CẢNH BÁO DẪN CHỨNG: Không tìm thấy dữ liệu tuyển sinh khớp với tiêu chí "
+                    f"(mã trường '{school_code or 'N/A'}', mã ngành '{major_code or 'N/A'}', tên ngành '{major_name}'). "
+                    f"Tuyệt đối không sử dụng dữ liệu của cơ sở đào tạo khác để thay thế."
+                ),
+            }
+
+        # Lấy dòng đại diện chính xác
+        target_row = matched_rows.iloc[0]
 
         # 2. Trích xuất thông tin tuyển sinh & lịch sử điểm
         actual_major_name = str(target_row.get("major_name", major_name))
@@ -241,6 +269,7 @@ class RAGService:
         formatted_context = "\n".join(formatted_lines)
 
         return {
+            "found": True,
             "metadata": {
                 "major_name": actual_major_name,
                 "major_code": actual_major_code,

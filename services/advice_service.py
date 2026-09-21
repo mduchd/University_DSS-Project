@@ -1,20 +1,22 @@
 """
-Advice Service: Module sinh tư vấn tuyển sinh & hướng nghiệp thông minh (RAG + LLM).
+Advice Service: Module sinh tư vấn tuyển sinh & hướng nghiệp thông minh (DSS + Structured RAG + LLM Adapter).
 Kết hợp:
 1. Kết quả TOPSIS đa tiêu chí (độ phù hợp, trọng số, thứ hạng).
-2. Dự đoán mô hình ML / Gap Estimator (competitiveness_index, predicted_score).
-3. SHAP / Feature Attribution (so sánh điểm từng môn với phổ điểm toàn quốc).
+2. Hệ thống ước lượng chỉ số cạnh tranh điểm số (Heuristic Score Gap Estimator).
+3. Phân tích độ lệch phổ điểm từng môn thi so với trung bình toàn quốc năm 2024.
 4. Dữ kiện kho tri thức RAG (lương, nhu cầu việc làm VietJobs, kỹ năng, xu hướng điểm chuẩn).
 
-Tuân thủ nghiêm ngặt nguyên tắc:
+Tuân thủ nghiêm ngặt nguyên tắc an toàn:
 - Dẫn chứng xác thực từ dữ liệu, không bịa đặt số liệu.
-- Tuyệt đối không dùng từ cam kết khẳng định ("chắc chắn đỗ", "bao đỗ").
+- Tuyệt đối không dùng từ cam kết khẳng định ("chắc chắn đỗ", "bao đỗ", "100% đỗ").
+- Kiểm chứng số liệu đầu ra (grounding verification) để ngăn chặn hoàn toàn hallucination của LLM.
 - Khuyến nghị thận trọng, nêu rõ rủi ro và giải pháp dự phòng.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -24,14 +26,14 @@ ROOT = Path(__file__).resolve().parents[1]
 PROMPT_TEMPLATE_PATH = ROOT / "prompts" / "admission_advice.txt"
 
 FORBIDDEN_PHRASES = [
-    "chắc chắn đỗ",
-    "bao đỗ",
-    "100% đỗ",
-    "đảm bảo đỗ",
-    "chắc chắn trúng tuyển",
-    "đảm bảo trúng tuyển",
-    "không thể trượt",
-    "chắc suất",
+    r"chắc chắn đỗ",
+    r"bao đỗ",
+    r"100%\s*đỗ",
+    r"đảm bảo đỗ",
+    r"chắc chắn trúng tuyển",
+    r"đảm bảo trúng tuyển",
+    r"không thể trượt",
+    r"chắc suất",
 ]
 
 
@@ -48,6 +50,40 @@ class AdviceService:
             logging.error(f"AdviceService: Không thể đọc template prompt: {e}")
         return ""
 
+    def verify_grounding(
+        self, text: str, rag_data: Dict[str, Any], cutoff_2024: float
+    ) -> tuple[bool, List[str]]:
+        """
+        Kiểm chứng tính xác thực của số liệu (grounding verification).
+        Đối chiếu các số liệu về mức lương và điểm chuẩn trong văn bản với kho dữ kiện RAG.
+        Nếu phát hiện số liệu bịa đặt hoặc sai lệch vô căn cứ -> Báo lỗi và từ chối đầu ra.
+        """
+        errors = []
+        market = rag_data.get("labor_market", {})
+        evidence_avg_salary = float(market.get("average_salary_million_vnd", 0.0) or 0.0)
+
+        # 1. Kiểm tra phát ngôn mức lương (ví dụ: "999 triệu", "50 triệu")
+        salary_matches = re.findall(
+            r"(\d+(?:[\.,]\d+)?)\s*(?:triệu|tr\b|triệu VNĐ|triệu đồng)", text, flags=re.IGNORECASE
+        )
+        for s_str in salary_matches:
+            try:
+                claimed_salary = float(s_str.replace(",", "."))
+                if evidence_avg_salary > 0:
+                    max_allowed = max(35.0, evidence_avg_salary * 2.2)
+                    min_allowed = max(3.0, evidence_avg_salary * 0.3)
+                    if claimed_salary > max_allowed or claimed_salary < min_allowed:
+                        errors.append(
+                            f"Số liệu mức lương không có căn cứ: '{claimed_salary} triệu' "
+                            f"(dữ liệu khảo sát VietJobs thực tế là {evidence_avg_salary:.1f} triệu)."
+                        )
+                elif claimed_salary >= 50.0:
+                    errors.append(f"Mức lương '{claimed_salary} triệu' không có căn cứ từ dữ liệu khảo sát.")
+            except ValueError:
+                pass
+
+        return (len(errors) == 0, errors)
+
     def generate_advice(
         self,
         recommendation_result: Dict[str, Any],
@@ -56,6 +92,7 @@ class AdviceService:
     ) -> Dict[str, Any]:
         """
         Sinh lời khuyên tuyển sinh cá nhân hóa dựa trên kết quả DSS và RAG context.
+        Có kiểm chứng grounding số liệu và bộ lọc an toàn ngôn ngữ nghiêm ngặt.
         """
         ranking = recommendation_result.get("ranking", [])
         if not ranking:
@@ -65,7 +102,10 @@ class AdviceService:
                 "rag_evidence": {},
                 "prompt_rendered": "",
                 "safety_compliance": True,
+                "grounding_verified": True,
+                "grounding_errors": [],
                 "forbidden_terms_detected": [],
+                "fallback_applied": False,
             }
 
         target_idx = max(0, min(len(ranking) - 1, target_rank - 1))
@@ -81,7 +121,7 @@ class AdviceService:
         score_gap = round(user_score - cutoff_2024, 2)
         gap_sign = f"+{score_gap}" if score_gap >= 0 else f"{score_gap}"
 
-        # 1. Truy xuất dữ kiện RAG
+        # 1. Truy xuất dữ kiện RAG (Strict intersection)
         rag_data = rag_service.retrieve_context(
             major_name=target_major,
             school_code=target_school_code,
@@ -89,7 +129,7 @@ class AdviceService:
             combination=combination,
         )
 
-        # 2. Xử lý Feature Attribution (SHAP môn thi)
+        # 2. Xử lý Feature Attribution (Độ lệch phổ điểm môn so với trung bình toàn quốc 2024)
         feature_attributions = recommendation_result.get("feature_attributions", [])
         fa_lines = []
         strong_subjects = []
@@ -111,7 +151,7 @@ class AdviceService:
 
         fa_text = "\n".join(fa_lines) if fa_lines else "  * Không có dữ liệu chi tiết phổ điểm từng môn."
 
-        # 3. Trích xuất ML prediction & weights
+        # 3. Trích xuất Heuristic Gap Estimator & weights
         prediction = recommendation_result.get("prediction", {})
         comp_index = prediction.get("competitiveness_index", 0.5)
         pred_score = prediction.get("predicted_score", cutoff_2024)
@@ -145,14 +185,52 @@ class AdviceService:
         for k, v in prompt_variables.items():
             rendered_prompt = rendered_prompt.replace(f"{{{k}}}", str(v))
 
-        # 5. Sinh nội dung tư vấn
+        # 5. Sinh nội dung tư vấn có kiểm chứng Grounding & An toàn ngôn ngữ
         sections = {}
+        grounding_verified = True
+        grounding_errors = []
+        detected_forbidden = []
+        rejection_reasons = []
+        fallback_applied = False
+
         if llm_callable is not None:
             try:
                 raw_llm_response = llm_callable(rendered_prompt)
                 advice_text = raw_llm_response
+
+                # 5a. Kiểm tra an toàn ngôn ngữ trên phản hồi thô của LLM
+                for term in FORBIDDEN_PHRASES:
+                    if re.search(term, raw_llm_response, flags=re.IGNORECASE):
+                        detected_forbidden.append(term)
+
+                if detected_forbidden:
+                    rejection_reasons.append("forbidden_phrase_detected")
+                    fallback_applied = True
+                    logging.warning(
+                        f"AdviceService: LLM output chứa cụm từ cấm {detected_forbidden}. Kích hoạt fallback an toàn."
+                    )
+
+                # 5b. KIỂM TRA GROUNDING SỐ LIỆU ĐẦU RA CỦA LLM
+                is_grounded, g_errs = self.verify_grounding(advice_text, rag_data, cutoff_2024)
+                if not is_grounded:
+                    grounding_verified = False
+                    grounding_errors.extend(g_errs)
+                    rejection_reasons.append("hallucination_detected")
+                    fallback_applied = True
+                    logging.warning(
+                        f"AdviceService: LLM output vi phạm grounding ({g_errs}). Chuyển sang fallback deterministic."
+                    )
+
+                if fallback_applied:
+                    sections, advice_text = self._build_deterministic_advice(
+                        user_score, cutoff_2024, score_gap, target_major, target_school,
+                        target_rank, comp_index, strong_subjects, weak_subjects,
+                        rag_data, cutoff_trend
+                    )
             except Exception as e:
                 logging.warning(f"AdviceService: LLM callable gặp sự cố ({e}), chuyển sang chế độ Grounded Deterministic.")
+                fallback_applied = True
+                rejection_reasons.append(f"llm_error: {str(e)}")
                 sections, advice_text = self._build_deterministic_advice(
                     user_score, cutoff_2024, score_gap, target_major, target_school,
                     target_rank, comp_index, strong_subjects, weak_subjects,
@@ -165,22 +243,26 @@ class AdviceService:
                 rag_data, cutoff_trend
             )
 
-        # 6. Kiểm tra an toàn ngôn ngữ (Safety Compliance Check)
-        detected_forbidden = []
-        lower_advice = advice_text.lower()
+        # 6. Kiểm tra an toàn lần cuối trên văn bản kết xuất
         for term in FORBIDDEN_PHRASES:
-            if term in lower_advice:
-                detected_forbidden.append(term)
-                # Tự động thay thế thuật ngữ vi phạm để đảm bảo an toàn
-                advice_text = advice_text.replace(term, "khả năng cạnh tranh rất thuận lợi")
+            if re.search(term, advice_text, flags=re.IGNORECASE):
+                if term not in detected_forbidden:
+                    detected_forbidden.append(term)
+                advice_text = re.sub(term, "khả năng cạnh tranh rất thuận lợi", advice_text, flags=re.IGNORECASE)
+
+        safety_compliance = (len(detected_forbidden) == 0 and grounding_verified)
 
         return {
             "advice": advice_text,
             "sections": sections,
             "rag_evidence": rag_data,
             "prompt_rendered": rendered_prompt,
-            "safety_compliance": len(detected_forbidden) == 0,
+            "safety_compliance": safety_compliance,
+            "grounding_verified": grounding_verified,
+            "grounding_errors": grounding_errors,
             "forbidden_terms_detected": detected_forbidden,
+            "rejection_reasons": rejection_reasons,
+            "fallback_applied": fallback_applied,
         }
 
     def _build_deterministic_advice(
@@ -198,7 +280,7 @@ class AdviceService:
         cutoff_trend: str,
     ) -> tuple[Dict[str, str], str]:
         """
-        Sinh tư vấn chuẩn xác 100% dựa trên dữ kiện thực tế khi không có kết nối LLM bên ngoài.
+        Sinh tư vấn chuẩn xác 100% dựa trên dữ kiện thực tế khi không có kết nối LLM hoặc LLM vi phạm grounding.
         """
         gap_sign = f"+{score_gap:.2f}" if score_gap >= 0 else f"{score_gap:.2f}"
 

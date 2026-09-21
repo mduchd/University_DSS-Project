@@ -181,7 +181,60 @@ class TestRecommendationAndValidation(unittest.TestCase):
         res = recommendation_engine.process_recommendation(payload)
         self.assertEqual(res["ranking_algorithm"], "TOPSIS_fallback_heuristic")
 
+    def test_zero_score_returns_empty_ranking_and_clear_advice(self):
+        """Kiểm tra P1: Thí sinh tổng điểm 0.0 bị loại sạch vì gap < -3.0, không có ranking ảo hay TOPSIS ảo."""
+        payload = {
+            "combination": "A00",
+            "scores": {"toan": 0.0, "vatly": 0.0, "hoahoc": 0.0},
+            "interest": "Công nghệ thông tin",
+        }
+        res = recommendation_engine.process_recommendation(payload)
+        self.assertEqual(res["total_count"], 0)
+        self.assertEqual(len(res["ranking"]), 0)
+        self.assertEqual(len(res["results"]["safe"]), 0)
+        self.assertEqual(len(res["results"]["match"]), 0)
+        self.assertEqual(len(res["results"]["reach"]), 0)
+        self.assertIn("thấp hơn điểm chuẩn tối thiểu", res["advice"])
+
+    def test_region_filter_strict_and_accurate(self):
+        """Kiểm tra P2: Lọc Miền Bắc và Miền Nam trả về 100% ngành đúng vùng miền, không còn NaN."""
+        base_scores = {"toan": 8.0, "vatly": 8.0, "hoahoc": 8.0}
+        
+        # Test Miền Bắc
+        res_north = recommendation_engine.process_recommendation({
+            "combination": "A00",
+            "scores": base_scores,
+            "region": "Miền Bắc",
+        })
+        self.assertGreater(res_north["total_count"], 0)
+        for bucket in ["safe", "match", "reach"]:
+            for item in res_north["results"][bucket]:
+                self.assertEqual(item["region"], "Miền Bắc")
+
+        # Test Miền Nam
+        res_south = recommendation_engine.process_recommendation({
+            "combination": "A00",
+            "scores": base_scores,
+            "region": "Miền Nam",
+        })
+        self.assertGreater(res_south["total_count"], 0)
+        for bucket in ["safe", "match", "reach"]:
+            for item in res_south["results"][bucket]:
+                self.assertEqual(item["region"], "Miền Nam")
+
+    def test_non_existent_group_returns_empty_no_filter_reset(self):
+        """Kiểm tra P2: Khi nhóm ngành không tồn tại, trả về 0 kết quả, tuyệt đối không reset về 45 phương án."""
+        payload = {
+            "combination": "A00",
+            "scores": {"toan": 8.0, "vatly": 8.0, "hoahoc": 8.0},
+            "group": "Nhóm Ngành Không Tồn Tại 12345",
+        }
+        res = recommendation_engine.process_recommendation(payload)
+        self.assertEqual(res["total_count"], 0)
+        self.assertEqual(len(res["ranking"]), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
