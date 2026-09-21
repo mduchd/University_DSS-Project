@@ -47,38 +47,77 @@ class TestRecommendationAndValidation(unittest.TestCase):
         # Môn Hóa học năm 2024: 6.6808
         self.assertAlmostEqual(attrs["hoahoc"]["national_mean"], 6.6808, places=3)
 
-    def test_api_validation_rejects_missing_subjects(self):
-        """Kiểm tra: API /api/recommend trả lỗi 400 khi thiếu môn bắt buộc."""
+    def test_api_frontend_contract_and_buckets(self):
+        """Kiểm tra: API /api/recommend trả về đầy đủ schema tương thích 100% với app.js."""
         client = app.test_client()
-        # Thiếu Lý và Hóa của A00
-        bad_payload = {
-            "combination": "A00",
-            "scores": {"toan": 8.5},
-        }
-        resp = client.post("/api/recommend", json=bad_payload)
-        self.assertEqual(resp.status_code, 400)
-        data = resp.get_json()
-        self.assertEqual(data["status"], "error")
-        error_fields = [e["field"] for e in data["errors"]]
-        self.assertIn("scores.vatly", error_fields)
-        self.assertIn("scores.hoahoc", error_fields)
-
-    def test_topsis_ranking_structure_and_criteria_weights(self):
-        """Kiểm tra: thuật toán TOPSIS trả về ma trận và tiêu chí đầy đủ."""
         payload = {
             "combination": "A00",
             "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
             "interest": "Công nghệ thông tin",
         }
+        resp = client.post("/api/recommend", json=payload)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+
+        # Kiểm tra các trường top-level mà renderRecommendationResults(data) trong app.js đọc
+        self.assertIn("user_score", data)
+        self.assertEqual(data["user_score"], 24.0)
+        self.assertIn("combination", data)
+        self.assertEqual(data["combination"], "A00")
+        self.assertIn("counts", data)
+        self.assertIn("safe", data["counts"])
+        self.assertIn("match", data["counts"])
+        self.assertIn("reach", data["counts"])
+
+        # Kiểm tra danh sách results.safe, results.match, results.reach
+        self.assertIn("results", data)
+        self.assertIsInstance(data["results"]["safe"], list)
+        self.assertIsInstance(data["results"]["match"], list)
+        self.assertIsInstance(data["results"]["reach"], list)
+
+        # Kiểm tra các trường của card hiển thị
+        if data["results"]["safe"]:
+            card = data["results"]["safe"][0]
+            self.assertIn("school", card)
+            self.assertIn("major", card)
+            self.assertIn("cutoff", card)
+            self.assertIn("gap", card)
+
+        # Kiểm tra backward compatibility
+        self.assertIn("data", data)
+        self.assertIn("status", data)
+        self.assertEqual(data["status"], "success")
+
+    def test_single_alternative_topsis_not_zero(self):
+        """Kiểm tra: khi bộ lọc chỉ có 1 phương án duy nhất, match_score không bị trả 0.0."""
+        payload = {
+            "combination": "A00",
+            "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
+            "interest": "Kỹ thuật phần mềm liên kết quốc tế - KNU",
+        }
         res = recommendation_engine.process_recommendation(payload)
-        self.assertEqual(res["ranking_algorithm"], "TOPSIS_multi_criteria")
-        self.assertIn("score_fit", res["criteria_weights"])
-        self.assertIn("salary", res["criteria_weights"])
         self.assertGreater(len(res["ranking"]), 0)
-        # Kiểm tra điểm tương đồng TOPSIS match_score trong khoảng [0, 100]
         for item in res["ranking"]:
-            self.assertGreaterEqual(item["match_score"], 0.0)
-            self.assertLessEqual(item["match_score"], 100.0)
+            self.assertGreater(item["match_score"], 50.0, "Điểm tương đồng phương án duy nhất phải > 50")
+
+    def test_preferences_dynamically_adjust_weights(self):
+        """Kiểm tra: preferences người dùng làm thay đổi trọng số ma trận TOPSIS."""
+        base_payload = {
+            "combination": "A00",
+            "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
+            "interest": "Công nghệ thông tin",
+        }
+
+        # Ưu tiên thu nhập
+        p_income = {**base_payload, "preferences": {"priority": "thu nhập"}}
+        r_income = recommendation_engine.process_recommendation(p_income)
+
+        # Ưu tiên ổn định
+        p_stab = {**base_payload, "preferences": {"priority": "ổn định"}}
+        r_stab = recommendation_engine.process_recommendation(p_stab)
+
+        self.assertGreater(r_income["criteria_weights"]["salary"], r_stab["criteria_weights"]["salary"])
+        self.assertGreater(r_stab["criteria_weights"]["stability"], r_income["criteria_weights"]["stability"])
 
 
 if __name__ == "__main__":

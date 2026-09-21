@@ -2,17 +2,18 @@
 # -*- coding: utf-8 -*-
 """Xây dựng Bộ dữ liệu thống nhất (Unified Dataset) cho ML và Decision Engine (AHP/TOPSIS).
 
-Phiên bản V3 - Xử lý dứt điểm các vấn đề:
+Phiên bản V4 - Giải quyết triệt để các vấn đề đánh giá:
 1. KHÔNG LÀM MẤT BẢN GHI: Bảo toàn 100% 19.983 phương án 2024.
-2. THỐNG KÊ NATIONAL CHUẨN XÁC: Weighted mean chính xác từng môn, điền đủ 22 count_*,
-   tách riêng 6 nhóm năm-chương trình thi.
-3. LỊCH SỬ KHÔNG XUNG ĐỘT:
-   - Khi có nhiều mức điểm trong quá khứ cho cùng một khóa, tính median xác định (không phụ thuộc thứ tự dòng).
-   - Xử lý đầy đủ trường hợp 2021-2024 theo annualized diff.
-   - Dưới 2 năm quan sát: bắt buộc gán 'Không đủ dữ liệu'.
+2. THỐNG KÊ NATIONAL: Weighted mean chính xác từng môn, điền đủ 22 count_*, 6 nhóm năm-chương trình.
+3. LỊCH SỬ PHÂN NHÓM CHẶT CHẼ & GHI NHẬN ĐA ĐIỂM (No Fake Medians):
+   - Nhóm lịch sử có tính đến giới tính (gender_requirement), chương trình CLC (honors_program) và cơ sở (campus).
+   - Nếu vẫn tồn tại nhiều mức điểm chuẩn (do đa phương thức xét tuyển): ghi nhận rõ cờ history_ambiguous = True.
+   - Nếu years_observed < 2: gán cutoff_std_recent = NaN (KHÔNG dùng 0.0 để tránh bị TOPSIS thưởng sai),
+     và gán cutoff_trend = 'Không đủ dữ liệu'.
+   - Xử lý chuỗi thời gian 2021-2024 theo annualized diff.
 4. MAPPING CHẶT CHẼ, KHÔNG CHỌN TÙY Ý KHI XUNG ĐỘT:
-   - Phát hiện các khóa có xung đột nhóm nghề (ambiguous) và gán rõ mapping_confidence = 'ambiguous'.
-   - Bỏ hoàn toàn substring fallback.
+   - Phát hiện các khóa xung đột nhóm nghề và gán cờ mapping_confidence = 'ambiguous',
+     job_category = 'cần_xác_nhận_liên_ngành'.
 """
 
 from __future__ import annotations
@@ -93,10 +94,10 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
     df_jobs["average_experience_months"] = pd.to_numeric(df_jobs["average_experience_months"], errors="coerce")
     job_lookup = df_jobs.set_index("job_category").to_dict(orient="index")
 
-    # Kiểm tra xung đột nhóm nghề cho tuple (major_code, normalized_name)
     df_mapping["norm_name"] = df_mapping["major_name"].apply(normalize_name)
     df_mapping["major_code_clean"] = df_mapping["major_code"].astype(str).str.strip()
 
+    # Kiểm tra xung đột nhóm nghề
     tuple_grouped = df_mapping.groupby(["major_code_clean", "norm_name"])
     tuple_conflicts: set[tuple[str, str]] = set()
     tuple_mapping: dict[tuple[str, str], tuple[str, str, str]] = {}
@@ -113,7 +114,6 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
                 str(first_row.get("mapping_confidence", "high")),
             )
 
-    # Kiểm tra xung đột cho tên chuẩn hóa đơn lẻ
     name_grouped = df_mapping.groupby("norm_name")
     name_conflicts: set[str] = set()
     name_mapping: dict[str, tuple[str, str, str]] = {}
@@ -132,16 +132,24 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
 
     logging.info(f"   - Số khóa tuple xung đột nhóm nghề: {len(tuple_conflicts)}")
 
-    logging.info("3. Đang ghép nối lịch sử điểm chuẩn xác định (Conflict-Safe Aggregation)...")
+    logging.info("3. Đang ghép nối lịch sử có phân nhóm giới tính, cơ sở và ghi nhận đa điểm...")
     past_df = df_adm[df_adm["year"].isin([2021, 2022, 2023]) & df_adm["cutoff_score_30"].notna()].copy()
     past_df["uac"] = past_df["university_admission_code"].astype(str).str.strip().str.upper()
     past_df["mac"] = past_df["major_admission_code"].astype(str).str.strip().str.upper()
     past_df["mc"] = past_df["major_code"].astype(str).str.strip().str.upper()
     past_df["comb"] = past_df["subject_combination"].astype(str).str.strip().str.upper()
+    past_df["gender"] = past_df["gender_requirement"].fillna("").astype(str).str.strip().str.upper()
+    past_df["honors"] = past_df["honors_program"].fillna("").astype(str).str.strip().str.upper()
 
-    # Tính median có xác định khi có nhiều mức điểm cho cùng một khóa
-    history_specific = past_df.groupby(["year", "uac", "mac", "comb"])["cutoff_score_30"].median().to_dict()
-    history_generic = past_df.groupby(["year", "uac", "mc", "comb"])["cutoff_score_30"].median().to_dict()
+    # Nhóm lịch sử theo khóa chi tiết bao gồm giới tính và honors
+    # Tính mean và kiểm tra xem có xung đột điểm hay không
+    grp_detailed = past_df.groupby(["year", "uac", "mac", "comb", "gender", "honors"])["cutoff_score_30"]
+    history_detailed_mean = grp_detailed.mean().to_dict()
+    history_detailed_spread = (grp_detailed.max() - grp_detailed.min()).to_dict()
+
+    grp_generic = past_df.groupby(["year", "uac", "mc", "comb"])["cutoff_score_30"]
+    history_generic_mean = grp_generic.mean().to_dict()
+    history_generic_spread = (grp_generic.max() - grp_generic.min()).to_dict()
 
     cutoff_2021_list = []
     cutoff_2022_list = []
@@ -151,48 +159,67 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
     cutoff_avg_recent_list = []
     cutoff_std_recent_list = []
     cutoff_trend_list = []
+    history_ambiguous_list = []
 
     for _, row in df_base.iterrows():
         uac = str(row.get("university_admission_code", "")).strip().upper()
         mac = str(row.get("major_admission_code", "")).strip().upper()
         mc = str(row.get("major_code", "")).strip().upper()
         comb = str(row.get("subject_combination", "")).strip().upper()
+        gender = str(row.get("gender_requirement", "")).strip().upper()
+        honors = str(row.get("honors_program", "")).strip().upper()
 
         score_24 = float(row["cutoff_score_30"]) if pd.notna(row.get("cutoff_score_30")) else np.nan
         cutoff_2024_list.append(score_24)
 
-        # 2023
-        s23 = history_specific.get((2023, uac, mac, comb))
-        if s23 is None:
-            s23 = history_generic.get((2023, uac, mc, comb), np.nan)
+        has_ambiguous_history = False
+
+        # Hàm tra cứu điểm từng năm trong quá khứ
+        def get_year_score(yr: int):
+            nonlocal has_ambiguous_history
+            # 1. Chi tiết theo uac, mac, comb, gender, honors
+            s = history_detailed_mean.get((yr, uac, mac, comb, gender, honors))
+            spread = history_detailed_spread.get((yr, uac, mac, comb, gender, honors), 0.0)
+            if s is not None:
+                if spread >= 0.5:
+                    has_ambiguous_history = True
+                return s
+            # 2. Chi tiết theo generic uac, mc, comb
+            s_gen = history_generic_mean.get((yr, uac, mc, comb))
+            spread_gen = history_generic_spread.get((yr, uac, mc, comb), 0.0)
+            if s_gen is not None:
+                if spread_gen >= 0.5:
+                    has_ambiguous_history = True
+                return s_gen
+            return np.nan
+
+        s23 = get_year_score(2023)
+        s22 = get_year_score(2022)
+        s21 = get_year_score(2021)
+
         cutoff_2023_list.append(s23)
-
-        # 2022
-        s22 = history_specific.get((2022, uac, mac, comb))
-        if s22 is None:
-            s22 = history_generic.get((2022, uac, mc, comb), np.nan)
         cutoff_2022_list.append(s22)
-
-        # 2021
-        s21 = history_specific.get((2021, uac, mac, comb))
-        if s21 is None:
-            s21 = history_generic.get((2021, uac, mc, comb), np.nan)
         cutoff_2021_list.append(s21)
+        history_ambiguous_list.append(has_ambiguous_history)
 
         valid_scores = [s for s in [s21, s22, s23, score_24] if pd.notna(s)]
         n_years = len(valid_scores)
         years_observed_list.append(n_years)
 
         recent_scores = [s for s in [s22, s23, score_24] if pd.notna(s)]
-        if recent_scores:
+
+        # KHẮC PHỤC TRIỆT ĐỂ: Nếu dưới 2 năm quan sát, cutoff_std_recent là NaN (KHÔNG dùng 0.0!)
+        if len(recent_scores) >= 2:
             cutoff_avg_recent_list.append(round(float(np.mean(recent_scores)), 2))
-            cutoff_std_recent_list.append(round(float(np.std(recent_scores)), 2) if len(recent_scores) >= 2 else 0.0)
+            cutoff_std_recent_list.append(round(float(np.std(recent_scores)), 2))
+        elif len(recent_scores) == 1:
+            cutoff_avg_recent_list.append(round(float(recent_scores[0]), 2))
+            cutoff_std_recent_list.append(np.nan)
         else:
             cutoff_avg_recent_list.append(np.nan)
             cutoff_std_recent_list.append(np.nan)
 
-        # Đánh giá xu hướng chuẩn xác:
-        # Nếu dưới 2 năm: BẮT BUỘC 'Không đủ dữ liệu'
+        # Xu hướng: Nếu dưới 2 năm: BẮT BUỘC 'Không đủ dữ liệu'
         if n_years < 2:
             cutoff_trend_list.append("Không đủ dữ liệu")
         else:
@@ -202,7 +229,6 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
             elif pd.notna(score_24) and pd.notna(s22):
                 diff = (score_24 - s22) / 2.0
             elif pd.notna(score_24) and pd.notna(s21):
-                # Xử lý trường hợp chỉ có 2024 và 2021
                 diff = (score_24 - s21) / 3.0
 
             if pd.notna(diff):
@@ -224,8 +250,9 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
     df_base["cutoff_avg_recent"] = cutoff_avg_recent_list
     df_base["cutoff_std_recent"] = cutoff_std_recent_list
     df_base["cutoff_trend"] = cutoff_trend_list
+    df_base["history_ambiguous"] = history_ambiguous_list
 
-    logging.info("4. Đang ánh xạ việc làm không chọn tùy ý (Conflict-Safe Mapping)...")
+    logging.info("4. Đang ánh xạ việc làm an toàn xung đột (Conflict-Safe Mapping)...")
     job_category_list = []
     mapping_basis_list = []
     mapping_confidence_list = []
@@ -245,7 +272,6 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
         raw_name = str(row.get("major_name", ""))
         n_name = normalize_name(raw_name)
 
-        # Kiểm tra xung đột trước
         if (code, n_name) in tuple_conflicts or n_name in name_conflicts:
             cat = "cần_xác_nhận_liên_ngành"
             basis = "conflicting_categories"
@@ -314,6 +340,7 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
         "is_scale_40",
         "weighted_subject",
         "weighted_subject_factor",
+        "gender_requirement",
         "honors_program",
         "campus",
         "cutoff_2021",
@@ -324,6 +351,7 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
         "cutoff_avg_recent",
         "cutoff_std_recent",
         "cutoff_trend",
+        "history_ambiguous",
         "job_category",
         "mapping_basis",
         "mapping_confidence",
@@ -348,6 +376,7 @@ def build_unified_admission() -> tuple[pd.DataFrame, dict]:
         "unique_universities": int(df_final["university_admission_code"].nunique()),
         "unique_majors": int(df_final["major_code"].nunique()),
         "unique_combinations": int(df_final["subject_combination"].nunique()),
+        "history_ambiguous_count": int(df_final["history_ambiguous"].sum()),
         "mapping_breakdown": {
             "exact_tuple_count": exact_tuple_count,
             "exact_tuple_pct": round(exact_tuple_count / total_records * 100, 2),
@@ -444,7 +473,7 @@ def build_unified_exam() -> tuple[pd.DataFrame, dict]:
 
 
 def main():
-    logging.info("=== BẮT ĐẦU XÂY DỰNG BỘ DỮ LIỆU THỐNG NHẤT (PHIÊN BẢN CHUẨN XÁC V3) ===")
+    logging.info("=== BẮT ĐẦU XÂY DỰNG BỘ DỮ LIỆU THỐNG NHẤT (PHIÊN BẢN CHUẨN XÁC V4) ===")
 
     OUTPUT_MASTER_ADMISSION.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_EXAM_PROCESSED.parent.mkdir(parents=True, exist_ok=True)
@@ -467,7 +496,7 @@ def main():
         json.dump(full_report, f, ensure_ascii=False, indent=2)
 
     logging.info(f"-> Báo cáo thống kê: {OUTPUT_REPORT}")
-    logging.info("=== HOÀN TẤT THÀNH CÔNG V3 ===")
+    logging.info("=== HOÀN TẤT THÀNH CÔNG V4 ===")
 
 
 if __name__ == "__main__":

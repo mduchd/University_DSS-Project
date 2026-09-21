@@ -225,17 +225,20 @@ def recommend_api():
         # GỌI ENGINE XỬ LÝ (Phase 3)
         result = recommendation_engine.process_recommendation(payload)
         
-        # TRẢ VỀ JSON CHUẨN ĐÃ CHỐT VỚI TEAM
-        return jsonify({
+        # Trả về đầy đủ top-level fields cho Frontend (app.js) và backward-compatible data wrapper
+        response_payload = {
+            **result,
             "status": "success",
             "data": result,
-            "errors": None
-        }), 200
+            "errors": None,
+        }
+        return jsonify(response_payload), 200
         
     except Exception as e:
         logging.error(f"Lỗi Server: {str(e)}")
         return jsonify({
             "status": "error",
+            "error": str(e),
             "message": "Lỗi hệ thống cục bộ, vui lòng thử lại sau.",
             "data": None,
             "errors": [{"message": str(e)}]
