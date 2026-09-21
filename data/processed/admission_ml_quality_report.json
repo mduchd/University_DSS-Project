@@ -1,0 +1,145 @@
+{
+  "step": "01_prepare_cutoff_dataset",
+  "description": "Validate and prepare THPTQG cutoff observations before feature engineering.",
+  "input": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission\\admission_cutoffs_2018_2024.csv",
+  "outputs": {
+    "accepted": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_base.csv",
+    "rejected": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_rejected.csv",
+    "quality_report": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_quality_report.json"
+  },
+  "rules": {
+    "accepted_year_range": [
+      2018,
+      2024
+    ],
+    "accepted_cutoff_score_30_range": [
+      0.0,
+      30.0
+    ],
+    "accepted_admission_method_contains": "THPTQG",
+    "subject_combination_regex": "^[A-Z][0-9]{2}$",
+    "model_key_columns": [
+      "year",
+      "university_admission_code",
+      "major_admission_code",
+      "subject_combination"
+    ],
+    "duplicate_policy": "Collapse rows only when a model key has one target value; reject the entire key when it has multiple target values.",
+    "review_flag_policy": "Source review/outlier flags are retained for audit and do not automatically remove a row."
+  },
+  "counts": {
+    "input_rows": 126185,
+    "hard_rejected_rows": 30015,
+    "hard_rejection_reason_counts_nonexclusive": {
+      "non_thpt_admission_method": 29633,
+      "missing_or_non_numeric_cutoff_score_30": 29633,
+      "cutoff_score_30_outside_0_30": 4,
+      "year_outside_2018_2024": 0,
+      "missing_university_admission_code": 0,
+      "missing_major_admission_code": 0,
+      "missing_subject_combination": 0,
+      "invalid_subject_combination": 5898
+    },
+    "eligible_rows_before_key_resolution": 96170,
+    "ambiguous_model_key_groups": 4481,
+    "ambiguous_rows_rejected": 9498,
+    "same_target_duplicate_groups_collapsed": 456,
+    "source_rows_in_collapsed_groups": 1064,
+    "duplicate_source_rows_removed_by_collapse": 608,
+    "accepted_source_rows_represented": 86672,
+    "accepted_rows": 86064,
+    "accepted_clean_rows": 12257,
+    "accepted_review_rows": 73807,
+    "rejected_rows_total": 39513,
+    "accepted_rows_by_year": {
+      "2018": 10174,
+      "2019": 10098,
+      "2020": 11324,
+      "2021": 11926,
+      "2022": 12191,
+      "2023": 10524,
+      "2024": 19827
+    },
+    "rejected_rows_by_reason": {
+      "ambiguous_multiple_cutoffs_for_model_key": 9498,
+      "cutoff_score_30_outside_0_30": 4,
+      "invalid_subject_combination": 378,
+      "non_thpt_admission_method|missing_or_non_numeric_cutoff_score_30": 24113,
+      "non_thpt_admission_method|missing_or_non_numeric_cutoff_score_30|invalid_subject_combination": 5520
+    }
+  },
+  "review_indicators_in_accepted_data": {
+    "source_note_review_flag": 40061,
+    "source_outlier_flag": 0,
+    "program_identity_requires_review": 65169,
+    "duplicate_same_target_collapsed": 456
+  },
+  "target_statistics": {
+    "overall": {
+      "count": 86064,
+      "min": 5.0,
+      "mean": 19.203243,
+      "median": 18.0,
+      "max": 30.0
+    },
+    "by_year": {
+      "2018": {
+        "count": 10174,
+        "min": 10.5,
+        "mean": 16.644703,
+        "median": 16.0,
+        "max": 28.18
+      },
+      "2019": {
+        "count": 10098,
+        "min": 10.5,
+        "mean": 17.479672,
+        "median": 17.0,
+        "max": 29.25
+      },
+      "2020": {
+        "count": 11324,
+        "min": 10.0,
+        "mean": 18.673946,
+        "median": 17.475,
+        "max": 30.0
+      },
+      "2021": {
+        "count": 11926,
+        "min": 5.0,
+        "mean": 19.947844,
+        "median": 19.0,
+        "max": 30.0
+      },
+      "2022": {
+        "count": 12191,
+        "min": 13.0,
+        "mean": 19.841604,
+        "median": 19.0,
+        "max": 29.95
+      },
+      "2023": {
+        "count": 10524,
+        "min": 12.0,
+        "mean": 20.629687,
+        "median": 21.0,
+        "max": 29.42
+      },
+      "2024": {
+        "count": 19827,
+        "min": 5.0,
+        "mean": 20.098725,
+        "median": 19.5,
+        "max": 29.73
+      }
+    }
+  },
+  "validation": {
+    "model_key_is_unique": true,
+    "target_is_complete": true,
+    "target_is_within_range": true,
+    "year_is_within_range": true,
+    "subject_combination_is_valid": true,
+    "source_rows_are_fully_accounted_for": true
+  }
+}

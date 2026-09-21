@@ -1,0 +1,712 @@
+{
+  "dataset_version": "admission_ml_v1",
+  "model_version": "cutoff_v1",
+  "target": "cutoff_score_30",
+  "split": {
+    "train": "<=2022",
+    "validation": "2023",
+    "test": "2024"
+  },
+  "sample_counts": {
+    "train": 55713,
+    "validation": 10524,
+    "test": 19827,
+    "test_cold_start_rate": 0.5836485600443839
+  },
+  "preprocessing": {
+    "categorical_features": [
+      "university_admission_code",
+      "canonical_program_id",
+      "canonical_major_code",
+      "major_group",
+      "subject_combination"
+    ],
+    "numeric_features": [
+      "year",
+      "cutoff_lag_1",
+      "cutoff_lag_2",
+      "cutoff_lag_3",
+      "last_observed_cutoff",
+      "years_since_last_observation",
+      "historical_mean",
+      "historical_median",
+      "historical_std",
+      "historical_min",
+      "historical_max",
+      "historical_count",
+      "last_year_change",
+      "historical_trend_slope",
+      "historical_mean_change_prior",
+      "historical_range_prior",
+      "school_historical_mean",
+      "major_group_historical_mean",
+      "combination_historical_mean",
+      "school_combination_historical_mean",
+      "major_group_combination_historical_mean",
+      "global_historical_mean",
+      "institution_combo_prev_mean",
+      "group_combo_prev_mean",
+      "combination_prev_mean",
+      "global_prev_mean",
+      "exam_combination_mean_t_minus_1",
+      "exam_combination_count_t_minus_1",
+      "group_mean_feature",
+      "hybrid_baseline_feature"
+    ],
+    "categorical": "constant imputation + OneHotEncoder(handle_unknown='ignore', min_frequency=10)",
+    "numeric_tree": "median imputation with missing indicators",
+    "numeric_ridge": "median imputation with missing indicators + StandardScaler"
+  },
+  "models": {
+    "baselines": {
+      "historical_mean": {
+        "validation": {
+          "n_samples": 8646,
+          "coverage": 0.821551,
+          "mae": 1.528445,
+          "rmse": 2.21817,
+          "r2": 0.719205
+        },
+        "test": {
+          "n_samples": 8255,
+          "coverage": 0.416351,
+          "mae": 2.001751,
+          "rmse": 2.966673,
+          "r2": 0.543629
+        }
+      },
+      "last_value": {
+        "validation": {
+          "n_samples": 8646,
+          "coverage": 0.821551,
+          "mae": 1.17252,
+          "rmse": 1.931759,
+          "r2": 0.787036
+        },
+        "test": {
+          "n_samples": 8255,
+          "coverage": 0.416351,
+          "mae": 1.429687,
+          "rmse": 2.411367,
+          "r2": 0.698487
+        }
+      },
+      "group_mean": {
+        "validation": {
+          "n_samples": 10524,
+          "coverage": 1.0,
+          "mae": 2.194227,
+          "rmse": 2.91066,
+          "r2": 0.510459
+        },
+        "test": {
+          "n_samples": 19827,
+          "coverage": 1.0,
+          "mae": 2.778486,
+          "rmse": 3.738599,
+          "r2": 0.280058
+        }
+      },
+      "hybrid_last_value_group_mean": {
+        "validation": {
+          "n_samples": 10524,
+          "coverage": 1.0,
+          "mae": 1.402917,
+          "rmse": 2.208543,
+          "r2": 0.71815
+        },
+        "test": {
+          "n_samples": 19827,
+          "coverage": 1.0,
+          "mae": 2.369024,
+          "rmse": 3.391638,
+          "r2": 0.407486
+        }
+      },
+      "linear_regression": {
+        "validation": {
+          "n_samples": 10524,
+          "coverage": 1.0,
+          "mae": 1.797769,
+          "rmse": 2.305363,
+          "r2": 0.692897
+        },
+        "test": {
+          "n_samples": 19827,
+          "coverage": 1.0,
+          "mae": 3.503904,
+          "rmse": 4.86741,
+          "r2": -0.220325
+        }
+      }
+    },
+    "validation_candidates": [
+      {
+        "name": "xgboost_1",
+        "family": "xgboost",
+        "params": {
+          "max_depth": 6,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.85,
+          "colsample_bytree": 0.8
+        },
+        "validation": {
+          "all": {
+            "n_samples": 10524,
+            "mae": 1.359516828555836,
+            "rmse": 1.9311500700155957,
+            "r2": 0.784504634921216
+          },
+          "known_history": {
+            "n_samples": 8646,
+            "mae": 1.2420816985286276,
+            "rmse": 1.787269357962894,
+            "r2": 0.81770293230008
+          },
+          "cold_start": {
+            "n_samples": 1878,
+            "mae": 1.90016865721145,
+            "rmse": 2.488459842159765,
+            "r2": 0.6201043394511758
+          }
+        },
+        "fit_seconds": 65.62998510000034,
+        "best_iteration": 638,
+        "best_score": 1.3595168331375325
+      },
+      {
+        "name": "random_forest_2",
+        "family": "random_forest",
+        "params": {
+          "n_estimators": 240,
+          "max_depth": 24,
+          "min_samples_leaf": 4,
+          "max_features": 0.2,
+          "max_samples": 0.85
+        },
+        "validation": {
+          "all": {
+            "n_samples": 10524,
+            "mae": 1.3784904180330573,
+            "rmse": 1.9653054539523735,
+            "r2": 0.7768144854662683
+          },
+          "known_history": {
+            "n_samples": 8646,
+            "mae": 1.227397499143365,
+            "rmse": 1.7807838978432193,
+            "r2": 0.8190235337956037
+          },
+          "cold_start": {
+            "n_samples": 1878,
+            "mae": 2.074097114902217,
+            "rmse": 2.654195379888913,
+            "r2": 0.5678158482737978
+          }
+        },
+        "fit_seconds": 42.90955639999811
+      },
+      {
+        "name": "xgboost_2",
+        "family": "xgboost",
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.04,
+          "min_child_weight": 3,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9
+        },
+        "validation": {
+          "all": {
+            "n_samples": 10524,
+            "mae": 1.4123287749861366,
+            "rmse": 1.9863623543870932,
+            "r2": 0.7720063050193707
+          },
+          "known_history": {
+            "n_samples": 8646,
+            "mae": 1.2741476359511867,
+            "rmse": 1.8195551758410826,
+            "r2": 0.8110572975032952
+          },
+          "cold_start": {
+            "n_samples": 1878,
+            "mae": 2.0484917824920883,
+            "rmse": 2.620763138544927,
+            "r2": 0.5786348602481454
+          }
+        },
+        "fit_seconds": 106.88893249999819,
+        "best_iteration": 1089,
+        "best_score": 1.412328778451407
+      },
+      {
+        "name": "ridge_alpha_1",
+        "family": "ridge",
+        "params": {
+          "alpha": 1.0,
+          "solver": "lsqr"
+        },
+        "validation": {
+          "all": {
+            "n_samples": 10524,
+            "mae": 1.4434748447616732,
+            "rmse": 1.9435990070837375,
+            "r2": 0.7817173475934263
+          },
+          "known_history": {
+            "n_samples": 8646,
+            "mae": 1.3466586188766367,
+            "rmse": 1.8369708697963318,
+            "r2": 0.8074230950328329
+          },
+          "cold_start": {
+            "n_samples": 1878,
+            "mae": 1.8892006642515708,
+            "rmse": 2.373489447916292,
+            "r2": 0.6543968676867499
+          }
+        },
+        "fit_seconds": 1.0744457000000693
+      },
+      {
+        "name": "random_forest_1",
+        "family": "random_forest",
+        "params": {
+          "n_estimators": 180,
+          "max_depth": 18,
+          "min_samples_leaf": 2,
+          "max_features": "sqrt",
+          "max_samples": 0.85
+        },
+        "validation": {
+          "all": {
+            "n_samples": 10524,
+            "mae": 1.6140980929205657,
+            "rmse": 2.1331785401666408,
+            "r2": 0.737057796938175
+          },
+          "known_history": {
+            "n_samples": 8646,
+            "mae": 1.383663093314767,
+            "rmse": 1.8621196159017122,
+            "r2": 0.8021141166730172
+          },
+          "cold_start": {
+            "n_samples": 1878,
+            "mae": 2.674982547974737,
+            "rmse": 3.088077755759355,
+            "r2": 0.41496814571637797
+          }
+        },
+        "fit_seconds": 2.278974900000321
+      },
+      {
+        "name": "ridge_alpha_100",
+        "family": "ridge",
+        "params": {
+          "alpha": 100.0,
+          "solver": "lsqr"
+        },
+        "validation": {
+          "all": {
+            "n_samples": 10524,
+            "mae": 1.8746944124700453,
+            "rmse": 2.340157506506179,
+            "r2": 0.6835565845590262
+          },
+          "known_history": {
+            "n_samples": 8646,
+            "mae": 1.795348919629322,
+            "rmse": 2.2509363149753345,
+            "r2": 0.7108480806995052
+          },
+          "cold_start": {
+            "n_samples": 1878,
+            "mae": 2.2399878795099255,
+            "rmse": 2.7133324079037977,
+            "r2": 0.5483426692818947
+          }
+        },
+        "fit_seconds": 0.36415629999828525
+      },
+      {
+        "name": "ridge_alpha_10",
+        "family": "ridge",
+        "params": {
+          "alpha": 10.0,
+          "solver": "lsqr"
+        },
+        "validation": {
+          "all": {
+            "n_samples": 10524,
+            "mae": 2.0864405534790285,
+            "rmse": 2.5487260664221427,
+            "r2": 0.6246363560288888
+          },
+          "known_history": {
+            "n_samples": 8646,
+            "mae": 2.045757248399906,
+            "rmse": 2.487012014069373,
+            "r2": 0.6470156667771658
+          },
+          "cold_start": {
+            "n_samples": 1878,
+            "mae": 2.2737397311755614,
+            "rmse": 2.815451070547421,
+            "r2": 0.5137058694170145
+          }
+        },
+        "fit_seconds": 0.6585964999976568
+      }
+    ]
+  },
+  "selection": {
+    "metric": "validation_2023_mae",
+    "selected_candidate": "xgboost_1",
+    "selected_family": "xgboost",
+    "selected_validation": {
+      "all": {
+        "n_samples": 10524,
+        "mae": 1.359516828555836,
+        "rmse": 1.9311500700155957,
+        "r2": 0.784504634921216
+      },
+      "known_history": {
+        "n_samples": 8646,
+        "mae": 1.2420816985286276,
+        "rmse": 1.787269357962894,
+        "r2": 0.81770293230008
+      },
+      "cold_start": {
+        "n_samples": 1878,
+        "mae": 1.90016865721145,
+        "rmse": 2.488459842159765,
+        "r2": 0.6201043394511758
+      }
+    },
+    "configuration_locked_before_test": true,
+    "test_used_for_hyperparameter_selection": false
+  },
+  "final_test_2024": {
+    "all": {
+      "n_samples": 19827,
+      "mae": 2.3245888727155117,
+      "rmse": 3.2499829334951245,
+      "r2": 0.4559459514897527
+    },
+    "known_history": {
+      "n_samples": 8255,
+      "mae": 1.6034698506291167,
+      "rmse": 2.4093029063332536,
+      "r2": 0.6990032161187303
+    },
+    "cold_start": {
+      "n_samples": 11572,
+      "mae": 2.839006218664629,
+      "rmse": 3.7358137620944727,
+      "r2": 0.27713078974911953
+    },
+    "clipped_prediction_count": 0
+  },
+  "test_by_large_school": [
+    {
+      "n_samples": 374,
+      "mae": 2.270592522646654,
+      "rmse": 3.192350450024659,
+      "r2": 0.3693054932018308,
+      "group": "Trường Đại Học Cần Thơ",
+      "group_column": "canonical_university_name"
+    },
+    {
+      "n_samples": 354,
+      "mae": 1.75839941746771,
+      "rmse": 2.1886447045472543,
+      "r2": 0.3641958158645071,
+      "group": "Trường Đại Học Tôn Đức Thắng",
+      "group_column": "canonical_university_name"
+    },
+    {
+      "n_samples": 300,
+      "mae": 0.7944975852966308,
+      "rmse": 1.037506593196881,
+      "r2": 0.268206174587338,
+      "group": "Trường Đại Học Bà Rịa – Vũng Tàu",
+      "group_column": "canonical_university_name"
+    },
+    {
+      "n_samples": 291,
+      "mae": 4.804247033555074,
+      "rmse": 4.8318492721030015,
+      "r2": -102.93005238277574,
+      "group": "Trường Đại học Ngoại thương",
+      "group_column": "canonical_university_name"
+    },
+    {
+      "n_samples": 264,
+      "mae": 0.5858660764405224,
+      "rmse": 0.8325131176978199,
+      "r2": -2.225207284900843,
+      "group": "Đại Học Kinh Tế Quốc Dân",
+      "group_column": "canonical_university_name"
+    },
+    {
+      "n_samples": 249,
+      "mae": 0.7241901719426534,
+      "rmse": 0.8966880087305702,
+      "r2": 0.5801453146521771,
+      "group": "Trường Đại học Công Nghệ TPHCM",
+      "group_column": "canonical_university_name"
+    },
+    {
+      "n_samples": 248,
+      "mae": 3.9860722467976224,
+      "rmse": 4.25851150817494,
+      "r2": -7.131199591460016,
+      "group": "Trường Đại Học Sư Phạm Kỹ Thuật TPHCM",
+      "group_column": "canonical_university_name"
+    },
+    {
+      "n_samples": 244,
+      "mae": 1.6613595837452373,
+      "rmse": 2.035302036482266,
+      "r2": 0.07985985169441256,
+      "group": "Trường Đại Học Công Nghiệp TPHCM",
+      "group_column": "canonical_university_name"
+    },
+    {
+      "n_samples": 236,
+      "mae": 0.7235865754596258,
+      "rmse": 1.0613847954679856,
+      "r2": 0.6225174300254896,
+      "group": "Trường Đại Học Nguyễn Tất Thành",
+      "group_column": "canonical_university_name"
+    },
+    {
+      "n_samples": 235,
+      "mae": 0.5416683643422229,
+      "rmse": 1.121852462026293,
+      "r2": 0.4772240413876555,
+      "group": "Trường Đại Học Đông Á",
+      "group_column": "canonical_university_name"
+    }
+  ],
+  "test_by_major_group": [
+    {
+      "n_samples": 2913,
+      "mae": 1.9540194698350761,
+      "rmse": 2.8249863389346923,
+      "r2": 0.587144493276189,
+      "group": "kinh te quan tri kinh doanh thuong mai",
+      "group_column": "major_group"
+    },
+    {
+      "n_samples": 2624,
+      "mae": 1.9594251881140035,
+      "rmse": 2.768665025423789,
+      "r2": 0.5432117487399005,
+      "group": "cong nghe thong tin tin hoc",
+      "group_column": "major_group"
+    },
+    {
+      "n_samples": 1427,
+      "mae": 4.877465730304891,
+      "rmse": 5.637809163239323,
+      "r2": -3.846224937718482,
+      "group": "su pham giao duc",
+      "group_column": "major_group"
+    },
+    {
+      "n_samples": 1412,
+      "mae": 2.3641633414411682,
+      "rmse": 3.3097295018627717,
+      "r2": 0.43950553230328826,
+      "group": "cong an quan doi",
+      "group_column": "major_group"
+    },
+    {
+      "n_samples": 1138,
+      "mae": 3.3639130140817435,
+      "rmse": 4.300104603913898,
+      "r2": 0.12251288640203573,
+      "group": "van hoa chinh tri khoa hoc xa hoi",
+      "group_column": "major_group"
+    },
+    {
+      "n_samples": 1083,
+      "mae": 2.22463161634056,
+      "rmse": 3.284588765016987,
+      "r2": 0.445030083575507,
+      "group": "du lich khach san",
+      "group_column": "major_group"
+    },
+    {
+      "n_samples": 1053,
+      "mae": 1.7185254594924217,
+      "rmse": 2.270895312561076,
+      "r2": 0.495751848031476,
+      "group": "xay dung kien truc giao thong",
+      "group_column": "major_group"
+    },
+    {
+      "n_samples": 985,
+      "mae": 2.351264567108929,
+      "rmse": 3.126742327526126,
+      "r2": 0.564359341700555,
+      "group": "ke toan kiem toan",
+      "group_column": "major_group"
+    },
+    {
+      "n_samples": 934,
+      "mae": 1.7496721892591718,
+      "rmse": 2.4118194669158095,
+      "r2": 0.6023682993960136,
+      "group": "o to co khi che tao",
+      "group_column": "major_group"
+    },
+    {
+      "n_samples": 896,
+      "mae": 2.5292400979144234,
+      "rmse": 3.4249487882302865,
+      "r2": 0.4904084729800282,
+      "group": "bao chi marketing quang cao pr",
+      "group_column": "major_group"
+    }
+  ],
+  "acceptance": {
+    "beats_historical_mean_on_validation": true,
+    "no_severe_test_degradation": true,
+    "not_concentrated_in_few_large_schools": true,
+    "test_mae_vs_hybrid_baseline": -0.044435127284488285,
+    "deployment_status": "accepted"
+  },
+  "top_features": [
+    {
+      "feature": "numeric__hybrid_baseline_feature",
+      "importance": 0.07807380706071854
+    },
+    {
+      "feature": "categorical__university_admission_code_SPK",
+      "importance": 0.02061055414378643
+    },
+    {
+      "feature": "numeric__school_historical_mean",
+      "importance": 0.015407450497150421
+    },
+    {
+      "feature": "categorical__university_admission_code_KHA",
+      "importance": 0.010760752484202385
+    },
+    {
+      "feature": "categorical__university_admission_code_DQN",
+      "importance": 0.009926782920956612
+    },
+    {
+      "feature": "categorical__university_admission_code_KTC",
+      "importance": 0.008084828965365887
+    },
+    {
+      "feature": "numeric__historical_mean",
+      "importance": 0.007746857590973377
+    },
+    {
+      "feature": "categorical__university_admission_code_SPS",
+      "importance": 0.007514613680541515
+    },
+    {
+      "feature": "categorical__major_group_khoa hoc giao duc va dao tao giao vien",
+      "importance": 0.007212246302515268
+    },
+    {
+      "feature": "numeric__missingindicator_school_historical_mean",
+      "importance": 0.006988322827965021
+    },
+    {
+      "feature": "categorical__university_admission_code_QSK",
+      "importance": 0.006956697907298803
+    },
+    {
+      "feature": "categorical__university_admission_code_QHE",
+      "importance": 0.006649696733802557
+    },
+    {
+      "feature": "numeric__missingindicator_school_combination_historical_mean",
+      "importance": 0.0066175260581076145
+    },
+    {
+      "feature": "categorical__university_admission_code_KSA",
+      "importance": 0.006566387601196766
+    },
+    {
+      "feature": "categorical__university_admission_code_BKA",
+      "importance": 0.006514676846563816
+    },
+    {
+      "feature": "categorical__university_admission_code_DNC",
+      "importance": 0.00648939935490489
+    },
+    {
+      "feature": "categorical__university_admission_code_DLX",
+      "importance": 0.006230752449482679
+    },
+    {
+      "feature": "numeric__missingindicator_major_group_historical_mean",
+      "importance": 0.005934662185609341
+    },
+    {
+      "feature": "categorical__university_admission_code_SP2",
+      "importance": 0.005807816982269287
+    },
+    {
+      "feature": "categorical__university_admission_code_QHF",
+      "importance": 0.0054803029634058475
+    },
+    {
+      "feature": "categorical__university_admission_code_DVD",
+      "importance": 0.005328279919922352
+    },
+    {
+      "feature": "categorical__university_admission_code_HBT",
+      "importance": 0.00506226159632206
+    },
+    {
+      "feature": "categorical__university_admission_code_HDT",
+      "importance": 0.005036740098148584
+    },
+    {
+      "feature": "categorical__university_admission_code_DQK",
+      "importance": 0.005036225542426109
+    },
+    {
+      "feature": "categorical__university_admission_code_DDL",
+      "importance": 0.004965181928128004
+    },
+    {
+      "feature": "numeric__historical_max",
+      "importance": 0.004841548390686512
+    },
+    {
+      "feature": "categorical__university_admission_code_DTT",
+      "importance": 0.004828840959817171
+    },
+    {
+      "feature": "categorical__university_admission_code_NTH",
+      "importance": 0.004649352747946978
+    },
+    {
+      "feature": "categorical__university_admission_code_HCV",
+      "importance": 0.004641219507902861
+    },
+    {
+      "feature": "categorical__university_admission_code_HNM",
+      "importance": 0.004578856751322746
+    }
+  ],
+  "outputs": {
+    "model": "D:\\Do_an_DSS\\DSS_Dataset\\models\\model.joblib",
+    "evaluation": "D:\\Do_an_DSS\\DSS_Dataset\\models\\evaluation.json",
+    "test_predictions": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_model_predictions_2024.csv",
+    "feature_importance": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_feature_importance.csv"
+  }
+}

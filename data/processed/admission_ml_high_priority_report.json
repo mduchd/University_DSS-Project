@@ -1,0 +1,54 @@
+{
+  "step": "03a_high_priority_review",
+  "policy": {
+    "same_year_coexistence": "Strong local evidence to keep two identities separate.",
+    "name_similarity": "Creates an alias candidate only; never triggers an automatic merge.",
+    "conflicting_cutoffs": "Remain rejected until verified against the original/official source."
+  },
+  "high_priority_queue": {
+    "items_reviewed": 8002,
+    "type_counts": {
+      "ambiguous_cutoff": 4481,
+      "sensitive_source_note": 2464,
+      "program_code_reuse": 913,
+      "major_code_conflict": 88,
+      "institution_code_reuse": 52,
+      "score_scale_mismatch": 4
+    },
+    "decision_counts": {
+      "keep_rejected_until_source_verified": 4481,
+      "retain_with_sensitive_note_flag": 2464,
+      "conservative_split_retained": 965,
+      "retain_series_and_verify_official_major_code": 88,
+      "keep_rejected_until_scale_verified": 4
+    }
+  },
+  "pairwise_identity_review": {
+    "pairs": 1097,
+    "scope_counts": {
+      "program_pair": 1043,
+      "institution_pair": 54
+    },
+    "decision_counts": {
+      "keep_split_conservative": 853,
+      "candidate_alias_medium_confidence_needs_official_verification": 143,
+      "candidate_alias_high_confidence_needs_official_verification": 55,
+      "keep_split_same_year_coexistence": 36,
+      "candidate_alias_requires_official_verification": 10
+    },
+    "strong_keep_split_pairs": 36,
+    "alias_candidates": 208,
+    "automatic_merges": 0
+  },
+  "rejected_rows_still_rejected": 39513,
+  "validation": {
+    "all_high_priority_items_have_a_decision": true,
+    "no_identity_merge_applied_without_official_evidence": true,
+    "no_rejected_row_restored": true
+  },
+  "outputs": {
+    "identity_pair_review": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_identity_pair_review.csv",
+    "high_priority_review": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_high_priority_reviewed.csv",
+    "report": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_high_priority_report.json"
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "step": "03b_leakage_safe_feature_engineering_and_cold_start",
+  "input_rows": 86064,
+  "output_rows": 86064,
+  "split_counts": {
+    "train": 55713,
+    "test": 19827,
+    "validation": 10524
+  },
+  "feature_definitions": {
+    "lag_1_year": "Cutoff for the exact same series in year t-1.",
+    "lag_2_year": "Cutoff for the exact same series in year t-2.",
+    "lag_3_year": "Cutoff for the exact same series in year t-3.",
+    "historical_statistics": "Count/mean/median/std/min/max calculated only from years before t.",
+    "historical_trend_prior": "Least-squares slope fitted only on observations before t.",
+    "context_previous_year": "Means from exactly t-1; the current year's targets are never used.",
+    "context_historical_means": "School, major-group and combination means use all observations strictly before t.",
+    "exam_distribution": "National weighted mean for the same combination from year t-1; current-year exam scores are not used."
+  },
+  "history_segments_by_split": {
+    "test": {
+      "cold_start": 11572,
+      "known_history_2plus": 6796,
+      "known_history_1_year": 1459
+    },
+    "train": {
+      "cold_start": 22338,
+      "known_history_2plus": 18637,
+      "known_history_1_year": 14738
+    },
+    "validation": {
+      "known_history_2plus": 6989,
+      "cold_start": 1878,
+      "known_history_1_year": 1657
+    }
+  },
+  "cold_start_policy": {
+    "definition": "lag_1_year is unavailable.",
+    "hierarchy": [
+      "exact_series_previous_year",
+      "institution_group_combo_previous_year",
+      "institution_combo_previous_year",
+      "group_combo_previous_year",
+      "combination_previous_year",
+      "global_previous_year"
+    ],
+    "missing_values": "Historical features remain missing; they are not filled with zero."
+  },
+  "test_2024": {
+    "rows": 19827,
+    "cold_start_rows": 15253,
+    "cold_start_type_counts": {
+      "new_series": 11572,
+      "history_gap": 3681
+    },
+    "baseline_level_counts": {
+      "combination_previous_year": 11513,
+      "exact_series_previous_year": 4574,
+      "institution_combo_previous_year": 3519,
+      "global_previous_year": 161,
+      "group_combo_previous_year": 60
+    },
+    "baseline_metrics_all": {
+      "rows": 19827,
+      "mae": 2.937306,
+      "rmse": 3.710355
+    },
+    "baseline_metrics_cold_start": {
+      "rows": 15253,
+      "mae": 3.477544,
+      "rmse": 4.090362
+    },
+    "exact_series_metrics": {
+      "rows": 4574,
+      "mae": 1.135763,
+      "rmse": 1.970158
+    }
+  },
+  "baseline_metrics_by_split": {
+    "test": {
+      "rows": 19827,
+      "mae": 2.937306,
+      "rmse": 3.710355
+    },
+    "train": {
+      "rows": 45539,
+      "mae": 1.929865,
+      "rmse": 2.747004
+    },
+    "validation": {
+      "rows": 10524,
+      "mae": 1.590954,
+      "rmse": 2.40228
+    }
+  },
+  "validation": {
+    "row_count_preserved": true,
+    "year_series_key_unique": true,
+    "exact_lag_values_verified": true,
+    "earliest_year_has_no_prior_history": true,
+    "current_year_target_not_used_in_context_features": true,
+    "exam_feature_uses_t_minus_1_only": true
+  },
+  "outputs": {
+    "features": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_features.csv",
+    "cold_start_2024": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_cold_start_2024.csv",
+    "report": "D:\\Do_an_DSS\\DSS_Dataset\\data\\processed\\admission_ml_feature_report.json"
+  }
+}
