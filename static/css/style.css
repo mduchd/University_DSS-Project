@@ -871,26 +871,27 @@ a {
 
 /* Recommendation Item Card */
 .rec-card {
-  padding: 16px 18px;
-  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  border-radius: var(--radius-lg, 14px);
   border: 1.5px solid var(--border-color);
   background-color: var(--bg-card);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
   transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .rec-card:hover {
   border-color: var(--primary);
-  box-shadow: var(--shadow-hover);
-  background-color: var(--bg-card-hover);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
 }
 
-.rec-card-main {
-  flex: 1;
-  min-width: 0;
+.rec-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .rec-card-tags {
@@ -898,7 +899,6 @@ a {
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-bottom: 6px;
 }
 
 /* Status Badges */
@@ -906,29 +906,47 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: var(--radius-full);
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
   border: 1px solid;
 }
 
 .badge.safe {
-  background-color: var(--safe-bg);
-  color: var(--safe-text);
-  border-color: var(--safe-border);
+  background-color: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
 }
 
 .badge.match {
-  background-color: var(--match-bg);
-  color: var(--match-text);
-  border-color: var(--match-border);
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
 }
 
 .badge.reach {
-  background-color: var(--reach-bg);
-  color: var(--reach-text);
-  border-color: var(--reach-border);
+  background-color: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+body.dark-mode .badge.safe {
+  background-color: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+body.dark-mode .badge.match {
+  background-color: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+body.dark-mode .badge.reach {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
 }
 
 .badge-tag {
@@ -936,7 +954,7 @@ a {
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 2.5px 8px;
   border-radius: var(--radius-full);
   font-weight: 500;
 }
@@ -948,38 +966,201 @@ a {
   font-weight: 700;
 }
 
+body.dark-mode .badge-model {
+  background-color: rgba(99, 102, 241, 0.18);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+}
+
+/* Card Main Info */
+.rec-card-info,
+.rec-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
 .rec-major-title {
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  white-space: normal;
+  overflow: visible;
+  word-break: break-word;
+  margin: 0;
 }
 
 .rec-school-name {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: normal;
+  overflow: visible;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.rec-school-name .ui-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* Metrics Grid */
+.rec-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: var(--bg-hover, #f8fafc);
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  margin-top: 2px;
+}
+
+body.dark-mode .rec-card-metrics {
+  background-color: #171926;
+  border-color: #2e3247;
+}
+
+.metric-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.metric-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.rec-explanation {
-  margin-top: 7px;
-  color: var(--text-muted);
-  font-size: 11px;
-  line-height: 1.45;
+.metric-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
 }
 
-.rec-explanation strong {
+.metric-block-forecast .metric-value {
   color: var(--primary);
 }
 
+.metric-fit-score {
+  color: #4f46e5;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+body.dark-mode .metric-fit-score {
+  color: #818cf8;
+}
+
+.metric-fit-score small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Card Footer */
+.rec-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-subtle);
+  line-height: 1.4;
+}
+
+.rec-card-footer .ui-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+/* Gap Pill */
+.gap-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.gap-pill.safe {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.gap-pill.match {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.gap-pill.reach {
+  background-color: #fffbeb;
+  color: #b45309;
+}
+
+body.dark-mode .gap-pill.safe {
+  background-color: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+body.dark-mode .gap-pill.match {
+  background-color: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+}
+
+body.dark-mode .gap-pill.reach {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+/* Lưu NV Button */
+.btn-save-nv {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1.5px solid var(--border-color);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.btn-save-nv:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: var(--bg-hover);
+}
+
+.btn-save-nv.saved {
+  background-color: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+/* Legacy compatibility */
 .rec-card-scores {
   display: flex;
   align-items: center;
@@ -1006,54 +1187,6 @@ a {
 
 .score-block-forecast .score-block-val {
   color: var(--primary);
-}
-
-.gap-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.gap-pill.safe {
-  background-color: var(--safe-bg);
-  color: var(--safe-text);
-}
-
-.gap-pill.match {
-  background-color: var(--match-bg);
-  color: var(--match-text);
-}
-
-.gap-pill.reach {
-  background-color: var(--reach-bg);
-  color: var(--reach-text);
-}
-
-/* Lưu NV Button */
-.btn-save-nv {
-  padding: 7px 12px;
-  border-radius: var(--radius-md);
-  font-size: 12px;
-  font-weight: 700;
-  border: 1.5px solid var(--border-color);
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-}
-
-.btn-save-nv:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  background-color: var(--primary-light);
-}
-
-.btn-save-nv.saved {
-  background-color: var(--primary);
-  color: #ffffff;
-  border-color: var(--primary);
 }
 
 /* ==================== VIEW 2: ADMISSION SEARCH TABLE ==================== */
@@ -1804,37 +1937,57 @@ a {
 
 /* Structural rules are shared by both themes; only the colour tokens change. */
 .app-main {
-  max-width: 1128px;
-  padding-top: 32px;
+  max-width: 1320px;
+  padding: 28px 24px 48px;
+  margin: 0 auto;
 }
 
 #recommend-view .view-hero {
-  max-width: none;
-  margin-bottom: 26px;
+  max-width: 820px;
+  margin: 0 auto 28px;
+  text-align: center;
 }
 
-#recommend-view .hero-badge,
-#recommend-view .hero-desc {
+#recommend-view .hero-badge {
   display: none;
+}
+
+#recommend-view .hero-desc {
+  display: block;
+  margin: 8px 0 0;
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 #recommend-view .hero-title {
   margin: 0;
-  font-size: 31px;
+  font-size: 29px;
+  font-weight: 800;
+  color: var(--text-primary);
 }
 
 .dashboard-grid {
-  grid-template-columns: 420px minmax(0, 1fr);
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
   gap: 24px;
+  align-items: start;
+}
+
+.form-card {
+  position: sticky;
+  top: 20px;
+  align-self: start;
+  z-index: 5;
 }
 
 .results-card {
-  min-height: 450px;
+  min-height: 500px;
 }
 
 .card-header {
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .score-sum-box {
@@ -1842,7 +1995,7 @@ a {
 }
 
 .empty-state-box {
-  padding: 72px 16px 36px;
+  padding: 60px 16px 36px;
 }
 
 .empty-guide-cards {
@@ -1853,18 +2006,130 @@ a {
   min-height: 88px;
 }
 
+/* Sidebar Tips Box */
+.form-sidebar-tips {
+  margin-top: 20px;
+  padding: 14px 16px;
+  background-color: var(--bg-hover, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.form-sidebar-tips .tip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.form-sidebar-tips .tip-header .ui-icon {
+  color: var(--primary);
+}
+
+.form-sidebar-tips .tip-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-sidebar-tips .tip-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.form-sidebar-tips .tip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.form-sidebar-tips .tip-dot.safe { background-color: #10b981; }
+.form-sidebar-tips .tip-dot.match { background-color: #3b82f6; }
+.form-sidebar-tips .tip-dot.reach { background-color: #f59e0b; }
+
+/* Filter Tab Pills */
+.filter-tabs-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.tab-pill:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.tab-pill.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.tab-pill.safe-pill.active {
+  background: #059669;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+.tab-pill.match-pill.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.tab-pill.reach-pill.active {
+  background: #d97706;
+  border-color: #d97706;
+  color: #ffffff;
+}
+
 body.dark-mode .app-header {
   background-color: #191b26;
   border-color: #30334a;
 }
 
 body.dark-mode .app-main {
-  max-width: 1128px;
-  padding-top: 32px;
+  max-width: 1320px;
+  padding: 28px 24px 48px;
 }
 
 body.dark-mode #recommend-view .hero-title {
   color: #f7f7fb;
+}
+
+body.dark-mode #recommend-view .hero-desc {
+  color: #9ba3be;
 }
 
 body.dark-mode .form-card,
@@ -1910,6 +2175,22 @@ body.dark-mode .score-sum-box {
   border-color: var(--primary);
 }
 
+body.dark-mode .form-sidebar-tips {
+  background-color: #202436;
+  border-color: #2f344e;
+}
+
+body.dark-mode .tab-pill {
+  background: #1b1d28;
+  border-color: #34384e;
+  color: #9ba3be;
+}
+
+body.dark-mode .tab-pill:hover {
+  background: #232738;
+  color: #e2e8f0;
+}
+
 body.dark-mode .empty-icon-wrap {
   width: 72px;
   height: 72px;
@@ -1917,10 +2198,16 @@ body.dark-mode .empty-icon-wrap {
 }
 
 @media (max-width: 1024px) {
+  .dashboard-grid,
   body.dark-mode .dashboard-grid {
     grid-template-columns: 1fr;
   }
 
+  .form-card {
+    position: static;
+  }
+
+  .results-card,
   body.dark-mode .results-card {
     min-height: 0;
   }
@@ -1959,20 +2246,9 @@ body {
 .form-card,
 .results-card,
 .rec-card,
-.rec-card-main,
-.rec-card-scores {
+.rec-card-info,
+.rec-card-metrics {
   min-width: 0;
-}
-
-.results-card,
-.rec-card,
-.rec-card-main {
-  overflow: hidden;
-}
-
-.rec-card-scores {
-  max-width: 100%;
-  flex-wrap: wrap;
 }
 
 @media (max-width: 1180px) {
@@ -1982,16 +2258,8 @@ body {
   }
 
   .dashboard-grid {
-    grid-template-columns: minmax(320px, 38%) minmax(0, 1fr);
+    grid-template-columns: 340px minmax(0, 1fr);
     gap: 18px;
-  }
-
-  .rec-card {
-    align-items: flex-start;
-  }
-
-  .rec-card-scores {
-    gap: 10px 14px;
   }
 }
 
@@ -2006,18 +2274,6 @@ body {
 
   .results-card {
     min-height: 0;
-  }
-
-  .rec-card {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .rec-card-scores {
-    width: 100%;
-    justify-content: flex-start;
-    padding-top: 10px;
-    border-top: 1px solid var(--border-subtle);
   }
 }
 
@@ -2115,7 +2371,17 @@ body {
 
   .rec-card {
     width: 100%;
-    padding: 13px;
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .rec-card-top {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn-save-nv {
+    margin-left: auto;
   }
 
   .rec-card-tags {
@@ -2123,14 +2389,28 @@ body {
   }
 
   .rec-major-title,
-  .rec-school-name,
-  .rec-explanation {
+  .rec-school-name {
     max-width: 100%;
     overflow-wrap: anywhere;
+    white-space: normal;
   }
 
-  .rec-school-name {
-    white-space: normal;
+  .rec-major-title {
+    font-size: 15.5px;
+  }
+
+  .rec-card-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .metric-block {
+    min-width: 0;
+  }
+
+  .metric-value {
+    font-size: 15px;
   }
 
   .rec-card-scores {
@@ -2146,11 +2426,6 @@ body {
 
   .score-block-label {
     overflow-wrap: anywhere;
-  }
-
-  .btn-save-nv {
-    width: 100%;
-    grid-column: 1 / -1;
   }
 }
 

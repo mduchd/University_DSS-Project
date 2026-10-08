@@ -465,40 +465,14 @@
       : `${ICONS.plus} <span>Lưu NV</span>`;
 
     return `
-      <article class="rec-card">
-        <div class="rec-card-main">
+      <article class="rec-card rec-card-v2" data-type="${item.type}">
+        <div class="rec-card-top">
           <div class="rec-card-tags">
             <span class="badge ${item.type}">${typeLabel}</span>
             <span class="badge-tag">${escapeHtml(item.group || "Đại học")}</span>
             <span class="badge-tag">Mã: ${escapeHtml(item.major_code)}</span>
             <span class="badge-tag badge-model">${escapeHtml(forecastTag)}</span>
           </div>
-          <h3 class="rec-major-title" title="${escapeHtml(item.major)}">${escapeHtml(item.major)}</h3>
-          <p class="rec-school-name" title="${escapeHtml(item.school)}">
-            ${ICONS.school}
-            <span>${escapeHtml(item.school)}</span>
-          </p>
-          <p class="rec-explanation">
-            Điểm content-based <strong>${recommendationScore}/100</strong> · dựa trên độ phù hợp điểm, lương, nhu cầu việc làm và độ ổn định.
-          </p>
-        </div>
-
-        <div class="rec-card-scores">
-          <div class="score-block">
-            <span class="score-block-label">Điểm chuẩn 2024</span>
-            <span class="score-block-val">${historicalCutoff.toFixed(2)}</span>
-          </div>
-
-          <div class="score-block score-block-forecast">
-            <span class="score-block-label">${forecastLabel}</span>
-            <span class="score-block-val">${forecastCutoff.toFixed(2)}</span>
-          </div>
-
-          <div class="score-block">
-            <span class="score-block-label">So với mốc dự báo</span>
-            <span class="gap-pill ${item.type}">${gapSign} đ</span>
-          </div>
-
           <button
             type="button"
             class="btn-save-nv ${isSaved ? "saved" : ""}"
@@ -511,6 +485,41 @@
           >
             ${saveIcon}
           </button>
+        </div>
+
+        <div class="rec-card-info">
+          <h3 class="rec-major-title" title="${escapeHtml(item.major)}">${escapeHtml(item.major)}</h3>
+          <p class="rec-school-name" title="${escapeHtml(item.school)}">
+            ${ICONS.school}
+            <span>${escapeHtml(item.school)}</span>
+          </p>
+        </div>
+
+        <div class="rec-card-metrics">
+          <div class="metric-block">
+            <span class="metric-label">Điểm chuẩn 2024</span>
+            <span class="metric-value">${historicalCutoff.toFixed(2)}</span>
+          </div>
+
+          <div class="metric-block metric-block-forecast">
+            <span class="metric-label">${forecastLabel}</span>
+            <span class="metric-value">${forecastCutoff.toFixed(2)}</span>
+          </div>
+
+          <div class="metric-block">
+            <span class="metric-label">So với mốc dự báo</span>
+            <span class="gap-pill ${item.type}">${gapSign} đ</span>
+          </div>
+
+          <div class="metric-block metric-block-fit">
+            <span class="metric-label">Độ phù hợp</span>
+            <span class="metric-value metric-fit-score">${recommendationScore}<small>/100</small></span>
+          </div>
+        </div>
+
+        <div class="rec-card-footer">
+          <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Gợi ý dựa trên điểm xét tuyển, dự báo xu hướng điểm và cơ hội việc làm.</span>
         </div>
       </article>
     `;
