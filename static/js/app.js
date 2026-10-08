@@ -719,21 +719,20 @@
         </div>
 
         <div class="career-salary-box">
-          <span class="career-salary-label">Mức lương tham khảo:</span>
-          <span class="career-salary-val">${escapeHtml(sec.salary_range)}</span>
+          <span class="career-salary-label">Lương trung bình / trung vị:</span>
+          <span class="career-salary-val">${escapeHtml(String(sec.average_salary_million_vnd))} / ${escapeHtml(String(sec.median_salary_million_vnd))} triệu VNĐ</span>
         </div>
 
-        <div class="career-section-sub">Vị trí công việc tiêu biểu</div>
+        <div class="career-section-sub">Dữ liệu tuyển dụng ghi nhận</div>
         <div class="career-tags-wrap">
-          ${sec.roles.map((r) => `<span class="badge-tag">${escapeHtml(r)}</span>`).join("")}
+          <span class="badge-tag">${escapeHtml(String(sec.posting_count))} tin tuyển dụng</span>
+          <span class="badge-tag">Kinh nghiệm TB: ${escapeHtml(String(sec.average_experience_months))} tháng</span>
         </div>
 
         <div class="career-section-sub">Kỹ năng nhà tuyển dụng săn đón</div>
         <div class="career-tags-wrap">
           ${sec.skills.map((s) => `<span class="badge-tag" style="background-color: var(--primary-light); color: var(--primary); font-weight: 600;">${escapeHtml(s)}</span>`).join("")}
         </div>
-
-        <p class="career-desc-note">${escapeHtml(sec.highlight)}</p>
       </article>
     `
       )

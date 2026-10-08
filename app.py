@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 from functools import lru_cache
+import json
 import math
 from pathlib import Path
 import unicodedata
@@ -22,6 +23,8 @@ def remove_accents(input_str: str) -> str:
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 ADMISSION_PATH = PROJECT_ROOT / "data" / "raw" / "admission" / "diemchuan_2024.csv"
+JOB_SUMMARY_PATH = PROJECT_ROOT / "data" / "processed" / "jobs" / "job_market_summary_by_category.csv"
+JOB_SKILLS_PATH = PROJECT_ROOT / "data" / "processed" / "jobs" / "job_category_skills.json"
 
 COMBINATIONS = {
     "A00": ("toan", "vatly", "hoahoc"),
@@ -278,69 +281,70 @@ def validate_payload(data):
             
     return errors
 
+def _demand_label(posting_count: int) -> str:
+    if posting_count >= 5_000:
+        return "Rất cao"
+    if posting_count >= 3_000:
+        return "Cao"
+    if posting_count >= 1_500:
+        return "Trung bình"
+    return "Ổn định"
+
+
+@lru_cache(maxsize=1)
+def _career_insights_from_data() -> dict:
+    """Tổng hợp màn hình nghề nghiệp từ các file VietJobs đã xử lý, không dùng số liệu hard-code."""
+    if not JOB_SUMMARY_PATH.exists() or not JOB_SKILLS_PATH.exists():
+        return {"sectors": [], "in_demand_skills": [], "data_source": "unavailable"}
+
+    with JOB_SUMMARY_PATH.open(encoding="utf-8-sig", newline="") as source:
+        summaries = list(csv.DictReader(source))
+    with JOB_SKILLS_PATH.open(encoding="utf-8") as source:
+        skills_lookup = json.load(source)
+
+    skill_counts: dict[str, int] = {}
+    skill_labels: dict[str, str] = {}
+    sectors = []
+    for row in sorted(summaries, key=lambda item: int(float(item.get("posting_count", 0))), reverse=True)[:6]:
+        category = str(row.get("job_category", "")).strip()
+        skill_data = skills_lookup.get(category, {})
+        skills = [
+            str(skill).strip()
+            for skill in skill_data.get("top_technical_skills", []) + skill_data.get("top_soft_skills", [])
+            if str(skill).strip()
+        ]
+        for skill in dict.fromkeys(skills):
+            normalized = skill.casefold()
+            skill_counts[normalized] = skill_counts.get(normalized, 0) + 1
+            skill_labels.setdefault(normalized, skill)
+
+        posting_count = int(float(row.get("posting_count", 0)))
+        average_salary = float(row.get("average_salary_million_vnd", 0))
+        median_salary = float(row.get("median_salary_million_vnd", 0))
+        experience = float(row.get("average_experience_months", 0))
+        sectors.append(
+            {
+                "name": category.replace("_", " "),
+                "icon": "school",
+                "demand": _demand_label(posting_count),
+                "posting_count": posting_count,
+                "average_salary_million_vnd": round(average_salary, 1),
+                "median_salary_million_vnd": round(median_salary, 1),
+                "average_experience_months": round(experience, 1),
+                "skills": list(dict.fromkeys(skills))[:6],
+            }
+        )
+
+    in_demand_skills = [
+        {"skill": skill_labels[key], "level": f"Xuất hiện trong {count} nhóm nghề của dữ liệu VietJobs"}
+        for key, count in sorted(skill_counts.items(), key=lambda item: (-item[1], item[0]))[:8]
+    ]
+    return {"sectors": sectors, "in_demand_skills": in_demand_skills, "data_source": "VietJobs"}
+
+
 @app.get("/api/career/insights")
 def career_insights():
-    """Insights derived from VietJobs market context and job trends."""
-    insights = {
-        "market_summary": "Tổng hợp xu hướng tuyển dụng dựa trên dữ liệu VietJobs và thị trường lao động Việt Nam giai đoạn 2024–2025.",
-        "sectors": [
-            {
-                "name": "Công nghệ thông tin & Phần mềm",
-                "demand": "Rất cao",
-                "salary_range": "12 – 35+ triệu VNĐ",
-                "roles": ["Kỹ sư phần mềm", "Data Analyst", "Chuyên viên An toàn thông tin", "AI/ML Engineer"],
-                "skills": ["Python / JavaScript / Java", "Tư duy thuật toán", "SQL & Dữ liệu", "Tiếng Anh chuyên ngành"],
-                "highlight": "Nhu cầu chuyển đổi số và phát triển giải pháp AI đang bùng nổ mạnh mẽ tại Hà Nội và TP.HCM."
-            },
-            {
-                "name": "Kinh doanh, Marketing & Thương mại điện tử",
-                "demand": "Cao",
-                "salary_range": "10 – 28 triệu VNĐ",
-                "roles": ["Digital Marketer", "Quản lý kinh doanh (Account / Sales)", "E-commerce Specialist", "Brand Executive"],
-                "skills": ["Phân tích thị trường", "Content & SEO", "Chạy quảng cáo số", "Đàm phán & Thuyết trình"],
-                "highlight": "Thương mại điện tử và tiếp thị số mở rộng tuyển dụng ở cả khối doanh nghiệp vừa và lớn."
-            },
-            {
-                "name": "Tài chính, Ngân hàng & Phân tích đầu tư",
-                "demand": "Ổn định",
-                "salary_range": "11 – 32 triệu VNĐ",
-                "roles": ["Chuyên viên tín dụng", "Phân tích tài chính", "Kiểm toán viên", "Tư vấn quản trị rủi ro"],
-                "skills": ["Mô hình hóa tài chính", "Kế toán / IFRS", "Phân tích báo cáo", "Chứng chỉ CFA/ACCA"],
-                "highlight": "Các vị trí kết hợp tài chính với công nghệ (Fintech) có mức đãi ngộ tăng trưởng vượt trội."
-            },
-            {
-                "name": "Logistics & Quản trị chuỗi cung ứng",
-                "demand": "Rất cao",
-                "salary_range": "10 – 26 triệu VNĐ",
-                "roles": ["Điều phối Logistics", "Thu mua (Procurement)", "Xuất nhập khẩu", "Quản trị kho vận"],
-                "skills": ["Thủ tục hải quan", "Tiếng Anh / Tiếng Trung", "Tối ưu chuỗi cung ứng", "ERP / SAP"],
-                "highlight": "Việt Nam tiếp tục là trung tâm sản xuất khu vực, tạo dư địa việc làm dồi dào cho ngành chuỗi cung ứng."
-            },
-            {
-                "name": "Kỹ thuật, Điện tử & Tự động hóa",
-                "demand": "Cao",
-                "salary_range": "12 – 30 triệu VNĐ",
-                "roles": ["Kỹ sư tự động hóa", "Thiết kế vi mạch / Bán dẫn", "Kỹ sư cơ điện tử", "Bảo trì công nghiệp"],
-                "skills": ["PLC / IoT", "AutoCAD / SolidWorks", "Lập trình nhúng", "Kỹ năng thực hành phòng lab"],
-                "highlight": "Làn sóng đầu tư bán dẫn và công nghệ cao mở ra cơ hội hấp dẫn cho khối ngành kỹ thuật."
-            },
-            {
-                "name": "Y tế, Dược phẩm & Chăm sóc sức khỏe",
-                "demand": "Bền vững",
-                "salary_range": "10 – 35 triệu VNĐ",
-                "roles": ["Bác sĩ đa khoa", "Dược sĩ nghiên cứu / lâm sàng", "Điều dưỡng viên", "Quản lý y tế"],
-                "skills": ["Chuyên môn y khoa", "Thực hành lâm sàng", "Đạo đức nghề nghiệp", "Ngoại ngữ"],
-                "highlight": "Ngành nghề có tính ổn định cao, nhu cầu dịch vụ chăm sóc sức khỏe chất lượng cao ngày càng tăng."
-            },
-        ],
-        "in_demand_skills": [
-            {"skill": "Ngoại ngữ (Tiếng Anh, Tiếng Trung, Tiếng Nhật)", "level": "Yếu tố tạo đột phá thu nhập (+30% đến +50%)"},
-            {"skill": "Kỹ năng số & Phân tích dữ liệu cơ bản", "level": "Cần thiết cho mọi nhóm ngành nghề hiện đại"},
-            {"skill": "Tư duy phản biện & Giải quyết vấn đề", "level": "Nhà tuyển dụng đánh giá cao nhất ở ứng viên mới tốt nghiệp"},
-            {"skill": "Thích nghi & Tự học liên tục", "level": "Chìa khóa then chốt trước sự biến chuyển của công nghệ"},
-        ]
-    }
-    return jsonify(insights)
+    return jsonify(_career_insights_from_data())
 
 
 if __name__ == "__main__":
