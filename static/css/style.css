@@ -1790,3 +1790,144 @@ a {
     min-height: 44px;
   }
 }
+
+/* ==================== GIAO DIỆN GỢI Ý TỐI GIẢN ==================== */
+/* Màn hình chính chỉ giữ lại thao tác cần thiết: điểm → phân tích → kết quả. */
+.main-nav,
+.brand-sub,
+.minimal-hidden,
+#admissions-view,
+#career-view,
+#about-view {
+  display: none !important;
+}
+
+body.dark-mode .app-header {
+  background-color: #191b26;
+  border-color: #30334a;
+}
+
+body.dark-mode .app-main {
+  max-width: 1128px;
+  padding-top: 32px;
+}
+
+body.dark-mode #recommend-view .view-hero {
+  max-width: none;
+  margin-bottom: 26px;
+}
+
+body.dark-mode #recommend-view .hero-badge,
+body.dark-mode #recommend-view .hero-desc {
+  display: none;
+}
+
+body.dark-mode #recommend-view .hero-title {
+  margin: 0;
+  color: #f7f7fb;
+  font-size: 31px;
+}
+
+body.dark-mode .dashboard-grid {
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 24px;
+}
+
+body.dark-mode .form-card,
+body.dark-mode .results-card {
+  background: #1b1d28;
+  border-color: #36394f;
+  box-shadow: none;
+}
+
+body.dark-mode .form-card {
+  padding: 24px;
+}
+
+body.dark-mode .results-card {
+  min-height: 450px;
+}
+
+body.dark-mode .card-header {
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+body.dark-mode .card-step-badge {
+  background: #f4f4f7;
+  color: #20222e;
+}
+
+body.dark-mode .form-select,
+body.dark-mode .form-input,
+body.dark-mode .score-field input {
+  background: #1a1c28;
+  border-color: #383c55;
+}
+
+body.dark-mode .score-sum-box {
+  gap: 12px;
+  background: #222638;
+  border-color: #343950;
+}
+
+.reset-scores-btn {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.reset-scores-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--primary);
+}
+
+body.dark-mode .empty-state-box {
+  padding: 72px 16px 36px;
+}
+
+body.dark-mode .empty-icon-wrap {
+  width: 72px;
+  height: 72px;
+  background: #20295a;
+}
+
+body.dark-mode .empty-guide-cards {
+  max-width: 610px;
+}
+
+body.dark-mode .guide-mini-card {
+  min-height: 88px;
+}
+
+@media (max-width: 1024px) {
+  body.dark-mode .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body.dark-mode .results-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  body.dark-mode .app-main {
+    padding-top: 24px;
+  }
+
+  body.dark-mode #recommend-view .hero-title {
+    font-size: 25px;
+  }
+
+  .score-sum-box {
+    flex-wrap: wrap;
+  }
+
+  .reset-scores-btn {
+    margin-left: auto;
+  }
+}

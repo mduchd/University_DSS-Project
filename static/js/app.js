@@ -64,6 +64,7 @@
     totalScoreDisplay: document.getElementById("total-score-display"),
     groupFilter: document.getElementById("group-filter"),
     interestInput: document.getElementById("interest-input"),
+    resetScoresBtn: document.getElementById("reset-scores-btn"),
     preferenceChoiceGroups: document.querySelectorAll("[data-preference-group]"),
     interestPreferenceCount: document.getElementById("interest-preference-count"),
     priorityPreferenceCount: document.getElementById("priority-preference-count"),
@@ -138,6 +139,8 @@
      2. NAVIGATION & TABS
      ========================================================================== */
   function switchView(targetViewId) {
+    // Phiên bản tối giản chỉ duy trì một luồng: nhập điểm → nhận gợi ý.
+    if (targetViewId !== "recommend") targetViewId = "recommend";
     state.activeView = targetViewId;
     elements.views.forEach((view) => {
       view.classList.toggle("active", view.id === `${targetViewId}-view`);
@@ -225,7 +228,24 @@
     }
   }
 
+  function resetRecommendationForm() {
+    elements.scoreGrid.querySelectorAll("input").forEach((input) => {
+      input.value = "";
+    });
+    elements.groupFilter.value = "";
+    elements.interestInput.value = "";
+    state.recommendations = null;
+    elements.formAlert.classList.add("hidden");
+    elements.resultsMeta.classList.add("hidden");
+    elements.filterTabsBar.classList.add("hidden");
+    elements.recContainer.classList.add("hidden");
+    elements.loadingState.classList.add("hidden");
+    elements.emptyState.classList.remove("hidden");
+    updateTotalScoreDisplay();
+  }
+
   elements.comboSelect.addEventListener("change", renderScoreInputs);
+  elements.resetScoresBtn.addEventListener("click", resetRecommendationForm);
 
   /* Preference choices are intentionally stored locally until the API ranks by them. */
   function saveProfile() {
@@ -349,8 +369,8 @@
           combination: combo,
           scores: scores,
           group: elements.groupFilter.value,
-          interest: elements.interestInput.value,
-          preferences: state.profile,
+          interest: "",
+          preferences: { interests: [], priorities: [], region: "" },
         }),
       });
 
@@ -892,9 +912,9 @@
      8. DARK / LIGHT THEME TOGGLE
      ========================================================================== */
   function initTheme() {
-    const savedTheme = localStorage.getItem("dss_theme");
-    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isDark = savedTheme === "dark" || (!savedTheme && prefersDark);
+    // Không kế thừa thiết lập giao diện của bản nhiều màn hình trước đây.
+    const savedTheme = localStorage.getItem("dss_minimal_theme");
+    const isDark = savedTheme ? savedTheme === "dark" : true;
 
     applyTheme(isDark);
   }
@@ -903,7 +923,7 @@
     document.body.classList.toggle("dark-mode", isDark);
     elements.themeIconMoon.classList.toggle("hidden", isDark);
     elements.themeIconSun.classList.toggle("hidden", !isDark);
-    localStorage.setItem("dss_theme", isDark ? "dark" : "light");
+    localStorage.setItem("dss_minimal_theme", isDark ? "dark" : "light");
   }
 
   elements.themeToggleBtn.addEventListener("click", () => {

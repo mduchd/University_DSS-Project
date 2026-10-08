@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#4255ff" />
+    <meta name="theme-color" content="#0a092d" />
     <title>La bàn Đại học | Hệ thống Hỗ trợ Ra Quyết định Tuyển sinh</title>
     <!-- Google Fonts: Plus Jakarta Sans (Chính) & Inter (Fallback) - Thống nhất toàn hệ thống -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   </head>
-  <body>
+  <body class="dark-mode">
     <!-- Ứng dụng Hỗ trợ Ra Quyết định Tuyển sinh Đại học (DSS) - Chuẩn phong cách Quizlet / Wayground: Flat, Đơn giản, Bộ Icon Vector Đồng Bộ -->
     <div class="app-wrapper">
       <!-- HEADER / NAVIGATION -->
@@ -118,13 +118,14 @@
                     <span class="sum-number" id="total-score-display">—</span>
                     <span class="sum-max">/ 30.00</span>
                   </div>
+                  <button type="button" class="reset-scores-btn" id="reset-scores-btn">Nhập lại</button>
                 </div>
 
                 <!-- Lọc theo nhóm ngành -->
                 <div class="form-group">
-                  <label class="form-label" for="group-filter">Nhóm ngành quan tâm <small>(không bắt buộc)</small></label>
+                  <label class="form-label" for="group-filter">Sở thích của bạn <small>(không bắt buộc)</small></label>
                   <select class="form-select" id="group-filter" name="group">
-                    <option value="">-- Tất cả nhóm ngành --</option>
+                    <option value="">-- Chọn lĩnh vực bạn yêu thích --</option>
                     {% for group in major_groups %}
                     <option value="{{ group }}">{{ group }}</option>
                     {% endfor %}
@@ -132,12 +133,12 @@
                 </div>
 
                 <!-- Tìm kiếm theo từ khóa -->
-                <div class="form-group">
+                <div class="form-group minimal-hidden">
                   <label class="form-label" for="interest-input">Trường hoặc ngành cụ thể <small>(không bắt buộc)</small></label>
                   <input type="text" class="form-input" id="interest-input" placeholder="Ví dụ: Công nghệ thông tin, Bách Khoa..." autocomplete="off" />
                 </div>
 
-                <fieldset class="preference-section" aria-describedby="preference-helper">
+                <fieldset class="preference-section minimal-hidden" aria-describedby="preference-helper">
                   <div class="preference-heading">
                     <legend>Hồ sơ định hướng</legend>
                     <span class="optional-label">Không bắt buộc</span>
