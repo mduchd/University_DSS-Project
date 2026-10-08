@@ -70,7 +70,6 @@
     regionPreference: document.getElementById("region-preference"),
     submitBtn: document.getElementById("submit-btn"),
     formAlert: document.getElementById("form-alert"),
-    presetBtns: document.querySelectorAll(".preset-btn"),
 
     // Recommender Results
     resultsMeta: document.getElementById("results-meta"),
@@ -170,7 +169,7 @@
   }
 
   /* ==========================================================================
-     3. RECOMMENDER: SCORE INPUTS & PRESETS
+     3. RECOMMENDER: SCORE INPUTS
      ========================================================================== */
   function renderScoreInputs() {
     const selectedCombo = elements.comboSelect.value;
@@ -225,25 +224,6 @@
       elements.totalScoreDisplay.textContent = "—";
     }
   }
-
-  function applyPreset(presetType) {
-    const inputs = elements.scoreGrid.querySelectorAll("input");
-    if (presetType === "reset") {
-      inputs.forEach((input) => (input.value = ""));
-    } else if (presetType === "high") {
-      inputs.forEach((input) => (input.value = "9.00"));
-    } else if (presetType === "good") {
-      inputs.forEach((input) => (input.value = "8.00"));
-    } else if (presetType === "avg") {
-      inputs.forEach((input) => (input.value = "7.00"));
-    }
-    updateTotalScoreDisplay();
-    elements.formAlert.classList.add("hidden");
-  }
-
-  elements.presetBtns.forEach((btn) => {
-    btn.addEventListener("click", () => applyPreset(btn.dataset.preset));
-  });
 
   elements.comboSelect.addEventListener("change", renderScoreInputs);
 

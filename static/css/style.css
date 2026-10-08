@@ -447,48 +447,6 @@ a {
   cursor: pointer;
 }
 
-/* Preset Chips */
-.preset-section {
-  padding: 12px 14px;
-  background-color: var(--border-subtle);
-  border-radius: var(--radius-md);
-  margin-bottom: 20px;
-}
-
-.preset-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-}
-
-.preset-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.preset-btn {
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--border-color);
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 600;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
-}
-
-.preset-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.preset-reset {
-  color: var(--text-muted);
-}
-
 /* Score Input Grid */
 .score-input-grid {
   display: grid;
@@ -1741,16 +1699,8 @@ a {
     gap: 8px;
   }
 
-  .preset-btn,
   .preference-chip {
     min-height: 44px;
-  }
-
-  .preset-btn {
-    display: inline-flex;
-    align-items: center;
-    flex: 1 1 calc(50% - 4px);
-    justify-content: center;
   }
 
   .preference-section {
