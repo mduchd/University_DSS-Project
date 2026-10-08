@@ -4,49 +4,46 @@
 
 ## Platform
 
-web
+Web application.
 
 ## Stack
 
-Confirmed: plain HTML, CSS and JavaScript for the interface; Python/Flask for the recommendation API.
+HTML, CSS và JavaScript thuần ở frontend; Python/Flask ở backend; pandas, scikit-learn và XGBoost cho xử lý dữ liệu và dự báo.
 
 ## Users
 
-Primary users are Vietnamese high-school students comparing university majors and schools after receiving or estimating their examination scores. They need a fast, understandable shortlist rather than an opaque prediction.
+Học sinh THPT muốn lập danh sách trường/ngành tham khảo sau khi có hoặc ước lượng điểm thi.
 
 ## Product Purpose
 
-The application helps students explore majors and universities using their subject scores, admission combinations, historical cut-off scores, and job-market context. Success is a clear shortlist that distinguishes safe, suitable, and ambitious choices.
+Hệ thống DSS biến điểm ba môn của người dùng thành một danh sách ngắn phương án tuyển sinh. Mỗi phương án được phân thành An toàn, Phù hợp hoặc Thử sức và kèm bối cảnh nghề nghiệp để hỗ trợ cân nhắc.
 
-## Positioning
+## Active Decision Flow
 
-The recommendation is explainable: every result shows the score gap and the historical cut-off used to classify it, while job information is clearly presented as supporting context.
+1. Người dùng chọn tổ hợp, nhập điểm và có thể chọn nhóm ngành/khu vực.
+2. Backend lọc `master_admission.csv` theo tổ hợp và điều kiện đã chọn.
+3. Với các phương án có feature hợp lệ, model XGBoost gắn mốc điểm dự báo 2025; các phương án còn lại dùng điểm chuẩn 2024 làm fallback.
+4. Hệ thống tính chênh lệch điểm, loại phương án thấp hơn quá 3 điểm so với mốc và xếp hạng phần còn lại bằng Content-Based Filtering (độ khớp hồ sơ sở thích-ngành) kết hợp weighted scoring.
+5. Giao diện hiển thị tối đa 15 phương án cho từng nhóm và cho phép lưu nguyện vọng cục bộ.
 
-## Operating Context
+## Data and Constraints
 
-Students enter subject scores, choose an admission combination, a preferred area and an optional major interest. The application filters and ranks choices, then lets users inspect historical cut-offs and labour-market context.
-
-## Capabilities and Constraints
-
-- The first build is a working interface and a Flask-backed demo recommendation flow.
-- Raw admission, exam and job datasets are available locally under `data/raw/` but have not yet been cleaned or mapped into production recommendation tables.
-- Recommendation labels are guidance only, not a guarantee of admission or employment.
-- The public raw exam data includes `SBD`; the user interface must not expose individual records.
-
-## Evidence on Hand
-
-- Admission cut-off data for 2018–2024 in `data/raw/admission/`.
-- Exam-score datasets for 2021–2025 in `data/raw/exam/`.
-- VietJobs in `data/raw/jobs/VietJobs/VietJobs.csv`.
-- No verified mapping between academic majors and job categories is available yet.
+- Điểm chuẩn dùng cho mô hình: 2018–2024; output forecast hiện tại là năm 2025.
+- `master_admission.csv`, phổ điểm thi tổng hợp và summary VietJobs đã được tích hợp vào luồng đang chạy.
+- Dữ liệu thô có thể chứa SBD, nhưng ứng dụng chỉ nạp bảng phổ điểm tổng hợp không có SBD.
+- Kết quả là gợi ý tham khảo; không thể hiện xác suất trúng tuyển hoặc cam kết việc làm.
+- Danh sách nguyện vọng và profile chỉ lưu trong `localStorage`, không có đăng nhập hay đồng bộ thiết bị.
 
 ## Product Principles
 
-1. Explain every recommendation with observable inputs and score differences.
-2. Keep the first decision path short: scores in, shortlist out.
-3. Separate historical evidence from future-looking guidance.
-4. Protect individual exam records by showing aggregates only.
+1. Giải thích được: hiển thị mốc điểm và chênh lệch thay vì kết luận tuyệt đối.
+2. Tập trung vào luồng DSS cốt lõi: điểm đầu vào → lọc → xếp hạng → danh sách nguyện vọng.
+3. Tách dữ liệu lịch sử, dự báo và bối cảnh việc làm.
+4. Bảo vệ dữ liệu cá nhân: không tra cứu hay công khai điểm theo SBD.
 
-## Accessibility & Inclusion
+## Non-goals for This Course Project
 
-The web interface supports keyboard use, visible focus states, readable Vietnamese labels and responsive layouts for phone and desktop.
+- Không phải cổng tuyển sinh chính thức hay hệ thống đăng ký nguyện vọng.
+- Không cập nhật điểm chuẩn thời gian thực.
+- Không có tài khoản người dùng, thanh toán, thông báo hay đồng bộ cloud.
+- Logo trường, hồ sơ cá nhân hoá sâu và dữ liệu tuyển sinh các năm mới là hướng phát triển, không phải phần cốt lõi của bản nộp.

@@ -1,4 +1,4 @@
-# Mô hình dự báo điểm chuẩn: phạm vi, giới hạn và integration contract
+# Mô hình dự báo điểm chuẩn: phạm vi và giới hạn
 
 ## Phạm vi và khả năng tái lập
 
@@ -6,11 +6,12 @@
 - Dữ liệu modeling gồm các quan sát điểm chuẩn theo phương thức THPTQG trong giai đoạn 2018–2024.
 - Dữ liệu được chia theo thời gian cố định: train `<= 2022`, validation `2023`, test `2024`.
 - Quá trình lựa chọn model chỉ sử dụng validation 2023. Test 2024 chỉ được sử dụng một lần sau khi cấu hình đã được khóa.
+- Artifact triển khai là `models/model.joblib`. `services/cutoff_forecast_service.py` ghép feature 2025 vào các phương án đã lọc và gọi artifact theo batch.
 - Có thể huấn luyện lại bằng lệnh `python models/train_cutoff_model.py` và kiểm tra bằng lệnh `python -m pytest -q`.
 
 ## Giới hạn của dữ liệu nguồn
 
-- Dữ liệu nguồn có 126.185 dòng; trong đó 86.064 dòng được chấp nhận cho modeling và 39.513 dòng bị loại với lý do có thể truy vết, kiểm tra lại.
+- Dữ liệu nguồn có 126.185 dòng. Sau khi gộp 608 bản ghi trùng cùng target, 86.064 dòng được chấp nhận cho modeling và 39.513 dòng bị loại với lý do có thể truy vết, kiểm tra lại.
 - Các trường hợp bị loại gồm: phương thức không phải THPT, target bị thiếu hoặc không phải số, tổ hợp môn không hợp lệ, sai thang điểm và có nhiều điểm chuẩn xung đột trên cùng một modeling key.
 - Có 4.481 nhóm khóa bị xung đột và tiếp tục bị loại cho đến khi có nguồn chính thức để xác minh. Không có dòng dữ liệu mơ hồ nào được tự động đưa trở lại tập modeling.
 - Trường hợp tái sử dụng mã trường hoặc mã chương trình được xử lý theo hướng thận trọng. Những alias có khả năng trùng nhau chỉ được đưa vào danh sách cần rà soát, không được tự động merge.
@@ -55,15 +56,14 @@ Predictor trả về kết quả theo cấu trúc:
 
 `predicted_cutoff` là giá trị ước lượng từ bài toán regression, không phải xác suất trúng tuyển. Backend không được trả về `chance_of_admission` hoặc mô tả kết quả này là “xác suất đỗ”. Ở bước sau, decision layer có thể so sánh điểm của học sinh với `predicted_cutoff`, nhưng kết quả so sánh đó không phải là một calibrated probability.
 
-## Dependency cho quá trình tích hợp
+## Tích hợp trong ứng dụng
 
-Hiện tại chưa có file `integrated_dataset.csv`. Trước khi thay thế dữ liệu admission đang sử dụng, người phụ trách Data Integration và người phụ trách Machine Learning cần thống nhất và khóa các nội dung sau:
+Luồng recommendation đang chạy đã tích hợp model theo các bước sau:
 
-- program identity/key;
-- tên và kiểu dữ liệu của các cột;
-- thời điểm sử dụng các feature về phân phối điểm thi;
-- chính sách xử lý cold start;
-- cách bàn giao danh sách các dòng bị loại;
-- dataset version.
+1. Lọc phương án từ `data/master/master_admission.csv` theo tổ hợp, nhóm ngành, vùng và từ khóa trường/ngành; sở thích hồ sơ được dùng để tính `interest_fit` khi xếp hạng.
+2. Ghép feature forecast 2025 bằng khóa trường, ngành tuyển sinh và tổ hợp.
+3. Dự báo batch bằng `models/model.joblib` cho các dòng có feature hợp lệ.
+4. Giữ `cutoff_score_30` năm 2024 làm fallback cho dòng không đủ feature forecast.
+5. Dùng mốc đó để tính chênh lệch điểm và phục vụ content-based ranking.
 
-Model pipeline vẫn có thể chạy khi chưa có file này. Tuy nhiên, ứng dụng hoàn chỉnh của nhóm chưa được xem là đã tích hợp cho đến khi backend cung cấp đầy đủ các engineered feature bắt buộc và sử dụng `predicted_cutoff` theo đúng contract nêu trên.
+Chi tiết số liệu, baseline và vai trò của model trong DSS xem [Báo cáo Data & Model](../docs/data-model-report.md).

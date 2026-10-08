@@ -1,4 +1,6 @@
-# Design QA
+# Design QA (bản ghi lịch sử)
+
+> Tài liệu này lưu kết quả một lần QA giao diện trước đây, không phải mô tả trạng thái hiện tại của sản phẩm hay điều kiện nghiệm thu Data & Model. Luồng triển khai hiện tại được mô tả trong `README.md` và `PRODUCT.md`.
 
 ## Comparison target
 

@@ -55,6 +55,65 @@ SUBJECT_EXAM_COLUMN_MAP = {
     "tinhoc": "informatics",
 }
 
+# Mapping có chủ đích, dùng để so khớp hồ sơ sở thích khái quát với các thuộc
+# tính đã có của phương án (tên ngành, nhóm ngành, nhóm nghề). Đây là content-
+# based filtering, không suy diễn từ hành vi của những người dùng khác.
+INTEREST_KEYWORDS = {
+    "cong nghe": (
+        "cong nghe", "tin hoc", "dien", "co khi", "tu dong hoa",
+        "du lieu", "tri tue nhan tao", "phan mem", "game",
+    ),
+    "kinh doanh": (
+        "kinh te", "quan tri", "thuong mai", "tai chinh", "ngan hang", "ke toan",
+        "marketing", "logistics", "kinh doanh", "bao hiem",
+    ),
+    "sang tao": (
+        "thiet ke", "truyen thong", "bao chi", "quang cao", "nghe thuat", "am nhac",
+        "my thuat", "thoi trang", "da phuong tien", "game",
+    ),
+    "xa hoi & cong dong": (
+        "xa hoi", "giao duc", "su pham", "tam ly", "luat", "y te", "dieu duong",
+        "duoc", "van hoa", "quan ly nha nuoc", "cong tac xa hoi",
+    ),
+}
+
+
+def calculate_interest_fit_scores(candidates: pd.DataFrame, interests: list[str]) -> np.ndarray:
+    """Trả về mức khớp [0, 1] giữa sở thích trong hồ sơ và từng phương án.
+
+    Mỗi sở thích có trọng số bằng nhau. Một phương án khớp ít nhất một từ khóa
+    đại diện của sở thích đó được tính 1 điểm cho sở thích ấy; sau đó lấy trung
+    bình theo số sở thích đã chọn. Không có sở thích thì trả về 0 để trọng số
+    `interest_fit` được phân bổ lại cho các tiêu chí còn lại ở caller.
+    """
+    cleaned_interests = list(dict.fromkeys(
+        str(interest).strip() for interest in interests if str(interest).strip()
+    ))
+    if not cleaned_interests:
+        return np.zeros(len(candidates), dtype=float)
+
+    searchable_columns = ("major_name", "major_group_name", "job_category")
+    candidate_texts = candidates.apply(
+        lambda row: " ".join(
+            remove_accents(str(row.get(column, ""))).replace("_", " ")
+            for column in searchable_columns
+        ),
+        axis=1,
+    )
+    interest_keywords = []
+    for interest in cleaned_interests:
+        normalized_interest = remove_accents(interest)
+        interest_keywords.append(INTEREST_KEYWORDS.get(normalized_interest, (normalized_interest,)))
+
+    scores = []
+    for candidate_text in candidate_texts:
+        matched_interests = sum(
+            any(keyword and keyword in candidate_text for keyword in keywords)
+            for keywords in interest_keywords
+        )
+        scores.append(matched_interests / len(interest_keywords))
+    return np.asarray(scores, dtype=float)
+
 
 class RecommendationEngine:
     def __init__(self):
@@ -140,7 +199,9 @@ class RecommendationEngine:
                     msg=f"Không tìm thấy phương án tuyển sinh nào tại khu vực '{region_pref}' cho tổ hợp {combination}."
                 )
 
-        # Lọc theo sở thích hoặc danh sách interests từ profile
+        # `interest` là từ khóa cụ thể do người dùng nhập nên được dùng để lọc
+        # cứng. Các chip `preferences.interests` là sở thích khái quát, được
+        # dùng để chấm interest_fit phía dưới thay vì loại hết kết quả.
         user_interests = []
         if isinstance(preferences, dict):
             if isinstance(preferences.get("interests"), list):
@@ -148,10 +209,7 @@ class RecommendationEngine:
             elif isinstance(preferences.get("interests"), str) and preferences.get("interests"):
                 user_interests = [preferences["interests"].strip()]
 
-        search_terms = []
-        if interest:
-            search_terms.append(interest)
-        search_terms.extend(user_interests)
+        search_terms = [interest] if interest else []
 
         if search_terms:
             term_masks = []
@@ -197,9 +255,11 @@ class RecommendationEngine:
 
         # 3. CONTENT-BASED SCORING
         # Điểm gợi ý dựa trên thuộc tính của ngành/trường và hồ sơ đã nhập,
-        # không dùng AHP hoặc TOPSIS. Collaborative Filtering sẽ được bổ sung
-        # sau khi hệ thống có dữ liệu tương tác người dùng đủ dày.
-        gap_scores = np.clip((matched_df["gap"].to_numpy(dtype=float) + 3.0) / 4.0, 0.05, 1.0)
+        # không dùng AHP, TOPSIS hay Collaborative Filtering. Collaborative
+        # Filtering cần ma trận tương tác từ nhiều người dùng, dữ liệu này chưa
+        # thuộc phạm vi của đồ án.
+        admission_fit_scores = np.clip((matched_df["gap"].to_numpy(dtype=float) + 3.0) / 4.0, 0.05, 1.0)
+        interest_fit_scores = calculate_interest_fit_scores(matched_df, user_interests)
 
         salaries = matched_df["job_avg_salary_million"].fillna(15.0).clip(lower=5.0).to_numpy(dtype=float)
         postings = matched_df["job_posting_count"].fillna(500.0).clip(lower=10.0).to_numpy(dtype=float)
@@ -229,10 +289,20 @@ class RecommendationEngine:
         demand_scores = normalize_candidate_feature(postings)
 
         # Điều chỉnh trọng số rõ ràng theo preference do người dùng cung cấp.
-        w_fit = 0.40
+        w_admission = 0.40
+        w_interest = 0.00
         w_sal = 0.25
         w_dem = 0.20
         w_stab = 0.15
+
+        # Khi hồ sơ có sở thích, dành 20% cho mức khớp hồ sơ-ngành. Không có
+        # sở thích thì không giả định sở thích và giữ nguyên trọng số cũ.
+        if user_interests:
+            w_admission = 0.35
+            w_interest = 0.20
+            w_sal = 0.20
+            w_dem = 0.15
+            w_stab = 0.10
 
         # Đọc preferences dạng list/dict từ frontend (state.profile) và priorities
         user_priorities = set()
@@ -259,7 +329,7 @@ class RecommendationEngine:
 
         if any(x in user_priorities for x in ["thu nhập", "salary", "income"]):
             w_sal += 0.15
-            w_fit -= 0.10
+            w_admission -= 0.10
             w_stab -= 0.05
         if any(x in user_priorities for x in ["ổn định", "stability"]):
             w_stab += 0.15
@@ -267,23 +337,26 @@ class RecommendationEngine:
             w_dem -= 0.10
         if any(x in user_priorities for x in ["cơ hội việc làm", "employment", "demand"]):
             w_dem += 0.15
-            w_fit -= 0.10
+            w_admission -= 0.10
             w_sal -= 0.05
         if any(x in user_priorities for x in ["cơ hội quốc tế", "international"]):
             w_dem += 0.10
             w_sal += 0.05
-            w_fit -= 0.15
+            w_admission -= 0.15
 
-        weights = np.array([w_fit, w_sal, w_dem, w_stab])
+        weights = np.array([w_admission, w_interest, w_sal, w_dem, w_stab])
         weights = weights / np.sum(weights)
 
         content_scores = (
-            weights[0] * gap_scores
-            + weights[1] * salary_scores
-            + weights[2] * demand_scores
-            + weights[3] * stabilities
+            weights[0] * admission_fit_scores
+            + weights[1] * interest_fit_scores
+            + weights[2] * salary_scores
+            + weights[3] * demand_scores
+            + weights[4] * stabilities
         )
         matched_df["recommendation_score"] = (content_scores * 100).round(1)
+        matched_df["interest_fit"] = (interest_fit_scores * 100).round(0)
+        matched_df["interest_fit_active"] = bool(user_interests)
         ranking_algo = "content_based_weighted_scoring"
 
         # 4. PHÂN CHIA VÀO CÁC NHÓM SAFE / MATCH / REACH CHO FRONTEND
@@ -308,6 +381,8 @@ class RecommendationEngine:
                 "combination": combination,
                 "note": str(r.get("note", "")),
                 "recommendation_score": float(r.get("recommendation_score", 0.0)),
+                "interest_fit": float(r.get("interest_fit", 0.0)),
+                "interest_fit_active": bool(r.get("interest_fit_active", False)),
                 "cutoff_trend": str(r.get("cutoff_trend", "")),
                 "history_ambiguous": bool(r.get("history_ambiguous", False)),
                 "job_category": str(r.get("job_category", "")),
@@ -346,6 +421,7 @@ class RecommendationEngine:
                 "is_cold_start": bool(r.get("forecast_is_cold_start", False)) if pd.notna(r.get("forecast_is_cold_start")) else False,
                 "gap": float(r.get("gap", 0.0)),
                 "recommendation_score": float(r.get("recommendation_score", 0.0)),
+                "interest_fit": float(r.get("interest_fit", 0.0)),
                 "job_category": str(r.get("job_category", "")),
                 "cutoff_trend": str(r.get("cutoff_trend", "")),
                 "history_ambiguous": bool(r.get("history_ambiguous", False)),
@@ -375,9 +451,6 @@ class RecommendationEngine:
         ]
 
         feature_attributions = []
-        strong_subjects = []
-        weak_subjects = []
-
         for subj_key, user_subj_score in user_scores_float.items():
             col_key = SUBJECT_EXAM_COLUMN_MAP.get(subj_key, subj_key)
             mean_col = f"mean_{col_key}_score"
@@ -399,11 +472,6 @@ class RecommendationEngine:
                 "deviation": impact_str,
             })
 
-            if diff >= 1.0:
-                strong_subjects.append(subj_name)
-            elif diff < 0:
-                weak_subjects.append(subj_name)
-
         # 7. THÔNG TIN THỊ TRƯỜNG LAO ĐỘNG (VietJobs - Trung thực khi thiếu mapping)
         career_context = []
         top_cat = top_choice.get("job_category", "")
@@ -418,24 +486,6 @@ class RecommendationEngine:
         else:
             career_context.append("Chưa đủ dữ liệu thị trường việc làm đã xác minh cho ngành này trong khảo sát VietJobs.")
 
-        # 8. LỜI KHUYÊN TƯ VẤN (Tích hợp AdviceService & RAG Service - Không cam kết tuyệt đối)
-        from services.advice_service import advice_service
-        current_res = {
-            "user_score": user_total_score,
-            "combination": combination,
-            "ranking": ranking,
-            "prediction": prediction,
-            "feature_attributions": feature_attributions,
-            "criteria_weights": {
-                "score_fit": round(float(weights[0]), 3),
-                "salary": round(float(weights[1]), 3),
-                "job_demand": round(float(weights[2]), 3),
-                "stability": round(float(weights[3]), 3),
-            },
-        }
-        adv_res = advice_service.generate_advice(current_res)
-        advice_text = adv_res.get("advice", "")
-
         return {
             "user_score": user_total_score,
             "combination": combination,
@@ -446,17 +496,15 @@ class RecommendationEngine:
             "ranking_algorithm": ranking_algo,
             "ranking": ranking,
             "criteria_weights": {
-                "score_fit": round(float(weights[0]), 3),
-                "salary": round(float(weights[1]), 3),
-                "job_demand": round(float(weights[2]), 3),
-                "stability": round(float(weights[3]), 3),
+                "admission_fit": round(float(weights[0]), 3),
+                "interest_fit": round(float(weights[1]), 3),
+                "salary": round(float(weights[2]), 3),
+                "job_demand": round(float(weights[3]), 3),
+                "stability": round(float(weights[4]), 3),
             },
             "prediction": prediction,
             "feature_attributions": feature_attributions,
             "career_context": career_context,
-            "advice": advice_text,
-            "detailed_advice": adv_res.get("sections", {}),
-            "rag_evidence": adv_res.get("rag_evidence", {}),
             "what_if": {},
         }
 
@@ -475,7 +523,13 @@ class RecommendationEngine:
             "total_count": 0,
             "ranking_algorithm": "content_based_weighted_scoring",
             "ranking": [],
-            "criteria_weights": {"score_fit": 0.40, "salary": 0.25, "job_demand": 0.20, "stability": 0.15},
+            "criteria_weights": {
+                "admission_fit": 0.40,
+                "interest_fit": 0.00,
+                "salary": 0.25,
+                "job_demand": 0.20,
+                "stability": 0.15,
+            },
             "prediction": {
                 "model": "unavailable",
                 "forecast_source": "unavailable",
@@ -486,9 +540,7 @@ class RecommendationEngine:
             },
             "feature_attributions": [],
             "career_context": [],
-            "advice": msg,
-            "detailed_advice": {},
-            "rag_evidence": {},
+            "message": msg,
             "what_if": {},
         }
 

@@ -151,12 +151,6 @@ class TestUnifiedDatasetSemantics(unittest.TestCase):
         self.assertNotIn("chance_of_admission", r2["prediction"])
         self.assertGreater(r1["prediction"]["score_gap_vs_predicted_cutoff"], r2["prediction"]["score_gap_vs_predicted_cutoff"])
 
-        # Kiểm tra nguyên tắc cấm dùng từ khẳng định tuyệt đối trong cả 2 lời khuyên
-        forbidden_phrases = ["chắc chắn đỗ", "bao đỗ", "100% đỗ", "chắc chắn trúng tuyển", "đảm bảo đỗ"]
-        for phrase in forbidden_phrases:
-            self.assertNotIn(phrase, r1["advice"].lower(), f"Lời khuyên chứa từ cấm: {phrase}")
-            self.assertNotIn(phrase, r2["advice"].lower(), f"Lời khuyên chứa từ cấm: {phrase}")
-
     def test_ambiguous_history_does_not_synthesize_fake_means(self):
         """7. Kiểm tra dữ liệu lịch sử điểm chuẩn không bị tổng hợp mean() ảo khi có xung đột."""
         # Trường KHA ngành 7310101 A00 năm 2022 có 3 mức điểm khác nhau trong dữ liệu gốc

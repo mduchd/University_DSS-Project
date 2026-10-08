@@ -1,9 +1,29 @@
 import unittest
-from services.recommendation_service import recommendation_engine
+import pandas as pd
+from services.recommendation_service import calculate_interest_fit_scores, recommendation_engine
 from app import app
 
 
 class TestRecommendationAndValidation(unittest.TestCase):
+    def test_interest_mapping_scores_matching_major(self):
+        """Kiểm tra mapping content-based: sở thích không phải bộ lọc cộng tác."""
+        candidates = pd.DataFrame([
+            {
+                "major_name": "Công nghệ thông tin",
+                "major_group_name": "Công nghệ thông tin - Tin học",
+                "job_category": "công_nghệ_thông_tin_kỹ_thuật_số",
+            },
+            {
+                "major_name": "Quản trị kinh doanh",
+                "major_group_name": "Kinh tế - Quản trị kinh doanh - Thương Mại",
+                "job_category": "kinh_doanh_bán_hàng_chăm_sóc_khách_hàng",
+            },
+        ])
+
+        scores = calculate_interest_fit_scores(candidates, ["Công nghệ"])
+
+        self.assertEqual(scores.tolist(), [1.0, 0.0])
+
     def test_extra_subject_ignored_and_exact_combination_summed(self):
         """Kiểm tra: chỉ cộng đúng 3 môn của tổ hợp, loại bỏ triệt để môn thừa."""
         payload = {
@@ -158,6 +178,7 @@ class TestRecommendationAndValidation(unittest.TestCase):
         }
         res = recommendation_engine.process_recommendation(payload)
         self.assertGreater(res["total_count"], 0)
+        self.assertGreater(res["criteria_weights"]["interest_fit"], 0.0)
         # Kiểm tra ưu tiên Thu nhập được tăng trọng số
         self.assertGreater(res["criteria_weights"]["salary"], 0.25)
 
@@ -181,7 +202,7 @@ class TestRecommendationAndValidation(unittest.TestCase):
         res = recommendation_engine.process_recommendation(payload)
         self.assertEqual(res["ranking_algorithm"], "content_based_weighted_scoring")
 
-    def test_zero_score_returns_empty_ranking_and_clear_advice(self):
+    def test_zero_score_returns_empty_ranking_and_clear_message(self):
         """Kiểm tra P1: Thí sinh tổng điểm 0.0 bị loại sạch vì gap < -3.0, không có ranking ảo."""
         payload = {
             "combination": "A00",
@@ -194,7 +215,7 @@ class TestRecommendationAndValidation(unittest.TestCase):
         self.assertEqual(len(res["results"]["safe"]), 0)
         self.assertEqual(len(res["results"]["match"]), 0)
         self.assertEqual(len(res["results"]["reach"]), 0)
-        self.assertIn("thấp hơn điểm chuẩn tối thiểu", res["advice"])
+        self.assertIn("thấp hơn điểm chuẩn tối thiểu", res["message"])
 
     def test_region_filter_strict_and_accurate(self):
         """Kiểm tra P2: Lọc Miền Bắc và Miền Nam trả về 100% ngành đúng vùng miền, không còn NaN."""

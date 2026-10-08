@@ -1,248 +1,83 @@
-# DSS Dataset — Hỗ trợ lựa chọn ngành học và trường đại học
+# La Bàn Đại Học — Hệ thống hỗ trợ lựa chọn ngành và trường
 
-Kho dữ liệu cho đề tài **“Xây dựng hệ thống hỗ trợ ra quyết định trong lựa chọn ngành học và trường đại học cho học sinh THPT.”**
+Đây là đồ án môn học về **hệ thống hỗ trợ ra quyết định (DSS)** cho học sinh THPT. Hệ thống nhận tổ hợp và điểm ba môn, đối chiếu dữ liệu điểm chuẩn lịch sử, sau đó trả về các phương án theo ba mức: **An toàn**, **Phù hợp** và **Thử sức**.
 
-Mục tiêu của bộ dữ liệu là hỗ trợ phân tích và gợi ý tham khảo dựa trên ba góc nhìn:
+> Kết quả là gợi ý tham khảo, không phải cam kết trúng tuyển hay dự báo xác suất đỗ.
 
-- **Năng lực đầu vào:** điểm thi tốt nghiệp THPT.
-- **Khả năng trúng tuyển:** điểm chuẩn theo trường, ngành và tổ hợp xét tuyển.
-- **Thị trường lao động:** tin tuyển dụng, kỹ năng, địa điểm và thông tin lương (nếu có).
+## Chức năng đang chạy
 
-> Hệ thống chỉ nhằm cung cấp gợi ý tham khảo, không thay thế quyết định cá nhân hoặc tư vấn tuyển sinh chính thức.
+- Nhập điểm theo 10 tổ hợp xét tuyển: `A00`, `A01`, `A02`, `B00`, `B08`, `C00`, `C01`, `C02`, `D01`, `D07`.
+- Lọc theo nhóm ngành, khu vực và từ khóa trường/ngành; chấm `interest_fit` từ hồ sơ sở thích đã chọn.
+- Phân loại phương án bằng chênh lệch giữa tổng điểm của người dùng và mốc điểm chuẩn dự báo/tham chiếu.
+- Xếp hạng content-based theo độ khớp điểm, sở thích-ngành, lương tham khảo, nhu cầu tuyển dụng và độ ổn định của lịch sử điểm chuẩn.
+- Tra cứu điểm chuẩn, xem bối cảnh nghề nghiệp và lưu danh sách nguyện vọng trong trình duyệt.
 
-## Cấu trúc repository
+Luồng recommendation hiện dùng Content-Based Filtering kết hợp weighted scoring: sở thích được đối chiếu minh bạch với đặc trưng của ngành/trường, không sử dụng Collaborative Filtering vì hệ thống chưa có dữ liệu tương tác đa người dùng. Mô-đun AHP + TOPSIS trong `services/decision_engine.py` chỉ được giữ để tham khảo, không nằm trên đường đi của API.
 
-```text
-data/
-├── raw/                         # Dữ liệu gốc, không chỉnh sửa trực tiếp
-│   ├── admission/
-│   │   ├── diemchuan_2018_2023.xlsx
-│   │   ├── diemchuan_2024.csv
-│   │   └── university_admissions_2025_2026.csv   # Dữ liệu cào mới có học phí & mô tả
-│   ├── exam/
-│   │   ├── diemthi_2021.csv
-│   │   ├── diemthi_2022.csv
-│   │   ├── diemthi_2023.csv
-│   │   ├── diemthi_2024.csv
-│   │   ├── diemthi_2025_ct2006.csv
-│   │   └── diemthi_2025_ct2018.csv
-│   ├── jobs/
-│   │   └── VietJobs/
-│   │       └── VietJobs.csv
-│   └── master/                  # Dữ liệu danh mục gốc
-│       └── danh_muc_nganh_chuan.json
-├── cleaned/                     # Dữ liệu sau làm sạch và chuẩn hóa
-│   ├── admission/
-│   ├── exam/
-│   └── jobs/
-├── master/                      # Data contract và danh mục chuẩn dùng chung
-├── processed/                   # Dữ liệu chuẩn hóa/tổng hợp, sẵn sàng phân tích
-│   ├── exam/                    # Điểm thi đã chuẩn hóa theo năm/chương trình
-│   ├── university_admissions_2026_2025.csv
-│   └── university_admissions.db # SQLite
-scripts/
-├── crawler/                     # Module cào dữ liệu tuyển sinh & làm giàu ngành học
-│   ├── __init__.py
-│   ├── config.py
-│   ├── school_scraper.py
-│   ├── admission_scraper.py
-│   ├── major_enricher.py
-│   ├── pipeline.py
-│   └── cli.py
-└── run_crawler.py               # Launcher dòng lệnh
-```
-
-`raw/` luôn được giữ nguyên so với dữ liệu đã tải. Toàn bộ thao tác loại trùng, đổi kiểu dữ liệu, chuẩn hóa tên cột hoặc mapping phải tạo kết quả mới trong `cleaned/` hoặc `processed/`.
-
-## Nguồn dữ liệu
-
-| Nhóm dữ liệu | Phạm vi | Nguồn |
-| --- | --- | --- |
-| Điểm chuẩn đại học | 2018–2024 | [HTNam1710/ADS_Final](https://github.com/HTNam1710/ADS_Final) |
-| Tuyển sinh, Điểm chuẩn & Học phí | 2025–2026 | Cổng thông tin Tuyển sinh Đại học (UniCrawler) |
-| Điểm thi tốt nghiệp THPT | 2021–2025 | [sdgedfegw/du-lieu-diem-thi](https://github.com/sdgedfegw/du-lieu-diem-thi) |
-| Tin tuyển dụng Việt Nam | VietJobs | [dinhieufam/VietJobs](https://huggingface.co/datasets/dinhieufam/VietJobs) |
-| Danh mục chuẩn ngành học | Cấp 4 | Thông tư 09/2022/TT-BGDĐT |
-
-Các file được lấy riêng theo năm thay vì dùng một file điểm thi tổng hợp để quá trình kiểm tra schema, làm sạch và chuẩn hóa có thể được tái lập rõ ràng.
-
-## Lưu ý dữ liệu
-
-- Hai file điểm thi năm 2025 được tách theo **chương trình 2006** và **chương trình 2018**. Không nên so sánh trực tiếp phân phối điểm 2025 với các năm trước mà không nêu rõ sự khác biệt chương trình và môn thi.
-- Dữ liệu điểm thi có cột `SBD`. Không công bố lại bản ghi cá nhân, kết quả truy vấn theo số báo danh hoặc dashboard có thể nhận diện cá nhân.
-- Việc liên kết ngành học với thị trường việc làm cần một bảng mapping rõ ràng, ví dụ `major_code`, `major_name`, `major_group`, `job_category`, `mapping_confidence`.
-- Một số file CSV lớn hơn 50 MB. GitHub đã chấp nhận chúng, nhưng Git LFS nên được cân nhắc nếu dữ liệu tiếp tục tăng.
-
-## Công cụ cào dữ liệu tuyển sinh & ngành học (UniCrawler)
-
-Repository tích hợp module cào dữ liệu tự động tại `scripts/crawler/` và entry point `run_crawler.py`, thu thập đầy đủ 8 trường thông tin:
-1. **Mã ngành**
-2. **Tên ngành**
-3. **Trường** (Mã trường, Tên trường)
-4. **Tổ hợp xét tuyển**
-5. **Học phí**
-6. **Chương trình đào tạo**
-7. **Mô tả ngành**
-8. **Cơ hội nghề nghiệp**
-
-### Cách sử dụng:
-
-```powershell
-# 1. Cào thử nghiệm N trường tiêu biểu:
-python run_crawler.py --limit 5
-
-# 2. Cào các trường theo mã (ví dụ NEU, HUST, UET):
-python run_crawler.py --schools KHA,BKA,QHI --years 2025,2026
-
-# 3. Cào toàn diện tất cả các trường trên cả nước trong 2 năm gần nhất:
-python run_crawler.py --formats csv,json,sqlite
-```
-
-Dữ liệu kết quả được lưu tại:
-- `data/raw/admission/university_admissions_{years}.csv` và `.json`
-- `data/processed/university_admissions_{years}.csv` và `university_admissions.db` (SQLite)
-- `data/raw/master/danh_muc_nganh_chuan.json`
-
-## Quy trình đề xuất
+## Kiến trúc
 
 ```text
-raw
-  → kiểm tra schema, giá trị thiếu, trùng lặp và kiểu dữ liệu
-  → cleaned
-  → chuẩn hóa mã/tên trường, ngành, tổ hợp, tỉnh/thành và nhóm nghề
-  → processed
-  → phân tích, dashboard hoặc mô hình gợi ý
+Browser (HTML/CSS/JS)
+        │ POST /api/recommend
+        ▼
+Flask API
+        │
+        ├─ master_admission.csv: lọc phương án tuyển sinh
+        ├─ model.joblib: dự báo mốc điểm chuẩn 2025
+        ├─ VietJobs summaries: bối cảnh việc làm
+        └─ content-based scoring: xếp hạng và phân nhóm
 ```
 
-## Trạng thái
+- Frontend: HTML, CSS, JavaScript thuần.
+- Backend: Flask, pandas, scikit-learn, XGBoost.
+- Deploy: Vercel host frontend và chuyển `/api/*` tới Flask API trên Render.
 
-- [x] Tải dữ liệu gốc về `data/raw/`
-- [x] Làm sạch dữ liệu điểm chuẩn, điểm thi và VietJobs
-- [x] Chuẩn hóa dữ liệu điểm thi 2021–2025 sang cùng một schema
-- [x] Tạo bảng tổng hợp điểm thi theo năm, chương trình và mã tỉnh
-- [x] Chuẩn hóa dữ liệu điểm chuẩn 2018–2024 sang cùng một schema
-- [x] Chuẩn hóa VietJobs sang cùng một schema
-- [x] Tạo danh mục ngành và bảng mapping ngành–nghề
-- [x] Xây dựng công cụ cào dữ liệu tuyển sinh, học phí và thông tin ngành
-- [ ] Tạo bảng tổng hợp phục vụ hệ thống gợi ý
+## Dữ liệu đang dùng
 
-## Làm sạch điểm chuẩn 2018–2023
+| Dữ liệu | Vai trò | Quy mô hiện có |
+| --- | --- | ---: |
+| Điểm chuẩn 2018–2024 | Huấn luyện/đánh giá mô hình | 126.185 dòng canonical; 86.064 dòng hợp lệ cho modeling |
+| `master_admission.csv` | Lọc và hiển thị phương án trong ứng dụng | 19.983 dòng |
+| Phổ điểm thi tổng hợp | Feature bối cảnh theo tổ hợp | 384 dòng tổng hợp, không có SBD |
+| VietJobs đã chuẩn hoá | Lương, nhu cầu và kỹ năng theo nhóm nghề | 47.698 tin; 16 nhóm nghề tổng hợp |
+| Mapping ngành–nghề | Ghép ngành với bối cảnh việc làm | 3.992 mapping; 133 ngành chưa map |
 
-Chạy script sau để tạo một bản dữ liệu clean. File gốc trong `data/raw/` không bị thay đổi.
+Nguồn và quy trình làm sạch/model được trình bày tại [docs/data-model-report.md](docs/data-model-report.md). Dữ liệu 2025–2026 do crawler thu thập được lưu riêng để tham khảo, **chưa được đưa vào mô hình hay mốc hiển thị của luồng recommendation hiện tại**.
 
-```bash
-.\.venv\Scripts\python -m pip install -r requirements.txt
-.\.venv\Scripts\python scripts\clean_diemchuan_2018_2023.py
-```
-
-Kết quả: `data/cleaned/admission/diemchuan_2018_2023_cleaned.csv`.
-
-## Làm sạch tin tuyển dụng VietJobs
-
-```bash
-.\.venv\Scripts\python scripts\clean_vietjobs.py
-```
-
-Kết quả: `data/cleaned/jobs/VietJobs_cleaned.csv`. File raw được giữ nguyên.
-
-## Làm sạch điểm thi 2021–2022
+## Chạy cục bộ
 
 ```powershell
-.\.venv\Scripts\python scripts/clean_exam.py
-```
-
-Kết quả:
-
-- `data/cleaned/exam/diemthi_2021_cleaned.csv`
-- `data/cleaned/exam/diemthi_2022_cleaned.csv`
-
-Các file gốc trong `data/raw/exam/` được giữ nguyên.
-
-## Chuẩn hóa điểm thi 2021–2025
-
-Script chuẩn hóa các file trong `data/cleaned/exam/` sang một schema chung,
-đồng thời tính lại các tổ hợp A00, A01, A02, B00, C00, C01, C02, D01 và D07.
-Contract cột nằm tại `data/master/exam_schema.csv`.
-
-```powershell
-.\.venv\Scripts\python scripts\standardize_exam.py
-```
-
-Kết quả nằm trong `data/processed/exam/`:
-
-- `scores_*.csv`: dữ liệu bản ghi đã chuẩn hóa, chỉ dùng cho phân tích nội bộ.
-- `exam_score_summary_by_year_province.csv`: bảng tổng hợp an toàn hơn cho ứng dụng; không có số báo danh.
-- `standardization_report.json`: số dòng đã xử lý và schema đầu ra.
-
-Không hiển thị `candidate_id` hoặc `candidate_number` trong giao diện hay API công khai.
-
-## Chuẩn hóa điểm chuẩn 2018–2024
-
-Script hợp nhất hai nguồn điểm chuẩn đã clean thành một schema chung. Chỉ các
-dòng `THPTQG` dùng thang 30 hoặc 40 có `cutoff_score_30`; các phương thức học
-bạ, DGNL và DGTD giữ nguyên thang điểm nguồn để tránh so sánh sai.
-
-```powershell
-.\.venv\Scripts\python scripts\standardize_admission.py
-```
-
-Kết quả nằm trong `data/processed/admission/`:
-
-- `admission_cutoffs_2018_2024.csv`: 126.185 bản ghi điểm chuẩn canonical.
-- `admission_cutoff_summary_by_year_major.csv`: thống kê xu hướng thang 30 theo năm, ngành và tổ hợp.
-- `standardization_report.json`: nguồn đầu vào, số dòng và schema đầu ra.
-
-Contract cột nằm tại `data/master/admission_schema.csv`.
-
-## Chuẩn hóa VietJobs
-
-Script chuẩn hóa các tin tuyển dụng thành bản ghi có `job_id` ổn định, lương
-triệu VND/tháng và kinh nghiệm theo tháng. Các trường kỹ năng, bằng cấp, ngôn
-ngữ và phúc lợi được lưu dưới dạng JSON list. Script không tự suy đoán ngành
-học phù hợp với nghề; quan hệ đó được tạo ở bước mapping sau.
-
-```powershell
-.\.venv\Scripts\python scripts\standardize_vietjobs.py
-```
-
-Kết quả nằm trong `data/processed/jobs/`:
-
-- `vietjobs_postings.csv`: 47.698 tin tuyển dụng canonical.
-- `job_market_summary_by_category.csv`: tổng hợp số tin, lương và kinh nghiệm theo nhóm nghề.
-- `standardization_report.json`: số dòng và các bản ghi cần rà soát.
-
-Contract cột nằm tại `data/master/jobs_schema.csv`.
-
-## Mapping ngành học với nhóm nghề
-
-Script tạo catalog ngành từ dữ liệu điểm chuẩn và mapping một ngành sang nhóm
-nghề VietJobs bằng quy tắc từ khóa có thể kiểm tra. Mỗi liên kết ghi rõ cơ sở
-mapping và mức tin cậy; mapping chỉ thể hiện liên quan chủ đề, không phải cam
-kết việc làm.
-
-```powershell
-.\.venv\Scripts\python scripts\build_major_job_mapping.py
-```
-
-Kết quả trong `data/master/`:
-
-- `major_catalog.csv`: 4.125 tổ hợp mã/tên/nhóm ngành có trong dữ liệu điểm chuẩn.
-- `major_job_mapping.csv`: 3.992 liên kết ngành–nhóm nghề (coverage 96,78%).
-- `unmapped_majors.csv`: 133 ngành cần quyết định thủ công thay vì tự suy đoán.
-- `major_job_mapping_report.json`: coverage, mức tin cậy và quy tắc áp dụng.
-
-Contract của bảng mapping nằm tại `data/master/major_job_mapping_schema.csv`.
-
-## Chạy giao diện web
-
-Giao diện MVP dùng **HTML, CSS, JavaScript** và **Flask**. Nó hiện đối chiếu điểm người dùng với dữ liệu điểm chuẩn 2024, theo các tổ hợp `A00`, `A01`, `B00`, `C00` và `D01`.
-
-```bash
 python -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements.txt
 .\.venv\Scripts\python app.py
 ```
 
-Sau đó mở `http://127.0.0.1:5000` trên trình duyệt.
+Mở `http://127.0.0.1:5000`.
 
-Các phần VietJobs và xu hướng nhiều năm đã có vị trí trong giao diện, nhưng chỉ được cá nhân hóa sau khi hoàn tất cleaning và bảng mapping ngành–nghề.
+## Kiểm thử
+
+```powershell
+.\.venv\Scripts\python -m pytest -q
+```
+
+Test bao phủ làm sạch dữ liệu, feature/model dự báo, validation payload, recommendation và decision engine tham khảo.
+
+## Phạm vi và giới hạn
+
+- Mô hình dùng dữ liệu điểm chuẩn 2018–2024 để tạo **mốc dự báo 2025**; đây là thí nghiệm lịch sử, không phải mốc tuyển sinh thời gian thực.
+- Trường/ngành chưa có lịch sử (cold-start) có sai số cao hơn; hệ thống giữ fallback lịch sử thay vì tạo dữ liệu giả.
+- Danh sách nguyện vọng chỉ lưu ở `localStorage`, không có tài khoản hay đồng bộ nhiều thiết bị.
+- Không có tra cứu số báo danh hoặc dữ liệu cá nhân của thí sinh trong API/giao diện công khai.
+
+## Cấu trúc chính
+
+```text
+app.py                              Flask routes
+services/recommendation_service.py  Lọc, dự báo và xếp hạng
+services/cutoff_forecast_service.py Feature store và batch prediction
+models/                             Artifact model, training và evaluation
+data/master/                        Dataset tích hợp dùng cho ứng dụng
+data/processed/                     Dataset/report trung gian và tổng hợp
+docs/data-model-report.md           Tài liệu Data & Model cho báo cáo môn học
+tests/                              Automated tests
+```
