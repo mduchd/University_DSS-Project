@@ -35,6 +35,7 @@ STEP2_PATH = ROOT / "data" / "processed" / "admission_ml_step2.csv"
 EXAM_SUMMARY_PATH = (
     ROOT / "data" / "processed" / "exam" / "exam_score_summary_by_year_province.csv"
 )
+FORECAST_FEATURES_PATH = ROOT / "data" / "processed" / "cutoff_forecast_2025_features.csv"
 JOIN_KEYS = [
     "university_admission_code",
     "major_admission_code",
@@ -72,6 +73,12 @@ class CutoffForecastService:
         target để missing. Các hàm feature engineering vì thế chỉ nhìn thấy
         target của các năm trước khi tạo lag và aggregate cho 2025.
         """
+        if FORECAST_FEATURES_PATH.exists():
+            forecast = pd.read_csv(FORECAST_FEATURES_PATH, low_memory=False)
+            for key in JOIN_KEYS:
+                forecast[key] = _normalise_join_key(forecast[key])
+            return forecast
+
         if not STEP2_PATH.exists() or not EXAM_SUMMARY_PATH.exists():
             raise FileNotFoundError("Không tìm thấy dữ liệu feature hoặc tóm tắt phổ điểm cho cutoff model.")
 
