@@ -1,5 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "python3 scripts/build_frontend.py",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/api/:path*",
