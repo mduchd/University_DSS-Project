@@ -94,6 +94,9 @@ def main() -> None:
     OUTPUT_DIR.mkdir(parents=True)
     (OUTPUT_DIR / "index.html").write_text(html, encoding="utf-8")
     shutil.copytree(STATIC_DIR, OUTPUT_DIR / "static")
+    vercel_config = ROOT / "vercel.json"
+    if vercel_config.exists():
+        shutil.copy2(vercel_config, OUTPUT_DIR / "vercel.json")
 
 
 if __name__ == "__main__":

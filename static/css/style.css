@@ -1937,14 +1937,14 @@ body.dark-mode .gap-pill.reach {
 
 /* Structural rules are shared by both themes; only the colour tokens change. */
 .app-main {
-  max-width: 1320px;
-  padding: 28px 24px 48px;
+  max-width: 1360px;
+  padding: 16px 24px 24px;
   margin: 0 auto;
 }
 
 #recommend-view .view-hero {
   max-width: 820px;
-  margin: 0 auto 28px;
+  margin: 0 auto 16px;
   text-align: center;
 }
 
@@ -1954,15 +1954,15 @@ body.dark-mode .gap-pill.reach {
 
 #recommend-view .hero-desc {
   display: block;
-  margin: 8px 0 0;
-  font-size: 14.5px;
+  margin: 4px 0 0;
+  font-size: 13.5px;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 #recommend-view .hero-title {
   margin: 0;
-  font-size: 29px;
+  font-size: 25px;
   font-weight: 800;
   color: var(--text-primary);
 }
@@ -1970,24 +1970,24 @@ body.dark-mode .gap-pill.reach {
 .dashboard-grid {
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
-  gap: 24px;
+  gap: 20px;
   align-items: start;
 }
 
 .form-card {
-  position: sticky;
-  top: 20px;
-  align-self: start;
-  z-index: 5;
+  border-radius: var(--radius-lg, 14px);
+  padding: 20px 22px;
 }
 
 .results-card {
+  border-radius: var(--radius-lg, 14px);
   min-height: 500px;
+  padding: 20px 22px;
 }
 
 .card-header {
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .score-sum-box {
@@ -1995,7 +1995,7 @@ body.dark-mode .gap-pill.reach {
 }
 
 .empty-state-box {
-  padding: 60px 16px 36px;
+  padding: 48px 16px 28px;
 }
 
 .empty-guide-cards {
@@ -2003,13 +2003,13 @@ body.dark-mode .gap-pill.reach {
 }
 
 .guide-mini-card {
-  min-height: 88px;
+  min-height: 80px;
 }
 
 /* Sidebar Tips Box */
 .form-sidebar-tips {
-  margin-top: 20px;
-  padding: 14px 16px;
+  margin-top: 16px;
+  padding: 12px 14px;
   background-color: var(--bg-hover, rgba(0, 0, 0, 0.02));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -2019,10 +2019,10 @@ body.dark-mode .gap-pill.reach {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -2037,16 +2037,16 @@ body.dark-mode .gap-pill.reach {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .form-sidebar-tips .tip-list li {
   display: flex;
   align-items: baseline;
   gap: 7px;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-secondary);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .form-sidebar-tips .tip-dot {
@@ -2065,7 +2065,7 @@ body.dark-mode .gap-pill.reach {
 .filter-tabs-bar {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
@@ -2073,9 +2073,9 @@ body.dark-mode .gap-pill.reach {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 15px;
+  padding: 6px 14px;
   border-radius: var(--radius-full);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   border: 1.5px solid var(--border-color);
@@ -2114,14 +2114,174 @@ body.dark-mode .gap-pill.reach {
   color: #ffffff;
 }
 
+/* ==================== DESKTOP FIXED VIEWPORT LAYOUT ==================== */
+/* Cố định toàn bộ khung màn hình trên Desktop: chỉ cuộn danh sách kết quả */
+@media (min-width: 961px) and (min-height: 560px) {
+  html,
+  body {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden !important;
+  }
+
+  .app-wrapper {
+    height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+  }
+
+  .app-header {
+    flex: 0 0 auto;
+  }
+
+  .app-main {
+    flex: 1 1 0%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+    padding: 12px 24px 16px;
+    width: 100%;
+  }
+
+  #recommend-view {
+    flex: 1 1 0%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+  }
+
+  #recommend-view .view-hero {
+    flex: 0 0 auto;
+    margin: 0 auto 12px;
+  }
+
+  #recommend-view .hero-title {
+    font-size: 22px;
+    margin: 0 0 2px;
+  }
+
+  #recommend-view .hero-desc {
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  .dashboard-grid {
+    flex: 1 1 0%;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 350px minmax(0, 1fr);
+    gap: 18px;
+    align-items: stretch;
+    overflow: hidden !important;
+  }
+
+  .form-card {
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    padding: 16px 18px;
+    position: static;
+    scrollbar-width: thin;
+  }
+
+  .results-card {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+    padding: 16px 20px;
+  }
+
+  .results-header {
+    flex: 0 0 auto;
+    margin-bottom: 10px;
+  }
+
+  .filter-tabs-bar {
+    flex: 0 0 auto;
+    margin-bottom: 12px;
+  }
+
+  .empty-state-box {
+    flex: 1 1 0%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 16px;
+    overflow-y: auto;
+  }
+
+  .loading-state-box {
+    flex: 1 1 0%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .recommendations-container {
+    flex: 1 1 0%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+  }
+
+  .recommendations-scroll-area {
+    flex: 1 1 0%;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    padding-right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scrollbar-width: thin;
+  }
+}
+
+/* Custom Sleek Scrollbar */
+.recommendations-scroll-area::-webkit-scrollbar,
+.form-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.recommendations-scroll-area::-webkit-scrollbar-track,
+.form-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.recommendations-scroll-area::-webkit-scrollbar-thumb,
+.form-card::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.recommendations-scroll-area::-webkit-scrollbar-thumb:hover,
+.form-card::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
 body.dark-mode .app-header {
   background-color: #191b26;
   border-color: #30334a;
 }
 
 body.dark-mode .app-main {
-  max-width: 1320px;
-  padding: 28px 24px 48px;
+  max-width: 1360px;
 }
 
 body.dark-mode #recommend-view .hero-title {
@@ -2137,10 +2297,6 @@ body.dark-mode .results-card {
   background: #1b1d28;
   border-color: #36394f;
   box-shadow: none;
-}
-
-body.dark-mode .form-card {
-  padding: 24px;
 }
 
 body.dark-mode .card-step-badge {
@@ -2197,7 +2353,7 @@ body.dark-mode .empty-icon-wrap {
   background: #20295a;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 960px) {
   .dashboard-grid,
   body.dark-mode .dashboard-grid {
     grid-template-columns: 1fr;
