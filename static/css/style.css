@@ -1802,6 +1802,57 @@ a {
   display: none !important;
 }
 
+/* Structural rules are shared by both themes; only the colour tokens change. */
+.app-main {
+  max-width: 1128px;
+  padding-top: 32px;
+}
+
+#recommend-view .view-hero {
+  max-width: none;
+  margin-bottom: 26px;
+}
+
+#recommend-view .hero-badge,
+#recommend-view .hero-desc {
+  display: none;
+}
+
+#recommend-view .hero-title {
+  margin: 0;
+  font-size: 31px;
+}
+
+.dashboard-grid {
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 24px;
+}
+
+.results-card {
+  min-height: 450px;
+}
+
+.card-header {
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.score-sum-box {
+  gap: 12px;
+}
+
+.empty-state-box {
+  padding: 72px 16px 36px;
+}
+
+.empty-guide-cards {
+  max-width: 610px;
+}
+
+.guide-mini-card {
+  min-height: 88px;
+}
+
 body.dark-mode .app-header {
   background-color: #191b26;
   border-color: #30334a;
@@ -1812,25 +1863,8 @@ body.dark-mode .app-main {
   padding-top: 32px;
 }
 
-body.dark-mode #recommend-view .view-hero {
-  max-width: none;
-  margin-bottom: 26px;
-}
-
-body.dark-mode #recommend-view .hero-badge,
-body.dark-mode #recommend-view .hero-desc {
-  display: none;
-}
-
 body.dark-mode #recommend-view .hero-title {
-  margin: 0;
   color: #f7f7fb;
-  font-size: 31px;
-}
-
-body.dark-mode .dashboard-grid {
-  grid-template-columns: 420px minmax(0, 1fr);
-  gap: 24px;
 }
 
 body.dark-mode .form-card,
@@ -1842,15 +1876,6 @@ body.dark-mode .results-card {
 
 body.dark-mode .form-card {
   padding: 24px;
-}
-
-body.dark-mode .results-card {
-  min-height: 450px;
-}
-
-body.dark-mode .card-header {
-  gap: 12px;
-  margin-bottom: 22px;
 }
 
 body.dark-mode .card-step-badge {
@@ -1866,7 +1891,6 @@ body.dark-mode .score-field input {
 }
 
 body.dark-mode .score-sum-box {
-  gap: 12px;
   background: #222638;
   border-color: #343950;
 }
@@ -1886,22 +1910,10 @@ body.dark-mode .score-sum-box {
   border-color: var(--primary);
 }
 
-body.dark-mode .empty-state-box {
-  padding: 72px 16px 36px;
-}
-
 body.dark-mode .empty-icon-wrap {
   width: 72px;
   height: 72px;
   background: #20295a;
-}
-
-body.dark-mode .empty-guide-cards {
-  max-width: 610px;
-}
-
-body.dark-mode .guide-mini-card {
-  min-height: 88px;
 }
 
 @media (max-width: 1024px) {
