@@ -66,7 +66,7 @@ class DataRepository:
         return df.copy()
 
     def get_master_data(self) -> pd.DataFrame:
-        """Cung cấp bản sao dữ liệu tiêu chí ngành cho AHP/TOPSIS / Decision Engine"""
+        """Cung cấp bản sao dữ liệu tuyển sinh cho luồng lọc và gợi ý."""
         df = self._data_cache.get("master_data", pd.DataFrame())
         return df.copy()
 

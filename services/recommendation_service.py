@@ -1,9 +1,9 @@
 import logging
-import math
 import unicodedata
 import numpy as np
 import pandas as pd
 from services.data_repository import data_repo
+from services.cutoff_forecast_service import cutoff_forecast_service
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -62,7 +62,7 @@ class RecommendationEngine:
         self.exam_data = data_repo.get_exam_data()
 
     def process_recommendation(self, user_payload: dict) -> dict:
-        """Xử lý hồ sơ: kiểm tra tổ hợp bắt buộc, chạy thuật toán TOPSIS đa tiêu chí, tính độ lệch phổ điểm."""
+        """Lọc ứng viên hợp lệ và xếp hạng content-based theo hồ sơ người dùng."""
         combination = str(user_payload.get("combination", "A00")).strip().upper()
         raw_scores = user_payload.get("scores", {})
         interest = str(user_payload.get("interest", "")).strip()
@@ -175,11 +175,18 @@ class RecommendationEngine:
         if matched_df.empty:
             return self._fallback_empty_response(user_total_score, combination)
 
-        matched_df["cutoff_numeric"] = pd.to_numeric(matched_df["cutoff_score_30"], errors="coerce")
-        matched_df = matched_df.dropna(subset=["cutoff_numeric"])
-        matched_df["gap"] = (user_total_score - matched_df["cutoff_numeric"]).round(2)
+        matched_df["historical_cutoff"] = pd.to_numeric(matched_df["cutoff_score_30"], errors="coerce")
+        matched_df = matched_df.dropna(subset=["historical_cutoff"])
 
-        # KHẮC PHỤC TRIỆT ĐỂ: Loại bỏ các phương án quá tầm với (gap < -3.0) trước khi chạy TOPSIS và xếp hạng
+        # XGBoost dự báo điểm chuẩn 2025 từ feature lịch sử tính đến 2024.
+        # Khi candidate không có modeling key, giữ điểm chuẩn lịch sử thay vì
+        # tự dựng feature hoặc đưa ra dự báo thiếu căn cứ.
+        matched_df = cutoff_forecast_service.add_forecasts(matched_df)
+        matched_df["ranking_cutoff"] = matched_df["predicted_cutoff"].fillna(matched_df["historical_cutoff"])
+        matched_df["cutoff_numeric"] = matched_df["ranking_cutoff"]
+        matched_df["gap"] = (user_total_score - matched_df["ranking_cutoff"]).round(2)
+
+        # Loại bỏ các phương án quá tầm với (gap < -3.0) trước khi tạo danh sách gợi ý.
         matched_df = matched_df[matched_df["gap"] >= -3.0].copy()
         if matched_df.empty:
             return self._fallback_empty_response(
@@ -188,18 +195,14 @@ class RecommendationEngine:
                 msg=f"Mức điểm {user_total_score:.2f} hiện thấp hơn điểm chuẩn tối thiểu của các trường (vượt ngoài ngưỡng thử sức -3.0 điểm). Hệ thống khuyến nghị bạn cân nhắc cải thiện điểm thi hoặc lựa chọn các phương thức xét tuyển khác."
             )
 
-        # 3. THUẬT TOÁN TOPSIS (Đa tiêu chí có tích hợp Preferences người dùng)
-        # Tiêu chí:
-        # - C1: Mức độ tương thích điểm số (gap fit)
-        # - C2: Mức lương thị trường (salary)
-        # - C3: Nhu cầu tuyển dụng (job_demand)
-        # - C4: Độ ổn định điểm chuẩn (stability)
-        gap_scores = matched_df["gap"].apply(
-            lambda g: max(0.1, 10.0 - abs(g - 1.0)) if g >= -2.0 else max(0.01, 10.0 - abs(g) * 2.0)
-        ).to_numpy()
+        # 3. CONTENT-BASED SCORING
+        # Điểm gợi ý dựa trên thuộc tính của ngành/trường và hồ sơ đã nhập,
+        # không dùng AHP hoặc TOPSIS. Collaborative Filtering sẽ được bổ sung
+        # sau khi hệ thống có dữ liệu tương tác người dùng đủ dày.
+        gap_scores = np.clip((matched_df["gap"].to_numpy(dtype=float) + 3.0) / 4.0, 0.05, 1.0)
 
-        salaries = matched_df["job_avg_salary_million"].fillna(15.0).clip(lower=5.0).to_numpy()
-        postings = matched_df["job_posting_count"].fillna(500.0).clip(lower=10.0).to_numpy()
+        salaries = matched_df["job_avg_salary_million"].fillna(15.0).clip(lower=5.0).to_numpy(dtype=float)
+        postings = matched_df["job_posting_count"].fillna(500.0).clip(lower=10.0).to_numpy(dtype=float)
 
         # KHẮC PHỤC TRIỆT ĐỂ: Nếu thiếu lịch sử quan sát (< 2 năm) hoặc có xung đột, gán stability trung tính 0.5
         years_obs = matched_df["years_observed"].fillna(1).to_numpy()
@@ -215,9 +218,17 @@ class RecommendationEngine:
             0.5  # Mức trung tính khi thiếu dữ liệu lịch sử hoặc xung đột
         )
 
-        X = np.column_stack([gap_scores, salaries, postings, stabilities])
+        def normalize_candidate_feature(values: np.ndarray) -> np.ndarray:
+            """Đưa một đặc trưng ứng viên về [0, 1] mà không dùng ideal solution."""
+            lower, upper = np.quantile(values, [0.05, 0.95])
+            if upper <= lower:
+                return np.full(len(values), 0.5)
+            return np.clip((values - lower) / (upper - lower), 0.0, 1.0)
 
-        # ĐIỀU CHỈNH TRỌNG SỐ THEO PREFERENCES NGƯỜI DÙNG (Phân biệt chính xác từng tag)
+        salary_scores = normalize_candidate_feature(salaries)
+        demand_scores = normalize_candidate_feature(postings)
+
+        # Điều chỉnh trọng số rõ ràng theo preference do người dùng cung cấp.
         w_fit = 0.40
         w_sal = 0.25
         w_dem = 0.20
@@ -266,31 +277,14 @@ class RecommendationEngine:
         weights = np.array([w_fit, w_sal, w_dem, w_stab])
         weights = weights / np.sum(weights)
 
-        # Vector normalization
-        norm_denom = np.sqrt(np.sum(X ** 2, axis=0))
-        norm_denom[norm_denom == 0] = 1e-9
-        R = X / norm_denom
-        V = R * weights
-
-        ideal_best = np.max(V, axis=0)
-        ideal_worst = np.min(V, axis=0)
-
-        dist_best = np.sqrt(np.sum((V - ideal_best) ** 2, axis=1))
-        dist_worst = np.sqrt(np.sum((V - ideal_worst) ** 2, axis=1))
-
-        # KHẮC PHỤC TRIỆT ĐỂ CHO TRƯỜNG HỢP 1 PHƯƠNG ÁN (m = 1)
-        if len(matched_df) == 1:
-            g = float(matched_df["gap"].iloc[0])
-            single_closeness = max(0.2, min(0.95, 0.70 + (g * 0.05)))
-            closeness = np.array([single_closeness])
-            ranking_algo = "TOPSIS_fallback_heuristic"
-        else:
-            denom = dist_best + dist_worst
-            closeness = np.where(denom > 1e-9, dist_worst / np.maximum(denom, 1e-9), 0.5)
-            ranking_algo = "TOPSIS_multi_criteria"
-
-        matched_df["topsis_closeness"] = closeness
-        matched_df["match_score"] = (closeness * 100).round(1)
+        content_scores = (
+            weights[0] * gap_scores
+            + weights[1] * salary_scores
+            + weights[2] * demand_scores
+            + weights[3] * stabilities
+        )
+        matched_df["recommendation_score"] = (content_scores * 100).round(1)
+        ranking_algo = "content_based_weighted_scoring"
 
         # 4. PHÂN CHIA VÀO CÁC NHÓM SAFE / MATCH / REACH CHO FRONTEND
         # Nghiệp vụ:
@@ -306,11 +300,14 @@ class RecommendationEngine:
                 "major": str(r.get("major_name", "")),
                 "major_code": str(r.get("major_code", "")),
                 "group": str(r.get("major_group_name", "Khác")),
-                "cutoff": float(r.get("cutoff_numeric", 0.0)),
+                "cutoff": float(r.get("ranking_cutoff", 0.0)),
+                "historical_cutoff_2024": float(r.get("historical_cutoff", 0.0)),
+                "forecast_year": int(r["forecast_year"]) if pd.notna(r.get("forecast_year")) else None,
+                "forecast_source": str(r.get("forecast_source", "historical_2024_fallback")),
                 "gap": gap,
                 "combination": combination,
                 "note": str(r.get("note", "")),
-                "topsis_score": float(r.get("match_score", 0.0)),
+                "recommendation_score": float(r.get("recommendation_score", 0.0)),
                 "cutoff_trend": str(r.get("cutoff_trend", "")),
                 "history_ambiguous": bool(r.get("history_ambiguous", False)),
                 "job_category": str(r.get("job_category", "")),
@@ -324,16 +321,16 @@ class RecommendationEngine:
             elif gap >= -3.0:
                 buckets["reach"].append(item)
 
-        # Sắp xếp từng bucket theo điểm TOPSIS và giới hạn tối đa 15 mục
+        # Sắp xếp từng bucket theo content-based score và giới hạn tối đa 15 mục.
         for k in buckets:
-            buckets[k].sort(key=lambda x: (x["topsis_score"], -abs(x["gap"])), reverse=True)
+            buckets[k].sort(key=lambda x: (x["recommendation_score"], -abs(x["gap"])), reverse=True)
             buckets[k] = buckets[k][:15]
 
         counts = {k: len(v) for k, v in buckets.items()}
         total_count = sum(counts.values())
 
-        # Top 5 tổng thể cho bảng xếp hạng TOPSIS
-        ranked_df = matched_df.sort_values(by="topsis_closeness", ascending=False).head(5)
+        # Top 5 theo content-based score để giải thích cho người dùng.
+        ranked_df = matched_df.sort_values(by="recommendation_score", ascending=False).head(5)
         ranking = []
         for _, r in ranked_df.iterrows():
             ranking.append({
@@ -341,9 +338,14 @@ class RecommendationEngine:
                 "ten_truong": str(r.get("university_name", "")),
                 "ma_nganh": str(r.get("major_code", "")),
                 "ten_nganh": str(r.get("major_name", "")),
-                "diem_chuan_2024": float(r.get("cutoff_score_30", 0.0)),
+                "diem_chuan_2024": float(r.get("historical_cutoff", 0.0)),
+                "du_bao_diem_chuan": float(r.get("ranking_cutoff", 0.0)),
+                "nam_du_bao": int(r["forecast_year"]) if pd.notna(r.get("forecast_year")) else None,
+                "nguon_du_bao": str(r.get("forecast_source", "historical_2024_fallback")),
+                "model_version": r.get("forecast_model_version") if pd.notna(r.get("forecast_model_version")) else None,
+                "is_cold_start": bool(r.get("forecast_is_cold_start", False)) if pd.notna(r.get("forecast_is_cold_start")) else False,
                 "gap": float(r.get("gap", 0.0)),
-                "match_score": float(r.get("match_score", 0.0)),
+                "recommendation_score": float(r.get("recommendation_score", 0.0)),
                 "job_category": str(r.get("job_category", "")),
                 "cutoff_trend": str(r.get("cutoff_trend", "")),
                 "history_ambiguous": bool(r.get("history_ambiguous", False)),
@@ -352,20 +354,16 @@ class RecommendationEngine:
         top_choice = ranking[0] if ranking else {}
         top_gap = top_choice.get("gap", 0.0)
 
-        # 5. ĐÁNH GIÁ MỨC ĐỘ CẠNH TRANH (Đổi tên minh bạch heuristic_score_gap_estimator)
-        prob = 1.0 / (1.0 + math.exp(-1.5 * top_gap)) if ranking else 0.5
-        competitiveness_index = round(min(0.95, max(0.05, prob)), 2)
-        predicted_score = round(float(top_choice.get("diem_chuan_2024", user_total_score)), 2)
-        if top_choice.get("cutoff_trend") == "Tăng":
-            predicted_score += 0.25
-        elif top_choice.get("cutoff_trend") == "Giảm":
-            predicted_score -= 0.25
-
+        # 5. DỰ BÁO ĐIỂM CHUẨN: regression output, không phải xác suất đỗ.
+        forecast_model = top_choice.get("model_version")
+        forecast_source = top_choice.get("nguon_du_bao")
         prediction = {
-            "model": "heuristic_score_gap_estimator",
-            "competitiveness_index": competitiveness_index,
-            "chance_of_admission": competitiveness_index,
-            "predicted_score": round(predicted_score, 2),
+            "model": str(forecast_model) if pd.notna(forecast_model) else "historical_2024_fallback",
+            "forecast_source": str(forecast_source) if pd.notna(forecast_source) else "historical_2024_fallback",
+            "forecast_year": top_choice.get("nam_du_bao"),
+            "predicted_cutoff": round(float(top_choice.get("du_bao_diem_chuan", user_total_score)), 2),
+            "score_gap_vs_predicted_cutoff": round(float(top_gap), 2),
+            "is_cold_start": bool(top_choice.get("is_cold_start", False)),
             "target_school": top_choice.get("ten_truong", ""),
             "target_major": top_choice.get("ten_nganh", ""),
         }
@@ -475,10 +473,17 @@ class RecommendationEngine:
             "counts": {"safe": 0, "match": 0, "reach": 0},
             "results": {"safe": [], "match": [], "reach": []},
             "total_count": 0,
-            "ranking_algorithm": "TOPSIS_multi_criteria",
+            "ranking_algorithm": "content_based_weighted_scoring",
             "ranking": [],
             "criteria_weights": {"score_fit": 0.40, "salary": 0.25, "job_demand": 0.20, "stability": 0.15},
-            "prediction": {"chance_of_admission": 0.05 if user_total_score <= 10.0 else 0.5, "predicted_score": user_total_score},
+            "prediction": {
+                "model": "unavailable",
+                "forecast_source": "unavailable",
+                "forecast_year": None,
+                "predicted_cutoff": user_total_score,
+                "score_gap_vs_predicted_cutoff": 0.0,
+                "is_cold_start": False,
+            },
             "feature_attributions": [],
             "career_context": [],
             "advice": msg,

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: dss-university-api
+    runtime: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 app:app
+    healthCheckPath: /api/health
+    autoDeploy: true

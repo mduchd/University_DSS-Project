@@ -1,5 +1,7 @@
 # Decision Engine: AHP + TOPSIS
 
+> Trạng thái: mô-đun được giữ lại để tham khảo và thử nghiệm; không thuộc luồng recommendation đang chạy. Luồng hiện tại dùng content-based scoring và sẽ mở rộng sang hybrid recommendation khi đã có dữ liệu tương tác.
+
 ## Phạm vi
 
 `services/decision_engine.py` xếp hạng các phương án trường-ngành độc lập với Flask, UI, CSV và mô hình ML. Backend có trách nhiệm lọc theo khu vực, ghép dữ liệu, và truyền `profile` cùng danh sách `candidates` vào `rank_candidates`.

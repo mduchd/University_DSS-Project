@@ -983,6 +983,13 @@ a {
   font-weight: 500;
 }
 
+.badge-model {
+  background-color: #eef4ff;
+  border-color: #bfd2ff;
+  color: #315ab8;
+  font-weight: 700;
+}
+
 .rec-major-title {
   font-size: 15px;
   font-weight: 700;
@@ -1002,6 +1009,17 @@ a {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.rec-explanation {
+  margin-top: 7px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.rec-explanation strong {
+  color: var(--primary);
 }
 
 .rec-card-scores {
@@ -1026,6 +1044,10 @@ a {
   font-size: 16px;
   font-weight: 800;
   color: var(--text-primary);
+}
+
+.score-block-forecast .score-block-val {
+  color: var(--primary);
 }
 
 .gap-pill {

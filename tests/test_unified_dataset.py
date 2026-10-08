@@ -147,8 +147,9 @@ class TestUnifiedDatasetSemantics(unittest.TestCase):
         r2 = recommendation_engine.process_recommendation(p2)
 
         # 2 profile phải có kết quả khác nhau
-        self.assertNotEqual(r1["prediction"]["chance_of_admission"], r2["prediction"]["chance_of_admission"])
-        self.assertGreater(r1["prediction"]["chance_of_admission"], r2["prediction"]["chance_of_admission"])
+        self.assertNotIn("chance_of_admission", r1["prediction"])
+        self.assertNotIn("chance_of_admission", r2["prediction"])
+        self.assertGreater(r1["prediction"]["score_gap_vs_predicted_cutoff"], r2["prediction"]["score_gap_vs_predicted_cutoff"])
 
         # Kiểm tra nguyên tắc cấm dùng từ khẳng định tuyệt đối trong cả 2 lời khuyên
         forbidden_phrases = ["chắc chắn đỗ", "bao đỗ", "100% đỗ", "chắc chắn trúng tuyển", "đảm bảo đỗ"]

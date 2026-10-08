@@ -13,12 +13,12 @@ Nhiệm vụ của bạn là đưa ra lời khuyên khách quan, thận trọng,
 - Chi tiết điểm từng môn và độ lệch so với phổ điểm chuẩn hóa toàn quốc (SHAP / Feature Attribution):
 {feature_attributions_text}
 
-=== ĐÁNH GIÁ MÔ HÌNH ML & XẾP HẠNG TOPSIS ===
+=== ĐÁNH GIÁ MÔ HÌNH ML & XẾP HẠNG CONTENT-BASED ===
 - Ngành đề xuất: {target_major} ({target_major_code})
 - Trường đào tạo: {target_school} ({target_school_code})
-- Điểm chuẩn năm 2024: {cutoff_2024} (Chênh lệch điểm số Gap: {score_gap})
-- Thứ hạng TOPSIS: Hạng {topsis_rank} (Điểm tương đồng TOPSIS: {topsis_score}/100)
-- Chỉ số khả năng cạnh tranh dự báo (ML / Estimator): {competitiveness_index} (Dự báo ngưỡng an toàn: {predicted_score})
+- Điểm chuẩn năm 2024: {cutoff_2024} (Chênh lệch so với điểm chuẩn lịch sử: {historical_score_gap})
+- Thứ hạng gợi ý: Hạng {recommendation_rank} (Điểm phù hợp content-based: {recommendation_score}/100)
+- {forecast_label}: {predicted_cutoff}; chênh lệch của thí sinh so với mốc này: {predicted_gap} (nguồn: {forecast_source}). Đây là điểm chuẩn ước lượng, không phải xác suất trúng tuyển.
 - Trọng số ưu tiên người dùng: Điểm số ({weight_score_fit}), Thu nhập ({weight_salary}), Nhu cầu thị trường ({weight_demand}), Độ ổn định ({weight_stability})
 
 === DỮ LIỆU KHO TRI THỨC RAG (THỰC TẾ VIỆT NAM) ===
@@ -26,8 +26,8 @@ Nhiệm vụ của bạn là đưa ra lời khuyên khách quan, thận trọng,
 
 === CẤU TRÚC BÀI TƯ VẤN CẦN SINH (3 - 4 ĐOẠN NGẮN GỌN) ===
 1. Đánh giá độ phù hợp & Khả năng cạnh tranh:
-   - Phân tích mức điểm của thí sinh so với điểm chuẩn 2024 ({cutoff_2024}) và gap ({score_gap}).
-   - Đánh giá khả năng cạnh tranh và xếp hạng TOPSIS một cách khách quan.
+   - Phân tích mức điểm của thí sinh so với điểm chuẩn 2024 ({cutoff_2024}) và mốc dự báo ({predicted_cutoff}); nhấn mạnh rằng đây không phải xác suất trúng tuyển.
+   - Đánh giá khả năng cạnh tranh và thứ hạng gợi ý một cách khách quan.
 2. Phân tích lợi thế môn thi & Môn cần cải thiện:
    - Nêu rõ môn nào là thế mạnh vượt trội so với phổ điểm toàn quốc.
    - Chỉ ra môn có điểm số thấp hơn hoặc cần cải thiện nếu muốn tăng độ an toàn.

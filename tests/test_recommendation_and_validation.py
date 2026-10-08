@@ -88,8 +88,8 @@ class TestRecommendationAndValidation(unittest.TestCase):
         self.assertIn("status", data)
         self.assertEqual(data["status"], "success")
 
-    def test_single_alternative_topsis_not_zero(self):
-        """Kiểm tra: khi bộ lọc chỉ có 1 phương án duy nhất, match_score không bị trả 0.0."""
+    def test_single_alternative_content_score_not_zero(self):
+        """Kiểm tra: một phương án duy nhất vẫn có content-based score hợp lệ."""
         payload = {
             "combination": "A00",
             "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
@@ -98,10 +98,10 @@ class TestRecommendationAndValidation(unittest.TestCase):
         res = recommendation_engine.process_recommendation(payload)
         self.assertGreater(len(res["ranking"]), 0)
         for item in res["ranking"]:
-            self.assertGreater(item["match_score"], 50.0, "Điểm tương đồng phương án duy nhất phải > 50")
+            self.assertGreater(item["recommendation_score"], 0.0, "Điểm gợi ý phải dương")
 
     def test_preferences_dynamically_adjust_weights(self):
-        """Kiểm tra: preferences người dùng làm thay đổi trọng số ma trận TOPSIS."""
+        """Kiểm tra: preferences người dùng làm thay đổi trọng số content-based."""
         base_payload = {
             "combination": "A00",
             "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
@@ -171,18 +171,18 @@ class TestRecommendationAndValidation(unittest.TestCase):
         self.assertIsInstance(data["error"], str)
         self.assertGreater(len(data["error"]), 0)
 
-    def test_single_alternative_algorithm_name(self):
-        """Kiểm tra: khi m=1, tên thuật toán là TOPSIS_fallback_heuristic."""
+    def test_content_based_algorithm_name(self):
+        """Kiểm tra: luồng recommendation không còn dùng TOPSIS."""
         payload = {
             "combination": "A00",
             "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
             "interest": "Kỹ thuật phần mềm liên kết quốc tế - KNU",
         }
         res = recommendation_engine.process_recommendation(payload)
-        self.assertEqual(res["ranking_algorithm"], "TOPSIS_fallback_heuristic")
+        self.assertEqual(res["ranking_algorithm"], "content_based_weighted_scoring")
 
     def test_zero_score_returns_empty_ranking_and_clear_advice(self):
-        """Kiểm tra P1: Thí sinh tổng điểm 0.0 bị loại sạch vì gap < -3.0, không có ranking ảo hay TOPSIS ảo."""
+        """Kiểm tra P1: Thí sinh tổng điểm 0.0 bị loại sạch vì gap < -3.0, không có ranking ảo."""
         payload = {
             "combination": "A00",
             "scores": {"toan": 0.0, "vatly": 0.0, "hoahoc": 0.0},
