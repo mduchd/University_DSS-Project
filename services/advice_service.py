@@ -1,8 +1,8 @@
 """
 Advice Service: Module sinh tư vấn tuyển sinh & hướng nghiệp thông minh (DSS + Structured RAG + LLM Adapter).
 Kết hợp:
-1. Kết quả TOPSIS đa tiêu chí (độ phù hợp, trọng số, thứ hạng).
-2. Hệ thống ước lượng chỉ số cạnh tranh điểm số (Heuristic Score Gap Estimator).
+1. Kết quả xếp hạng content-based (độ phù hợp, trọng số, thứ hạng).
+2. Dự báo điểm chuẩn bằng XGBoost hoặc mốc điểm lịch sử khi thiếu feature.
 3. Phân tích độ lệch phổ điểm từng môn thi so với trung bình toàn quốc năm 2024.
 4. Dữ kiện kho tri thức RAG (lương, nhu cầu việc làm VietJobs, kỹ năng, xu hướng điểm chuẩn).
 
@@ -118,8 +118,7 @@ class AdviceService:
         combination = str(recommendation_result.get("combination", "A00"))
         user_score = float(recommendation_result.get("user_score", 0.0))
         cutoff_2024 = float(target_choice.get("diem_chuan_2024", 0.0))
-        score_gap = round(user_score - cutoff_2024, 2)
-        gap_sign = f"+{score_gap}" if score_gap >= 0 else f"{score_gap}"
+        historical_score_gap = round(user_score - cutoff_2024, 2)
 
         # 1. Truy xuất dữ kiện RAG (Strict intersection)
         rag_data = rag_service.retrieve_context(
@@ -151,10 +150,17 @@ class AdviceService:
 
         fa_text = "\n".join(fa_lines) if fa_lines else "  * Không có dữ liệu chi tiết phổ điểm từng môn."
 
-        # 3. Trích xuất Heuristic Gap Estimator & weights
+        # 3. Trích xuất cutoff forecast & weights. Đây không phải xác suất đỗ.
         prediction = recommendation_result.get("prediction", {})
-        comp_index = prediction.get("competitiveness_index", 0.5)
-        pred_score = prediction.get("predicted_score", cutoff_2024)
+        predicted_cutoff = float(prediction.get("predicted_cutoff", cutoff_2024))
+        predicted_gap = float(prediction.get("score_gap_vs_predicted_cutoff", historical_score_gap))
+        forecast_year = prediction.get("forecast_year") or "không xác định"
+        forecast_source = str(prediction.get("forecast_source", "historical_2024_fallback"))
+        forecast_label = (
+            f"điểm chuẩn dự báo năm {forecast_year}"
+            if forecast_source == "xgboost_cutoff_v1"
+            else "điểm chuẩn 2024 dùng làm mốc thay thế"
+        )
         weights = recommendation_result.get("criteria_weights", {})
         cutoff_trend = str(target_choice.get("cutoff_trend", rag_data["admission_data"].get("cutoff_trend", "Không đủ dữ liệu")))
 
@@ -168,11 +174,14 @@ class AdviceService:
             "target_school": target_school,
             "target_school_code": target_school_code,
             "cutoff_2024": f"{cutoff_2024:.2f}",
-            "score_gap": gap_sign,
-            "topsis_rank": target_rank,
-            "topsis_score": target_choice.get("match_score", 0.0),
-            "competitiveness_index": f"{comp_index * 100:.1f}%",
-            "predicted_score": f"{pred_score:.2f}",
+            "historical_score_gap": f"{historical_score_gap:+.2f}",
+            "recommendation_rank": target_rank,
+            "recommendation_score": target_choice.get("recommendation_score", 0.0),
+            "predicted_cutoff": f"{predicted_cutoff:.2f}",
+            "predicted_gap": f"{predicted_gap:+.2f}",
+            "forecast_year": forecast_year,
+            "forecast_source": forecast_source,
+            "forecast_label": forecast_label,
             "weight_score_fit": f"{weights.get('score_fit', 0.40):.2f}",
             "weight_salary": f"{weights.get('salary', 0.25):.2f}",
             "weight_demand": f"{weights.get('job_demand', 0.20):.2f}",
@@ -223,8 +232,8 @@ class AdviceService:
 
                 if fallback_applied:
                     sections, advice_text = self._build_deterministic_advice(
-                        user_score, cutoff_2024, score_gap, target_major, target_school,
-                        target_rank, comp_index, strong_subjects, weak_subjects,
+                        user_score, predicted_cutoff, predicted_gap, target_major, target_school,
+                        target_rank, strong_subjects, weak_subjects,
                         rag_data, cutoff_trend
                     )
             except Exception as e:
@@ -232,14 +241,14 @@ class AdviceService:
                 fallback_applied = True
                 rejection_reasons.append(f"llm_error: {str(e)}")
                 sections, advice_text = self._build_deterministic_advice(
-                    user_score, cutoff_2024, score_gap, target_major, target_school,
-                    target_rank, comp_index, strong_subjects, weak_subjects,
+                    user_score, predicted_cutoff, predicted_gap, target_major, target_school,
+                    target_rank, strong_subjects, weak_subjects,
                     rag_data, cutoff_trend
                 )
         else:
             sections, advice_text = self._build_deterministic_advice(
-                user_score, cutoff_2024, score_gap, target_major, target_school,
-                target_rank, comp_index, strong_subjects, weak_subjects,
+                user_score, predicted_cutoff, predicted_gap, target_major, target_school,
+                target_rank, strong_subjects, weak_subjects,
                 rag_data, cutoff_trend
             )
 
@@ -268,12 +277,11 @@ class AdviceService:
     def _build_deterministic_advice(
         self,
         user_score: float,
-        cutoff_2024: float,
+        reference_cutoff: float,
         score_gap: float,
         target_major: str,
         target_school: str,
         target_rank: int,
-        comp_index: float,
         strong_subjects: List[str],
         weak_subjects: List[str],
         rag_data: Dict[str, Any],
@@ -288,30 +296,29 @@ class AdviceService:
         if score_gap >= 2.0:
             p1 = (
                 f"1. Độ phù hợp & Khả năng cạnh tranh: Với mức tổng điểm {user_score:.2f}, "
-                f"bạn đang có mức chênh lệch an toàn {gap_sign} điểm so với điểm chuẩn 2024 ({cutoff_2024:.2f}) "
+                f"bạn đang có mức chênh lệch an toàn {gap_sign} điểm so với mốc dự báo ({reference_cutoff:.2f}) "
                 f"của ngành {target_major} tại {target_school}. Phương án này đạt thứ hạng {target_rank} trong "
-                f"đánh giá tổng hợp TOPSIS với chỉ số cạnh tranh ước tính đạt {comp_index * 100:.1f}%, "
-                f"thể hiện lợi thế tuyển sinh rất thuận lợi ở phương thức xét điểm tốt nghiệp."
+                f"xếp hạng gợi ý theo hồ sơ đã nhập. Đây là lợi thế tuyển sinh thuận lợi theo mốc điểm tham chiếu, "
+                f"nhưng vẫn cần theo dõi chỉ tiêu và quy chế của trường."
             )
         elif score_gap >= 0.0:
             p1 = (
                 f"1. Độ phù hợp & Khả năng cạnh tranh: Mức điểm {user_score:.2f} của bạn nằm trong vùng điểm chuẩn "
-                f"cạnh tranh tốt ({gap_sign} điểm so với mốc {cutoff_2024:.2f} năm 2024) của ngành {target_major} "
-                f"tại {target_school}. Mặc dù nằm trong nhóm chỉ số cạnh tranh tích cực ({comp_index * 100:.1f}%), "
-                f"bạn vẫn nên theo dõi chặt chẽ chỉ tiêu tuyển sinh năm nay."
+                f"cạnh tranh tốt ({gap_sign} điểm so với mốc dự báo {reference_cutoff:.2f}) của ngành {target_major} "
+                f"tại {target_school}. Bạn vẫn nên theo dõi chặt chẽ chỉ tiêu tuyển sinh năm nay."
             )
         elif score_gap >= -2.0:
             p1 = (
                 f"1. Độ phù hợp & Khả năng cạnh tranh: Ngành {target_major} tại {target_school} "
-                f"có điểm chuẩn 2024 là {cutoff_2024:.2f}, hiện cao hơn điểm của bạn ({user_score:.2f}) "
-                f"khoảng {abs(score_gap):.2f} điểm. Đây là nguyện vọng thuộc nhóm thử sức (chỉ số cạnh tranh {comp_index * 100:.1f}%), "
+                f"có mốc dự báo là {reference_cutoff:.2f}, hiện cao hơn điểm của bạn ({user_score:.2f}) "
+                f"khoảng {abs(score_gap):.2f} điểm. Đây là nguyện vọng thuộc nhóm thử sức, "
                 f"bạn hoàn toàn có thể đặt ở nguyện vọng đầu nhưng cần kết hợp phương án an toàn."
             )
         else:
             p1 = (
                 f"1. Độ phù hợp & Khả năng cạnh tranh: Mức điểm {user_score:.2f} hiện thấp hơn điểm chuẩn năm trước "
-                f"đáng kể ({gap_sign} điểm so với {cutoff_2024:.2f}) đối với {target_school}. Phương án này mang tính thử thách cao "
-                f"với chỉ số cạnh tranh khoảng {comp_index * 100:.1f}%, bạn nên cân nhắc kỹ trước khi lựa chọn."
+                f"đáng kể ({gap_sign} điểm so với mốc dự báo {reference_cutoff:.2f}) đối với {target_school}. Phương án này mang tính thử thách cao "
+                f"bạn nên cân nhắc kỹ trước khi lựa chọn."
             )
 
         # Đoạn 2: Phân tích môn thi & điểm cần cải thiện

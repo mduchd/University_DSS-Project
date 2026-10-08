@@ -1,7 +1,8 @@
-"""Independent AHP + TOPSIS engine for university recommendation ranking.
+"""Retained independent AHP + TOPSIS engine for reference and experiments.
 
 This module deliberately has no dependency on Flask, CSV files, or ML models.
-The caller prepares candidate features and calls :func:`rank_candidates`.
+The active recommendation flow uses content-based scoring and does not import
+this module. It remains available only for future evaluation or comparison.
 """
 
 from __future__ import annotations

@@ -453,6 +453,13 @@
     const isSaved = isItemInWishlist(item.school, item.major);
     const gapSign = item.gap > 0 ? `+${item.gap.toFixed(2)}` : `${item.gap.toFixed(2)}`;
     const typeLabel = item.type === "safe" ? "An toàn" : item.type === "match" ? "Phù hợp" : "Thử sức";
+    const historicalCutoff = Number(item.historical_cutoff_2024 ?? item.cutoff);
+    const forecastCutoff = Number(item.cutoff);
+    const isModelForecast = item.forecast_source === "xgboost_cutoff_v1";
+    const forecastYear = item.forecast_year || "2024";
+    const forecastLabel = isModelForecast ? `Dự báo XGBoost ${forecastYear}` : "Mốc lịch sử 2024";
+    const forecastTag = isModelForecast ? `XGBoost · ${forecastYear}` : "Dữ liệu 2024";
+    const recommendationScore = Number(item.recommendation_score || 0).toFixed(1);
     const saveIcon = isSaved
       ? `${ICONS.check} <span>Đã lưu NV</span>`
       : `${ICONS.plus} <span>Lưu NV</span>`;
@@ -464,22 +471,31 @@
             <span class="badge ${item.type}">${typeLabel}</span>
             <span class="badge-tag">${escapeHtml(item.group || "Đại học")}</span>
             <span class="badge-tag">Mã: ${escapeHtml(item.major_code)}</span>
+            <span class="badge-tag badge-model">${escapeHtml(forecastTag)}</span>
           </div>
           <h3 class="rec-major-title" title="${escapeHtml(item.major)}">${escapeHtml(item.major)}</h3>
           <p class="rec-school-name" title="${escapeHtml(item.school)}">
             ${ICONS.school}
             <span>${escapeHtml(item.school)}</span>
           </p>
+          <p class="rec-explanation">
+            Điểm content-based <strong>${recommendationScore}/100</strong> · dựa trên độ phù hợp điểm, lương, nhu cầu việc làm và độ ổn định.
+          </p>
         </div>
 
         <div class="rec-card-scores">
           <div class="score-block">
             <span class="score-block-label">Điểm chuẩn 2024</span>
-            <span class="score-block-val">${item.cutoff.toFixed(2)}</span>
+            <span class="score-block-val">${historicalCutoff.toFixed(2)}</span>
+          </div>
+
+          <div class="score-block score-block-forecast">
+            <span class="score-block-label">${forecastLabel}</span>
+            <span class="score-block-val">${forecastCutoff.toFixed(2)}</span>
           </div>
 
           <div class="score-block">
-            <span class="score-block-label">Chênh lệch</span>
+            <span class="score-block-label">So với mốc dự báo</span>
             <span class="gap-pill ${item.type}">${gapSign} đ</span>
           </div>
 
@@ -489,7 +505,7 @@
             data-major="${escapeHtml(item.major)}"
             data-school="${escapeHtml(item.school)}"
             data-code="${escapeHtml(item.major_code)}"
-            data-cutoff="${item.cutoff.toFixed(2)}"
+            data-cutoff="${forecastCutoff.toFixed(2)}"
             data-gap="${gapSign}"
             aria-label="Lưu vào danh sách nguyện vọng"
           >
