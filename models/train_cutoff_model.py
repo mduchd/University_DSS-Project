@@ -266,14 +266,13 @@ def load_baseline_metrics(path: Path) -> dict[str, Any]:
 def fit_validation_candidates(
     train: pd.DataFrame,
     validation: pd.DataFrame,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Huấn luyện các cấu hình trên train và xếp hạng chỉ bằng validation."""
     x_train = train[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
     x_validation = validation[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
     y_train = train[TARGET]
     y_validation = validation[TARGET]
     candidates: list[dict[str, Any]] = []
-    fitted: dict[str, Any] = {}
 
     linear_preprocessor = make_preprocessor(scale_numeric=True)
     # Chỉ fit preprocessor trên train; validation chỉ transform để không học trước phân phối 2023.
@@ -295,7 +294,6 @@ def fit_validation_candidates(
                 time.perf_counter() - start,
             )
         )
-        fitted[name] = (linear_preprocessor, estimator)
 
     tree_preprocessor = make_preprocessor(scale_numeric=False)
     # Dùng cùng phép biến đổi đã học từ train cho cả Random Forest và XGBoost.
@@ -338,7 +336,6 @@ def fit_validation_candidates(
                 time.perf_counter() - start,
             )
         )
-        fitted[name] = (tree_preprocessor, estimator)
 
     xgb_configs = [
         {
@@ -391,9 +388,9 @@ def fit_validation_candidates(
                 },
             )
         )
-        fitted[name] = (tree_preprocessor, estimator)
 
-    return candidates, fitted
+    # Chỉ giữ chỉ số đánh giá; model được chọn sẽ được huấn luyện lại ở bước sau.
+    return candidates
 
 
 def refit_selected(
@@ -485,7 +482,7 @@ def main() -> None:
     if not (train["year"].max() <= 2022 and validation["year"].eq(2023).all() and test["year"].eq(2024).all()):
         raise AssertionError("Fixed time split is not valid.")
 
-    candidates, _ = fit_validation_candidates(train, validation)
+    candidates = fit_validation_candidates(train, validation)
     candidates = sorted(candidates, key=lambda item: item["validation"]["all"]["mae"])
     selected = candidates[0]
     baseline_metrics = load_baseline_metrics(args.baseline_metrics.resolve())
