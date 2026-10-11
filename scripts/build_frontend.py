@@ -86,8 +86,13 @@ def main() -> None:
         r"\{%\s*endfor\s*%\}"
     )
     html, group_loop_count = re.subn(group_loop_pattern, build_group_options(), html)
-    if group_loop_count != 2:
-        raise RuntimeError("Không tìm thấy vòng lặp nhóm ngành cần thay thế trong index.html")
+    # Chỉ còn bộ lọc "nhóm ngành" ở phần tra cứu tuyển sinh. Dropdown nhóm
+    # gợi ý cũ đã được thay bằng sở thích, nên template hiện có đúng một vòng
+    # lặp Jinja cần render tĩnh.
+    if group_loop_count != 1:
+        raise RuntimeError(
+            "Số vòng lặp nhóm ngành trong index.html không đúng (cần đúng 1)."
+        )
 
     if OUTPUT_DIR.exists():
         shutil.rmtree(OUTPUT_DIR)
