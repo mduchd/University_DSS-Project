@@ -7,12 +7,12 @@
 ## Chức năng đang chạy
 
 - Nhập điểm theo 10 tổ hợp xét tuyển: `A00`, `A01`, `A02`, `B00`, `B08`, `C00`, `C01`, `C02`, `D01`, `D07`.
-- Lọc theo nhóm ngành, khu vực và từ khóa trường/ngành; chấm `interest_fit` từ hồ sơ sở thích đã chọn.
+- Chấm `interest_fit` từ tối đa hai sở thích người dùng đã chọn.
 - Phân loại phương án bằng chênh lệch giữa tổng điểm của người dùng và mốc điểm chuẩn dự báo/tham chiếu.
 - Xếp hạng content-based theo độ khớp điểm, sở thích-ngành, lương tham khảo, nhu cầu tuyển dụng và độ ổn định của lịch sử điểm chuẩn.
 - Tra cứu điểm chuẩn, xem bối cảnh nghề nghiệp và lưu danh sách nguyện vọng trong trình duyệt.
 
-Luồng recommendation hiện dùng Content-Based Filtering kết hợp weighted scoring: sở thích được đối chiếu minh bạch với đặc trưng của ngành/trường, không sử dụng Collaborative Filtering vì hệ thống chưa có dữ liệu tương tác đa người dùng. Mô-đun AHP + TOPSIS trong `services/decision_engine.py` chỉ được giữ để tham khảo, không nằm trên đường đi của API.
+Luồng recommendation dùng Content-Based Filtering kết hợp weighted scoring: sở thích được đối chiếu minh bạch với đặc trưng của ngành/trường, không sử dụng Collaborative Filtering vì hệ thống chưa có dữ liệu tương tác đa người dùng.
 
 ## Kiến trúc
 
@@ -41,6 +41,14 @@ Flask API
 | Phổ điểm thi tổng hợp | Feature bối cảnh theo tổ hợp | 384 dòng tổng hợp, không có SBD |
 | VietJobs đã chuẩn hoá | Lương, nhu cầu và kỹ năng theo nhóm nghề | 47.698 tin; 16 nhóm nghề tổng hợp |
 | Mapping ngành–nghề | Ghép ngành với bối cảnh việc làm | 3.992 mapping; 133 ngành chưa map |
+
+### Nguồn dữ liệu gốc
+
+| Nhóm dữ liệu | Phạm vi | Nguồn |
+| --- | --- | --- |
+| Điểm chuẩn đại học | 2018–2024 | [HTNam1710/ADS_Final](https://github.com/HTNam1710/ADS_Final) |
+| Điểm thi tốt nghiệp THPT | 2021–2025 | [sdgedfegw/du-lieu-diem-thi](https://github.com/sdgedfegw/du-lieu-diem-thi) |
+| Tin tuyển dụng Việt Nam | VietJobs | [dinhieufam/VietJobs](https://huggingface.co/datasets/dinhieufam/VietJobs) |
 
 Nguồn và quy trình làm sạch/model được trình bày tại [docs/data-model-report.md](docs/data-model-report.md). Dữ liệu 2025–2026 do crawler thu thập được lưu riêng để tham khảo, **chưa được đưa vào mô hình hay mốc hiển thị của luồng recommendation hiện tại**.
 

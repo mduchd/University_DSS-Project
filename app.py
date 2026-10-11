@@ -274,10 +274,13 @@ def validate_payload(data):
                 if not isinstance(score, (int, float)) or score < 0 or score > 10:
                     errors.append({"field": f"scores.{subject}", "message": "Điểm phải là số nằm trong khoảng 0-10."})
 
-    priorities = data.get("priorities", {})
-    for key, value in priorities.items():
-        if not isinstance(value, (int, float)) or value < 0:
-            errors.append({"field": f"priorities.{key}", "message": "Mức độ ưu tiên không được là số âm."})
+    interests = data.get("interests", [])
+    if not isinstance(interests, list):
+        errors.append({"field": "interests", "message": "Sở thích phải là một danh sách."})
+    elif len(interests) > 2:
+        errors.append({"field": "interests", "message": "Chỉ được chọn tối đa 2 sở thích."})
+    elif any(not isinstance(value, str) or not value.strip() for value in interests):
+        errors.append({"field": "interests", "message": "Sở thích không hợp lệ."})
             
     return errors
 

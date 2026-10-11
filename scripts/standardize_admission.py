@@ -63,6 +63,13 @@ CANONICAL_COLUMNS = (
     "outlier_score",
 )
 
+# Mã ngành cấp III theo danh mục giáo dục quốc gia đáng tin cậy hơn nhãn nhóm
+# ngành nguồn khi hai trường mâu thuẫn. Dữ liệu nguồn 2024 có nhiều ngành 738
+# (Luật) bị gắn nhầm sang Báo chí/Marketing hoặc Công an/Quân đội.
+MAJOR_GROUP_OVERRIDES = {
+    "738": ("738", "Pháp luật"),
+}
+
 
 class DataValidationError(ValueError):
     """Raised when a cleaned source cannot satisfy the processed-data contract."""
@@ -143,6 +150,10 @@ def standardize(frame: pd.DataFrame, spec: SourceSpec) -> pd.DataFrame:
         result.loc[missing_major_code, "major_admission_code"].str.split("_").str[0]
     )
     result["major_name"] = text_column(frame, "Tên Ngành", "Tên ngành", "Ngành")
+    for prefix, (group_code, group_name) in MAJOR_GROUP_OVERRIDES.items():
+        mask = result["major_code"].str.startswith(prefix, na=False)
+        result.loc[mask, "major_group_code"] = group_code
+        result.loc[mask, "major_group_name"] = group_name
     result["admission_method"] = text_column(frame, "Loại điểm")
     result["subject_combination"] = normalize_code(text_column(frame, "Tổ hợp", "Tổ hợp môn"))
     result["combination_group"] = text_column(frame, "Khoi_to_hop")

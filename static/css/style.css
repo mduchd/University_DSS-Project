@@ -653,18 +653,41 @@ a {
   gap: 8px;
 }
 
+/* Cột nhập liệu của dashboard hẹp hơn phần kết quả: hiển thị một topic mỗi
+   hàng để mô tả lĩnh vực luôn đọc được đầy đủ. */
+.dashboard-grid .preference-choice-grid {
+  grid-template-columns: 1fr;
+}
+
 .preference-chip {
-  min-height: 38px;
-  padding: 8px 10px;
+  min-height: 82px;
+  padding: 12px;
   border: 1.5px solid var(--border-color);
   border-radius: var(--radius-md);
   background-color: var(--bg-card);
   color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 700;
   line-height: 1.25;
   text-align: left;
   transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.preference-chip-title,
+.preference-chip-detail {
+  display: block;
+}
+
+.preference-chip-title {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.preference-chip-detail {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .preference-chip:hover {
@@ -679,8 +702,13 @@ a {
   box-shadow: 0 2px 7px rgba(66, 85, 255, 0.14);
 }
 
-.preference-region-group {
-  margin-top: 15px;
+.preference-chip.selected .preference-chip-title,
+.preference-chip:hover .preference-chip-title {
+  color: var(--primary);
+}
+
+.preference-chip.selected .preference-chip-detail {
+  color: var(--text-secondary);
 }
 
 .profile-summary {
@@ -1833,7 +1861,7 @@ body.dark-mode .gap-pill.reach {
   }
 
   .preference-chip {
-    min-height: 44px;
+    min-height: 82px;
   }
 
   .preference-section {
@@ -1846,7 +1874,7 @@ body.dark-mode .gap-pill.reach {
   }
 
   .preference-chip {
-    text-align: center;
+    text-align: left;
   }
 
   .filter-tabs-bar {

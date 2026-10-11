@@ -1,11 +1,11 @@
 {
   "mapping_version": 1,
-  "catalog_majors": 4125,
-  "mapped_majors": 3992,
+  "catalog_majors": 4124,
+  "mapped_majors": 3991,
   "unmapped_majors": 133,
-  "coverage_percent": 96.78,
+  "coverage_percent": 96.77,
   "confidence_counts": {
-    "high": 3697,
+    "high": 3696,
     "low": 45,
     "medium": 250
   },

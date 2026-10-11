@@ -24,6 +24,18 @@ class TestRecommendationAndValidation(unittest.TestCase):
 
         self.assertEqual(scores.tolist(), [1.0, 0.0])
 
+    def test_job_category_alone_cannot_change_major_interest(self):
+        """Mapping VietJobs nhiễu không được làm sai lĩnh vực của ngành học."""
+        candidates = pd.DataFrame([{
+            "major_name": "Quản trị kinh doanh",
+            "major_group_name": "Kinh tế - Quản trị kinh doanh - Thương Mại",
+            "job_category": "sản_xuất_lao_động_phổ_thông_cơ_khí",
+        }])
+
+        scores = calculate_interest_fit_scores(candidates, ["Công nghệ"])
+
+        self.assertEqual(scores.tolist(), [0.0])
+
     def test_extra_subject_ignored_and_exact_combination_summed(self):
         """Kiểm tra: chỉ cộng đúng 3 môn của tổ hợp, loại bỏ triệt để môn thừa."""
         payload = {
@@ -34,7 +46,7 @@ class TestRecommendationAndValidation(unittest.TestCase):
                 "hoahoc": 7.5,
                 "nguvan": 10.0,  # Môn thừa ngoài tổ hợp A00
             },
-            "interest": "Công nghệ thông tin",
+            "interests": ["Công nghệ"],
         }
         res = recommendation_engine.process_recommendation(payload)
         # Tổng điểm phải đúng 24.0 (8.5 + 8.0 + 7.5), tuyệt đối không được cộng thêm Văn 10 thành 34.0
@@ -46,7 +58,7 @@ class TestRecommendationAndValidation(unittest.TestCase):
         payload = {
             "combination": "A00",
             "scores": {"toan": 8.5},  # Thiếu Lý và Hóa
-            "interest": "Công nghệ thông tin",
+            "interests": ["Công nghệ"],
         }
         with self.assertRaises(ValueError):
             recommendation_engine.process_recommendation(payload)
@@ -73,7 +85,7 @@ class TestRecommendationAndValidation(unittest.TestCase):
         payload = {
             "combination": "A00",
             "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
-            "interest": "Công nghệ thông tin",
+            "interests": ["Công nghệ"],
         }
         resp = client.post("/api/recommend", json=payload)
         self.assertEqual(resp.status_code, 200)
@@ -108,36 +120,41 @@ class TestRecommendationAndValidation(unittest.TestCase):
         self.assertIn("status", data)
         self.assertEqual(data["status"], "success")
 
-    def test_single_alternative_content_score_not_zero(self):
-        """Kiểm tra: một phương án duy nhất vẫn có content-based score hợp lệ."""
+    def test_ranked_alternatives_have_positive_content_scores(self):
+        """Kiểm tra: các phương án gợi ý có content-based score hợp lệ."""
         payload = {
             "combination": "A00",
             "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
-            "interest": "Kỹ thuật phần mềm liên kết quốc tế - KNU",
+            "interests": ["Công nghệ"],
         }
         res = recommendation_engine.process_recommendation(payload)
         self.assertGreater(len(res["ranking"]), 0)
         for item in res["ranking"]:
             self.assertGreater(item["recommendation_score"], 0.0, "Điểm gợi ý phải dương")
 
-    def test_preferences_dynamically_adjust_weights(self):
-        """Kiểm tra: preferences người dùng làm thay đổi trọng số content-based."""
-        base_payload = {
+    def test_interests_activate_interest_fit_weight(self):
+        """Kiểm tra: sở thích là đầu vào duy nhất ngoài tổ hợp và điểm."""
+        payload = {
             "combination": "A00",
             "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
-            "interest": "Công nghệ thông tin",
+            "interests": ["Công nghệ", "Kinh doanh"],
         }
+        result = recommendation_engine.process_recommendation(payload)
+        self.assertGreater(result["criteria_weights"]["interest_fit"], 0.0)
 
-        # Ưu tiên thu nhập
-        p_income = {**base_payload, "preferences": {"priority": "thu nhập"}}
-        r_income = recommendation_engine.process_recommendation(p_income)
+    def test_selected_interest_excludes_zero_fit_majors(self):
+        """Chọn Công nghệ không được trả ngành không khớp như Luật kinh tế."""
+        result = recommendation_engine.process_recommendation({
+            "combination": "D01",
+            "scores": {"toan": 9.0, "nguvan": 9.0, "ngoaingu": 9.0},
+            "interests": ["Công nghệ"],
+        })
 
-        # Ưu tiên ổn định
-        p_stab = {**base_payload, "preferences": {"priority": "ổn định"}}
-        r_stab = recommendation_engine.process_recommendation(p_stab)
-
-        self.assertGreater(r_income["criteria_weights"]["salary"], r_stab["criteria_weights"]["salary"])
-        self.assertGreater(r_stab["criteria_weights"]["stability"], r_income["criteria_weights"]["stability"])
+        self.assertGreater(result["total_count"], 0)
+        returned = [item for bucket in result["results"].values() for item in bucket]
+        self.assertTrue(all(item["interest_fit"] > 0 for item in returned))
+        self.assertNotIn("Luật kinh tế", {item["major"] for item in returned})
+        self.assertNotIn("Quản trị kinh doanh", {item["major"] for item in returned})
 
     def test_reach_bucket_lower_bound(self):
         """Kiểm tra: nhóm Thử sức (reach) chỉ chứa gap trong khoảng [-3.0, -1.0), không chứa gap < -3.0."""
@@ -145,42 +162,24 @@ class TestRecommendationAndValidation(unittest.TestCase):
         payload = {
             "combination": "A00",
             "scores": {"toan": 3.0, "vatly": 3.5, "hoahoc": 3.5},
-            "interest": "Công nghệ thông tin",
+            "interests": ["Công nghệ"],
         }
         res = recommendation_engine.process_recommendation(payload)
         for item in res["results"]["reach"]:
             self.assertGreaterEqual(item["gap"], -3.0, "Nhóm reach không được chứa ngành có gap < -3.0")
             self.assertLess(item["gap"], -1.0, "Nhóm reach chỉ chứa ngành có gap < -1.0")
 
-    def test_group_filter(self):
-        """Kiểm tra: bộ lọc group từ giao diện chỉ trả về ngành thuộc đúng nhóm ngành."""
+    def test_frontend_interests_payload_format(self):
+        """Kiểm tra: backend nhận trực tiếp danh sách interests từ frontend."""
         payload = {
             "combination": "A00",
             "scores": {"toan": 8.0, "vatly": 8.0, "hoahoc": 8.0},
-            "group": "Công nghệ thông tin - Tin học",
-        }
-        res = recommendation_engine.process_recommendation(payload)
-        self.assertGreater(res["total_count"], 0)
-        for bucket in ["safe", "match", "reach"]:
-            for item in res["results"][bucket]:
-                self.assertIn("Công nghệ thông tin", item["group"])
-
-    def test_frontend_profile_preferences_format(self):
-        """Kiểm tra: nhận đúng payload preferences từ state.profile của frontend (interests, priorities mảng, region)."""
-        payload = {
-            "combination": "A00",
-            "scores": {"toan": 8.0, "vatly": 8.0, "hoahoc": 8.0},
-            "preferences": {
-                "interests": ["Công nghệ", "Kinh doanh"],
-                "priorities": ["Cơ hội quốc tế", "Thu nhập"],
-                "region": "Miền Bắc",
-            },
+            "interests": ["Công nghệ", "Kinh doanh"],
         }
         res = recommendation_engine.process_recommendation(payload)
         self.assertGreater(res["total_count"], 0)
         self.assertGreater(res["criteria_weights"]["interest_fit"], 0.0)
-        # Kiểm tra ưu tiên Thu nhập được tăng trọng số
-        self.assertGreater(res["criteria_weights"]["salary"], 0.25)
+        self.assertAlmostEqual(res["criteria_weights"]["salary"], 0.20)
 
     def test_api_400_validation_error_format(self):
         """Kiểm tra: khi lỗi validation 400, API trả về trường 'error' dạng chuỗi để app.js hiển thị."""
@@ -193,11 +192,11 @@ class TestRecommendationAndValidation(unittest.TestCase):
         self.assertGreater(len(data["error"]), 0)
 
     def test_content_based_algorithm_name(self):
-        """Kiểm tra: luồng recommendation không còn dùng TOPSIS."""
+        """Kiểm tra: luồng gợi ý dùng content-based weighted scoring."""
         payload = {
             "combination": "A00",
             "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5},
-            "interest": "Kỹ thuật phần mềm liên kết quốc tế - KNU",
+            "interests": ["Công nghệ"],
         }
         res = recommendation_engine.process_recommendation(payload)
         self.assertEqual(res["ranking_algorithm"], "content_based_weighted_scoring")
@@ -207,7 +206,7 @@ class TestRecommendationAndValidation(unittest.TestCase):
         payload = {
             "combination": "A00",
             "scores": {"toan": 0.0, "vatly": 0.0, "hoahoc": 0.0},
-            "interest": "Công nghệ thông tin",
+            "interests": ["Công nghệ"],
         }
         res = recommendation_engine.process_recommendation(payload)
         self.assertEqual(res["total_count"], 0)
@@ -217,42 +216,17 @@ class TestRecommendationAndValidation(unittest.TestCase):
         self.assertEqual(len(res["results"]["reach"]), 0)
         self.assertIn("thấp hơn điểm chuẩn tối thiểu", res["message"])
 
-    def test_region_filter_strict_and_accurate(self):
-        """Kiểm tra P2: Lọc Miền Bắc và Miền Nam trả về 100% ngành đúng vùng miền, không còn NaN."""
-        base_scores = {"toan": 8.0, "vatly": 8.0, "hoahoc": 8.0}
-        
-        # Test Miền Bắc
-        res_north = recommendation_engine.process_recommendation({
-            "combination": "A00",
-            "scores": base_scores,
-            "region": "Miền Bắc",
-        })
-        self.assertGreater(res_north["total_count"], 0)
-        for bucket in ["safe", "match", "reach"]:
-            for item in res_north["results"][bucket]:
-                self.assertEqual(item["region"], "Miền Bắc")
-
-        # Test Miền Nam
-        res_south = recommendation_engine.process_recommendation({
-            "combination": "A00",
-            "scores": base_scores,
-            "region": "Miền Nam",
-        })
-        self.assertGreater(res_south["total_count"], 0)
-        for bucket in ["safe", "match", "reach"]:
-            for item in res_south["results"][bucket]:
-                self.assertEqual(item["region"], "Miền Nam")
-
-    def test_non_existent_group_returns_empty_no_filter_reset(self):
-        """Kiểm tra P2: Khi nhóm ngành không tồn tại, trả về 0 kết quả, tuyệt đối không reset về 45 phương án."""
-        payload = {
-            "combination": "A00",
-            "scores": {"toan": 8.0, "vatly": 8.0, "hoahoc": 8.0},
-            "group": "Nhóm Ngành Không Tồn Tại 12345",
-        }
-        res = recommendation_engine.process_recommendation(payload)
-        self.assertEqual(res["total_count"], 0)
-        self.assertEqual(len(res["ranking"]), 0)
+    def test_more_than_two_interests_is_rejected(self):
+        client = app.test_client()
+        response = client.post(
+            "/api/recommend",
+            json={
+                "combination": "A00",
+                "scores": {"toan": 8.0, "vatly": 8.0, "hoahoc": 8.0},
+                "interests": ["Công nghệ", "Kinh doanh", "Sáng tạo"],
+            },
+        )
+        self.assertEqual(response.status_code, 400)
 
 
 if __name__ == "__main__":

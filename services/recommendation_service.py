@@ -92,7 +92,10 @@ def calculate_interest_fit_scores(candidates: pd.DataFrame, interests: list[str]
     if not cleaned_interests:
         return np.zeros(len(candidates), dtype=float)
 
-    searchable_columns = ("major_name", "major_group_name", "job_category")
+    # Sở thích mô tả lĩnh vực học nên chỉ đối chiếu với tên/nhóm ngành chuẩn.
+    # job_category từ VietJobs dùng cho tín hiệu lương và nhu cầu; một mapping
+    # nghề nhiễu không được phép biến ngành Kinh doanh thành ngành Công nghệ.
+    searchable_columns = ("major_name", "major_group_name")
     candidate_texts = candidates.apply(
         lambda row: " ".join(
             remove_accents(str(row.get(column, ""))).replace("_", " ")
@@ -124,9 +127,12 @@ class RecommendationEngine:
         """Lọc ứng viên hợp lệ và xếp hạng content-based theo hồ sơ người dùng."""
         combination = str(user_payload.get("combination", "A00")).strip().upper()
         raw_scores = user_payload.get("scores", {})
-        interest = str(user_payload.get("interest", "")).strip()
-        preferences = user_payload.get("preferences", {}) or {}
-        priorities = user_payload.get("priorities", {}) or {}
+        raw_interests = user_payload.get("interests", [])
+        user_interests = (
+            [str(value).strip() for value in raw_interests if str(value).strip()]
+            if isinstance(raw_interests, list)
+            else []
+        )
 
         required_subjects = COMBINATIONS.get(combination)
         if not required_subjects:
@@ -152,7 +158,12 @@ class RecommendationEngine:
 
         # Chỉ tính tổng 3 môn của tổ hợp
         user_total_score = round(sum(user_scores_float[s] for s in required_subjects), 2)
-        logging.info(f"Hồ sơ: Tổ hợp {combination} - Tổng 3 môn: {user_total_score} - Sở thích: '{interest}'")
+        logging.info(
+            "Hồ sơ: Tổ hợp %s - Tổng 3 môn: %s - Sở thích: %s",
+            combination,
+            user_total_score,
+            user_interests,
+        )
 
         # 2. LẤY & LỌC DỮ LIỆU TỪ MASTER ADMISSION
         df = data_repo.get_master_data()
@@ -163,72 +174,6 @@ class RecommendationEngine:
 
         # TÁCH PHƯƠNG ÁN THANG 40 KHỎI RANKING THANG 30
         matched_df = matched_df[matched_df["is_scale_40"] == False].copy()
-
-        # Lọc theo Nhóm ngành (group) từ giao diện nếu có
-        group_filter = str(user_payload.get("group", "")).strip()
-        if group_filter:
-            norm_grp = remove_accents(group_filter)
-            group_mask = matched_df["major_group_name"].apply(
-                lambda x: norm_grp in remove_accents(str(x)) or remove_accents(str(x)) in norm_grp
-            )
-            matched_df = matched_df[group_mask].copy()
-            if matched_df.empty:
-                return self._fallback_empty_response(
-                    user_total_score,
-                    combination,
-                    msg=f"Không tìm thấy phương án tuyển sinh nào thuộc nhóm ngành '{group_filter}' cho tổ hợp {combination}."
-                )
-
-        # Lọc theo Khu vực (region) từ profile nếu có
-        region_pref = ""
-        if isinstance(preferences, dict) and preferences.get("region"):
-            region_pref = str(preferences["region"]).strip()
-        elif user_payload.get("region"):
-            region_pref = str(user_payload.get("region")).strip()
-
-        if region_pref:
-            norm_reg = remove_accents(region_pref)
-            reg_mask = matched_df["region"].apply(
-                lambda x: norm_reg in remove_accents(str(x)) or remove_accents(str(x)) in norm_reg
-            )
-            matched_df = matched_df[reg_mask].copy()
-            if matched_df.empty:
-                return self._fallback_empty_response(
-                    user_total_score,
-                    combination,
-                    msg=f"Không tìm thấy phương án tuyển sinh nào tại khu vực '{region_pref}' cho tổ hợp {combination}."
-                )
-
-        # `interest` là từ khóa cụ thể do người dùng nhập nên được dùng để lọc
-        # cứng. Các chip `preferences.interests` là sở thích khái quát, được
-        # dùng để chấm interest_fit phía dưới thay vì loại hết kết quả.
-        user_interests = []
-        if isinstance(preferences, dict):
-            if isinstance(preferences.get("interests"), list):
-                user_interests = [str(i).strip() for i in preferences["interests"] if str(i).strip()]
-            elif isinstance(preferences.get("interests"), str) and preferences.get("interests"):
-                user_interests = [preferences["interests"].strip()]
-
-        search_terms = [interest] if interest else []
-
-        if search_terms:
-            term_masks = []
-            for term in search_terms:
-                nt = remove_accents(term)
-                tm = (
-                    matched_df["major_name"].apply(lambda x: nt in remove_accents(str(x)))
-                    | matched_df["major_group_name"].apply(lambda x: nt in remove_accents(str(x)))
-                    | matched_df["university_name"].apply(lambda x: nt in remove_accents(str(x)))
-                )
-                term_masks.append(tm)
-            combined_mask = pd.concat(term_masks, axis=1).any(axis=1)
-            matched_df = matched_df[combined_mask].copy()
-            if matched_df.empty:
-                return self._fallback_empty_response(
-                    user_total_score,
-                    combination,
-                    msg=f"Không tìm thấy phương án tuyển sinh nào phù hợp với từ khóa sở thích '{', '.join(search_terms)}' cho tổ hợp {combination}."
-                )
 
         if matched_df.empty:
             return self._fallback_empty_response(user_total_score, combination)
@@ -255,11 +200,27 @@ class RecommendationEngine:
 
         # 3. CONTENT-BASED SCORING
         # Điểm gợi ý dựa trên thuộc tính của ngành/trường và hồ sơ đã nhập,
-        # không dùng AHP, TOPSIS hay Collaborative Filtering. Collaborative
-        # Filtering cần ma trận tương tác từ nhiều người dùng, dữ liệu này chưa
-        # thuộc phạm vi của đồ án.
+        # Không dùng Collaborative Filtering vì hệ thống chưa có ma trận tương
+        # tác từ nhiều người dùng.
+        matched_df["interest_fit_raw"] = calculate_interest_fit_scores(matched_df, user_interests)
+
+        # Khi người dùng đã chọn sở thích, đây là điều kiện phù hợp tối thiểu:
+        # chỉ giữ ngành khớp ít nhất một sở thích. Nếu chọn hai sở thích, ngành
+        # khớp cả hai vẫn được xếp cao hơn nhờ interest_fit = 1.0 thay vì 0.5.
+        if user_interests:
+            matched_df = matched_df[matched_df["interest_fit_raw"] > 0].copy()
+            if matched_df.empty:
+                return self._fallback_empty_response(
+                    user_total_score,
+                    combination,
+                    msg=(
+                        f"Chưa tìm thấy ngành nào vừa xét tổ hợp {combination}, phù hợp mức điểm "
+                        f"{user_total_score:.2f} và khớp với sở thích đã chọn."
+                    ),
+                )
+
         admission_fit_scores = np.clip((matched_df["gap"].to_numpy(dtype=float) + 3.0) / 4.0, 0.05, 1.0)
-        interest_fit_scores = calculate_interest_fit_scores(matched_df, user_interests)
+        interest_fit_scores = matched_df.pop("interest_fit_raw").to_numpy(dtype=float)
 
         salaries = matched_df["job_avg_salary_million"].fillna(15.0).clip(lower=5.0).to_numpy(dtype=float)
         postings = matched_df["job_posting_count"].fillna(500.0).clip(lower=10.0).to_numpy(dtype=float)
@@ -288,7 +249,8 @@ class RecommendationEngine:
         salary_scores = normalize_candidate_feature(salaries)
         demand_scores = normalize_candidate_feature(postings)
 
-        # Điều chỉnh trọng số rõ ràng theo preference do người dùng cung cấp.
+        # Các trọng số chỉ phản ánh dữ liệu có trong hệ thống: điểm xét tuyển,
+        # độ khớp sở thích, thu nhập, số tin tuyển dụng và lịch sử điểm chuẩn.
         w_admission = 0.40
         w_interest = 0.00
         w_sal = 0.25
@@ -303,46 +265,6 @@ class RecommendationEngine:
             w_sal = 0.20
             w_dem = 0.15
             w_stab = 0.10
-
-        # Đọc preferences dạng list/dict từ frontend (state.profile) và priorities
-        user_priorities = set()
-        if isinstance(preferences, dict):
-            p_val = preferences.get("priorities", [])
-            if isinstance(p_val, list):
-                for p in p_val:
-                    user_priorities.add(str(p).strip().lower())
-            elif isinstance(p_val, dict):
-                for p in p_val.keys():
-                    user_priorities.add(str(p).strip().lower())
-            elif isinstance(p_val, str):
-                user_priorities.add(p_val.strip().lower())
-
-            if preferences.get("priority"):
-                user_priorities.add(str(preferences["priority"]).strip().lower())
-
-        if isinstance(priorities, dict):
-            for k in priorities.keys():
-                user_priorities.add(str(k).strip().lower())
-        elif isinstance(priorities, list):
-            for p in priorities:
-                user_priorities.add(str(p).strip().lower())
-
-        if any(x in user_priorities for x in ["thu nhập", "salary", "income"]):
-            w_sal += 0.15
-            w_admission -= 0.10
-            w_stab -= 0.05
-        if any(x in user_priorities for x in ["ổn định", "stability"]):
-            w_stab += 0.15
-            w_sal -= 0.05
-            w_dem -= 0.10
-        if any(x in user_priorities for x in ["cơ hội việc làm", "employment", "demand"]):
-            w_dem += 0.15
-            w_admission -= 0.10
-            w_sal -= 0.05
-        if any(x in user_priorities for x in ["cơ hội quốc tế", "international"]):
-            w_dem += 0.10
-            w_sal += 0.05
-            w_admission -= 0.15
 
         weights = np.array([w_admission, w_interest, w_sal, w_dem, w_stab])
         weights = weights / np.sum(weights)

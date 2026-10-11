@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Xây dựng Bộ dữ liệu thống nhất (Unified Dataset) cho ML và Decision Engine (AHP/TOPSIS).
+"""Xây dựng Bộ dữ liệu thống nhất (Unified Dataset) cho ML và hệ thống gợi ý.
 
 Phiên bản V4 - Giải quyết triệt để các vấn đề đánh giá:
 1. KHÔNG LÀM MẤT BẢN GHI: Bảo toàn 100% 19.983 phương án 2024.
@@ -8,7 +8,7 @@ Phiên bản V4 - Giải quyết triệt để các vấn đề đánh giá:
 3. LỊCH SỬ PHÂN NHÓM CHẶT CHẼ & GHI NHẬN ĐA ĐIỂM (No Fake Medians):
    - Nhóm lịch sử có tính đến giới tính (gender_requirement), chương trình CLC (honors_program) và cơ sở (campus).
    - Nếu vẫn tồn tại nhiều mức điểm chuẩn (do đa phương thức xét tuyển): ghi nhận rõ cờ history_ambiguous = True.
-   - Nếu years_observed < 2: gán cutoff_std_recent = NaN (KHÔNG dùng 0.0 để tránh bị TOPSIS thưởng sai),
+   - Nếu years_observed < 2: gán cutoff_std_recent = NaN (không dùng 0.0 để tránh đánh giá sai độ ổn định),
      và gán cutoff_trend = 'Không đủ dữ liệu'.
    - Xử lý chuỗi thời gian 2021-2024 theo annualized diff.
 4. MAPPING CHẶT CHẼ, KHÔNG CHỌN TÙY Ý KHI XUNG ĐỘT:

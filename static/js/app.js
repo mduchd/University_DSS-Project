@@ -47,7 +47,7 @@
     },
     careerLoaded: false,
     wishlist: JSON.parse(localStorage.getItem("dss_user_wishlist") || "[]"),
-    profile: JSON.parse(localStorage.getItem("dss_user_profile") || '{"interests":[],"priorities":[],"region":""}'),
+    interests: loadStoredInterests(),
   };
 
   // DOM Elements
@@ -62,12 +62,9 @@
     comboSelect: document.getElementById("combination-select"),
     scoreGrid: document.getElementById("score-input-grid"),
     totalScoreDisplay: document.getElementById("total-score-display"),
-    groupFilter: document.getElementById("group-filter"),
     resetScoresBtn: document.getElementById("reset-scores-btn"),
     preferenceChoiceGroups: document.querySelectorAll("[data-preference-group]"),
     interestPreferenceCount: document.getElementById("interest-preference-count"),
-    priorityPreferenceCount: document.getElementById("priority-preference-count"),
-    regionPreference: document.getElementById("region-preference"),
     submitBtn: document.getElementById("submit-btn"),
     formAlert: document.getElementById("form-alert"),
 
@@ -231,7 +228,6 @@
     elements.scoreGrid.querySelectorAll("input").forEach((input) => {
       input.value = "";
     });
-    elements.groupFilter.value = "";
     state.recommendations = null;
     elements.formAlert.classList.add("hidden");
     elements.resultsMeta.classList.add("hidden");
@@ -245,29 +241,42 @@
   elements.comboSelect.addEventListener("change", renderScoreInputs);
   elements.resetScoresBtn.addEventListener("click", resetRecommendationForm);
 
-  /* Preference choices are persisted locally and sent with each recommendation request. */
-  function saveProfile() {
-    localStorage.setItem("dss_user_profile", JSON.stringify(state.profile));
+  /* Interest choices are persisted locally and sent with each recommendation request. */
+  function loadStoredInterests() {
+    try {
+      const savedInterests = JSON.parse(localStorage.getItem("dss_user_interests") || "null");
+      if (Array.isArray(savedInterests)) return savedInterests;
+
+      const legacyProfile = JSON.parse(localStorage.getItem("dss_user_profile") || "null");
+      return Array.isArray(legacyProfile?.interests) ? legacyProfile.interests : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function saveInterests() {
+    localStorage.setItem("dss_user_interests", JSON.stringify(state.interests));
+    localStorage.removeItem("dss_user_profile");
   }
 
   function syncPreferenceGroup(groupName) {
     const group = document.querySelector(`[data-preference-group="${groupName}"]`);
     if (!group) return;
 
-    const selectedValues = state.profile[groupName] || [];
+    const selectedValues = state.interests;
     group.querySelectorAll(".preference-chip").forEach((button) => {
       const isSelected = selectedValues.includes(button.dataset.preferenceValue);
       button.classList.toggle("selected", isSelected);
       button.setAttribute("aria-pressed", String(isSelected));
     });
 
-    const countElement = groupName === "interests" ? elements.interestPreferenceCount : elements.priorityPreferenceCount;
-    if (countElement) countElement.textContent = `${selectedValues.length}/2 đã chọn`;
+    if (elements.interestPreferenceCount) {
+      elements.interestPreferenceCount.textContent = `${selectedValues.length}/2 đã chọn`;
+    }
   }
 
   function syncProfileSummary() {
-    const summaryParts = [...state.profile.interests, ...state.profile.priorities];
-    if (state.profile.region) summaryParts.push(state.profile.region);
+    const summaryParts = [...state.interests];
 
     if (!summaryParts.length) {
       elements.profileSummary.classList.add("hidden");
@@ -280,9 +289,8 @@
   }
 
   function initPreferenceProfile() {
-    if (!Array.isArray(state.profile.interests)) state.profile.interests = [];
-    if (!Array.isArray(state.profile.priorities)) state.profile.priorities = [];
-    if (typeof state.profile.region !== "string") state.profile.region = "";
+    if (!Array.isArray(state.interests)) state.interests = [];
+    saveInterests();
 
     elements.preferenceChoiceGroups.forEach((group) => {
       const groupName = group.dataset.preferenceGroup;
@@ -291,7 +299,7 @@
       group.querySelectorAll(".preference-chip").forEach((button) => {
         button.addEventListener("click", () => {
           const value = button.dataset.preferenceValue;
-          const selections = state.profile[groupName];
+          const selections = state.interests;
           const existingIndex = selections.indexOf(value);
 
           if (existingIndex >= 0) {
@@ -303,7 +311,7 @@
             return;
           }
 
-          saveProfile();
+          saveInterests();
           syncPreferenceGroup(groupName);
           syncProfileSummary();
         });
@@ -311,15 +319,6 @@
 
       syncPreferenceGroup(groupName);
     });
-
-    if (elements.regionPreference) {
-      elements.regionPreference.value = state.profile.region;
-      elements.regionPreference.addEventListener("change", () => {
-        state.profile.region = elements.regionPreference.value;
-        saveProfile();
-        syncProfileSummary();
-      });
-    }
 
     syncProfileSummary();
   }
@@ -366,12 +365,7 @@
         body: JSON.stringify({
           combination: combo,
           scores: scores,
-          group: elements.groupFilter.value,
-          preferences: {
-            interests: [...state.profile.interests],
-            priorities: [...state.profile.priorities],
-            region: state.profile.region,
-          },
+          interests: [...state.interests],
         }),
       });
 
@@ -427,9 +421,13 @@
     }
 
     if (listToRender.length === 0) {
+      const bucketLabels = { safe: "An toàn", match: "Phù hợp", reach: "Thử sức" };
+      const emptyMessage = state.recommendations.total_count === 0
+        ? state.recommendations.message || "Chưa tìm thấy ngành phù hợp với tổ hợp, mức điểm và sở thích đã nhập."
+        : `Không có ngành nào thuộc nhóm ${bucketLabels[state.activeBucket] || "đã chọn"}.`;
       elements.recList.innerHTML = `
         <div class="empty-state-box" style="padding: 32px 16px;">
-          <p class="empty-desc">Không tìm thấy ngành nào phù hợp với bộ lọc trong nhóm này.</p>
+          <p class="empty-desc">${escapeHtml(emptyMessage)}</p>
         </div>
       `;
       return;

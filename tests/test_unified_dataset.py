@@ -124,6 +124,12 @@ class TestUnifiedDatasetSemantics(unittest.TestCase):
         scale_40_rows = self.df_master[self.df_master["is_scale_40"] == "True"]
         self.assertGreater(len(scale_40_rows), 500, "Phải nhận diện được các phương án thang 40")
 
+    def test_law_major_codes_have_canonical_group(self):
+        """Mã ngành 738 thuộc lĩnh vực Pháp luật, không nhận nhãn nhóm sai từ nguồn."""
+        law_rows = self.df_master[self.df_master["major_code"].astype(str).str.startswith("738")]
+        self.assertGreater(len(law_rows), 0)
+        self.assertEqual(set(law_rows["major_group_name"].dropna()), {"Pháp luật"})
+
 
     def test_data_repository_regex_safety_and_copies(self):
         """5. Kiểm tra tính an toàn regex và bảo vệ bộ nhớ cache của DataRepository."""
@@ -139,11 +145,11 @@ class TestUnifiedDatasetSemantics(unittest.TestCase):
     def test_recommendation_engine_semantics_and_safety(self):
         """6. Kiểm tra Recommendation Engine sinh kết quả thật và tuân thủ nguyên tắc an toàn."""
         # Profile 1: 24 điểm CNTT
-        p1 = {"combination": "A00", "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5}, "interest": "Công nghệ thông tin"}
+        p1 = {"combination": "A00", "scores": {"toan": 8.5, "vatly": 8.0, "hoahoc": 7.5}, "interests": ["Công nghệ"]}
         r1 = recommendation_engine.process_recommendation(p1)
 
         # Profile 2: 12 điểm Ngôn ngữ
-        p2 = {"combination": "A00", "scores": {"toan": 4.0, "vatly": 4.0, "hoahoc": 4.0}, "interest": "Ngôn ngữ"}
+        p2 = {"combination": "A00", "scores": {"toan": 4.0, "vatly": 4.0, "hoahoc": 4.0}, "interests": ["Xã hội & cộng đồng"]}
         r2 = recommendation_engine.process_recommendation(p2)
 
         # 2 profile phải có kết quả khác nhau
