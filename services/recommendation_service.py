@@ -55,55 +55,69 @@ SUBJECT_EXAM_COLUMN_MAP = {
     "tinhoc": "informatics",
 }
 
-# Mapping có chủ đích, dùng để so khớp hồ sơ sở thích khái quát với các thuộc
+# Mapping có chủ đích, dùng để so khớp sở thích định hướng với các thuộc
 # tính đã có của phương án (tên ngành, nhóm ngành, nhóm nghề). Đây là content-
 # based filtering, không suy diễn từ hành vi của những người dùng khác.
 INTEREST_KEYWORDS = {
     # Không dùng từ khóa "công nghệ" đơn lẻ: nó xuất hiện trong tên nhiều
-    # ngành kỹ thuật (ví dụ Công nghệ kỹ thuật xây dựng). Công nghệ số chỉ
+    # ngành kỹ thuật (ví dụ Công nghệ kỹ thuật xây dựng). Nhóm sở thích máy tính chỉ
     # bao gồm các ngành máy tính, dữ liệu và phần mềm.
-    "cong nghe so": (
+    "kham pha may tinh, du lieu & ai": (
         "cong nghe thong tin", "tin hoc", "khoa hoc may tinh", "ky thuat may tinh",
         "he thong thong tin", "mang may tinh", "truyen thong du lieu",
         "an toan thong tin", "du lieu", "tri tue nhan tao", "phan mem",
         "lap trinh", "internet van vat", "thuong mai dien tu", "game",
     ),
-    "ky thuat & xay dung": (
+    "thiet ke, che tao & xay dung": (
         "xay dung", "kien truc", "cong trinh", "giao thong", "co khi",
         "co dien tu", "dien dien tu", "dien tu", "dien cong nghiep",
         "tu dong hoa", "dieu khien", "o to", "vat lieu", "mo dia chat",
         "ky thuat moi truong", "cong nghe ky thuat",
     ),
-    "kinh doanh": (
+    "kinh doanh & lam viec voi thi truong": (
         "kinh te", "quan tri", "thuong mai", "tai chinh", "ngan hang", "ke toan",
         "marketing", "logistics", "kinh doanh", "bao hiem",
     ),
-    "sang tao": (
+    "sang tao noi dung & thiet ke": (
         "thiet ke", "truyen thong", "bao chi", "quang cao", "nghe thuat", "am nhac",
         "my thuat", "thoi trang", "da phuong tien", "game",
     ),
-    "xa hoi & cong dong": (
+    "lam viec voi con nguoi & cong dong": (
         "xa hoi", "giao duc", "su pham", "tam ly", "luat", "y te", "dieu duong",
         "duoc", "van hoa", "quan ly nha nuoc", "cong tac xa hoi",
     ),
 }
 
-# Một số bản ghi lịch sử có nhãn nhóm ngành chưa chính xác. Với Công nghệ số,
+# Một số bản ghi lịch sử có nhãn nhóm ngành chưa chính xác. Với nhóm sở thích máy tính,
 # tên ngành là nguồn đáng tin hơn, nên không dùng nhãn nhóm để kết luận khớp.
-INTERESTS_MATCHING_MAJOR_NAME_ONLY = {"cong nghe so"}
+INTERESTS_MATCHING_MAJOR_NAME_ONLY = {"kham pha may tinh, du lieu & ai"}
 
-# Các tín hiệu kỹ thuật này cũng luôn loại phương án khỏi nhóm Công nghệ số.
+# Các tín hiệu kỹ thuật này cũng luôn loại phương án khỏi nhóm sở thích máy tính.
 # Đây là lớp bảo vệ cho tên ngành có cả thành phần số và thành phần kỹ thuật.
 INTEREST_EXCLUDED_MAJOR_KEYWORDS = {
-    "cong nghe so": (
+    "kham pha may tinh, du lieu & ai": (
         "xay dung", "kien truc", "cong trinh", "giao thong", "co khi",
         "co dien tu", "dien dien tu", "dien tu", "dien cong nghiep",
         "tu dong hoa", "dieu khien", "o to", "vat lieu", "mo dia chat",
     ),
 }
 
-# Duy trì dữ liệu hồ sơ đã lưu ở giao diện trước khi tách nhóm.
-INTEREST_ALIASES = {"cong nghe": "cong nghe so"}
+# Duy trì dữ liệu hồ sơ đã lưu từ các phiên bản giao diện trước.
+INTEREST_ALIASES = {
+    "cong nghe": "kham pha may tinh, du lieu & ai",
+    "cong nghe so": "kham pha may tinh, du lieu & ai",
+    "may tinh du lieu & ai": "kham pha may tinh, du lieu & ai",
+    "may tinh, du lieu & ai": "kham pha may tinh, du lieu & ai",
+    "ky thuat & xay dung": "thiet ke, che tao & xay dung",
+    "may moc cong trinh & ky thuat": "thiet ke, che tao & xay dung",
+    "may moc, cong trinh & ky thuat": "thiet ke, che tao & xay dung",
+    "kinh doanh": "kinh doanh & lam viec voi thi truong",
+    "kinh doanh & thi truong": "kinh doanh & lam viec voi thi truong",
+    "sang tao": "sang tao noi dung & thiet ke",
+    "noi dung thiet ke & truyen thong": "sang tao noi dung & thiet ke",
+    "xa hoi & cong dong": "lam viec voi con nguoi & cong dong",
+    "con nguoi cong dong & dich vu": "lam viec voi con nguoi & cong dong",
+}
 
 
 def calculate_interest_fit_scores(candidates: pd.DataFrame, interests: list[str]) -> np.ndarray:

@@ -20,7 +20,7 @@ class TestRecommendationAndValidation(unittest.TestCase):
             },
         ])
 
-        scores = calculate_interest_fit_scores(candidates, ["Công nghệ số"])
+        scores = calculate_interest_fit_scores(candidates, ["Khám phá máy tính, dữ liệu & AI"])
 
         self.assertEqual(scores.tolist(), [1.0, 0.0])
 
@@ -32,7 +32,7 @@ class TestRecommendationAndValidation(unittest.TestCase):
             "job_category": "sản_xuất_lao_động_phổ_thông_cơ_khí",
         }])
 
-        scores = calculate_interest_fit_scores(candidates, ["Công nghệ số"])
+        scores = calculate_interest_fit_scores(candidates, ["Khám phá máy tính, dữ liệu & AI"])
 
         self.assertEqual(scores.tolist(), [0.0])
 
@@ -58,8 +58,8 @@ class TestRecommendationAndValidation(unittest.TestCase):
             },
         ])
 
-        digital_scores = calculate_interest_fit_scores(candidates, ["Công nghệ số"])
-        engineering_scores = calculate_interest_fit_scores(candidates, ["Kỹ thuật & xây dựng"])
+        digital_scores = calculate_interest_fit_scores(candidates, ["Khám phá máy tính, dữ liệu & AI"])
+        engineering_scores = calculate_interest_fit_scores(candidates, ["Thiết kế, chế tạo & xây dựng"])
 
         self.assertEqual(digital_scores.tolist(), [1.0, 0.0, 0.0, 0.0])
         self.assertEqual(engineering_scores.tolist(), [0.0, 1.0, 1.0, 1.0])

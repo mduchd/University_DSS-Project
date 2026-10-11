@@ -74,7 +74,7 @@ Baseline “giá trị gần nhất” chỉ phủ 41,64% test vì nhiều trư�
 ## 7. Tích hợp vào DSS
 
 ```text
-Điểm ba môn + tổ hợp + hồ sơ sở thích/khu vực/ưu tiên
+Điểm ba môn + tổ hợp + sở thích định hướng
         ↓
 Lọc tổ hợp, nhóm ngành, khu vực và từ khóa cụ thể từ master admission
         ↓
@@ -87,9 +87,9 @@ Content-Based Filtering + weighted scoring
 An toàn (gap ≥ 1) / Phù hợp (-1 ≤ gap < 1) / Thử sức (-3 ≤ gap < -1)
 ```
 
-Khi không chọn sở thích, điểm xếp hạng kết hợp bốn tín hiệu: độ khớp điểm (0,40), lương tham khảo (0,25), nhu cầu việc làm (0,20) và độ ổn định lịch sử (0,15). Khi chọn sở thích, hệ thống dành 0,20 cho `interest_fit`; các trọng số ban đầu lần lượt là độ khớp điểm 0,35, lương 0,20, nhu cầu 0,15 và ổn định 0,10. Người dùng có thể thay đổi tương quan các trọng số bằng ưu tiên đã chọn.
+Khi không chọn sở thích, điểm xếp hạng kết hợp bốn tín hiệu: độ khớp điểm (0,40), lương tham khảo (0,25), nhu cầu việc làm (0,20) và độ ổn định lịch sử (0,15). Khi chọn sở thích, hệ thống dành 0,20 cho `interest_fit`; các trọng số còn lại lần lượt là độ khớp điểm 0,35, lương 0,20, nhu cầu 0,15 và ổn định 0,10.
 
-`interest_fit` được tính minh bạch từ mapping sở thích → từ khóa đặc trưng trong tên ngành và nhóm ngành: **Công nghệ số**, **Kỹ thuật & xây dựng**, **Kinh doanh**, **Sáng tạo**, **Xã hội & cộng đồng**. Công nghệ số chỉ so khớp với tên ngành để không bị nhiễu bởi các nhãn nhóm lịch sử sai; các ngành xây dựng, kiến trúc, cơ khí, điện tử và tự động hóa được loại khỏi nhóm này. Mỗi sở thích khớp được 1 điểm, sau đó lấy trung bình theo số sở thích đã chọn. Đây là Content-Based Filtering; hệ thống không dùng Collaborative Filtering vì chưa thu thập ma trận tương tác/rating từ nhiều học sinh. Từ khóa trường/ngành người dùng tự nhập là bộ lọc cụ thể, không phải dữ liệu huấn luyện.
+`interest_fit` được tính minh bạch từ mapping sở thích định hướng → từ khóa đặc trưng trong tên ngành và nhóm ngành: **Khám phá máy tính, dữ liệu & AI**, **Thiết kế, chế tạo & xây dựng**, **Kinh doanh & làm việc với thị trường**, **Sáng tạo nội dung & thiết kế**, **Làm việc với con người & cộng đồng**. Nhóm sở thích máy tính chỉ so khớp với tên ngành để không bị nhiễu bởi các nhãn nhóm lịch sử sai; các ngành xây dựng, kiến trúc, cơ khí, điện tử và tự động hóa được loại khỏi nhóm này. Mỗi sở thích khớp được 1 điểm, sau đó lấy trung bình theo số sở thích đã chọn. Đây là Content-Based Filtering; hệ thống không dùng Collaborative Filtering vì chưa thu thập ma trận tương tác/rating từ nhiều học sinh. Từ khóa trường/ngành người dùng tự nhập là bộ lọc cụ thể, không phải dữ liệu huấn luyện.
 
 ## 8. Giới hạn và cách diễn giải
 

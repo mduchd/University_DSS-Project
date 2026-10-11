@@ -254,12 +254,23 @@
     }
   }
 
-  // Hồ sơ cũ lưu "Công nghệ" trước khi tách thành hai nhóm. Chuyển lựa chọn
-  // cũ sang Công nghệ số để nút và dữ liệu gửi về backend luôn đồng nhất.
+  // Chuyển nhãn nhóm ngành cũ sang câu mô tả sở thích hiện hành để nút và dữ
+  // liệu gửi về backend luôn đồng nhất.
   function migrateLegacyInterests(interests) {
-    return [...new Set(interests.map((interest) => (
-      interest === "Công nghệ" ? "Công nghệ số" : interest
-    )))];
+    const legacyInterestValues = {
+      "Công nghệ": "Khám phá máy tính, dữ liệu & AI",
+      "Công nghệ số": "Khám phá máy tính, dữ liệu & AI",
+      "Máy tính, dữ liệu & AI": "Khám phá máy tính, dữ liệu & AI",
+      "Kỹ thuật & xây dựng": "Thiết kế, chế tạo & xây dựng",
+      "Máy móc, công trình & kỹ thuật": "Thiết kế, chế tạo & xây dựng",
+      "Kinh doanh": "Kinh doanh & làm việc với thị trường",
+      "Kinh doanh & thị trường": "Kinh doanh & làm việc với thị trường",
+      "Sáng tạo": "Sáng tạo nội dung & thiết kế",
+      "Nội dung, thiết kế & truyền thông": "Sáng tạo nội dung & thiết kế",
+      "Xã hội & cộng đồng": "Làm việc với con người & cộng đồng",
+      "Con người, cộng đồng & dịch vụ": "Làm việc với con người & cộng đồng",
+    };
+    return [...new Set(interests.map((interest) => legacyInterestValues[interest] || interest))];
   }
 
   function saveInterests() {
@@ -431,7 +442,7 @@
     if (listToRender.length === 0) {
       const bucketLabels = { safe: "An toàn", match: "Phù hợp", reach: "Thử sức" };
       const emptyMessage = state.recommendations.total_count === 0
-        ? state.recommendations.message || "Chưa tìm thấy ngành phù hợp với tổ hợp, mức điểm và sở thích đã nhập."
+        ? state.recommendations.message || "Chưa tìm thấy ngành phù hợp với tổ hợp, mức điểm và sở thích đã chọn."
         : `Không có ngành nào thuộc nhóm ${bucketLabels[state.activeBucket] || "đã chọn"}.`;
       elements.recList.innerHTML = `
         <div class="empty-state-box" style="padding: 32px 16px;">
