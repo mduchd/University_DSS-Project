@@ -63,7 +63,6 @@
     scoreGrid: document.getElementById("score-input-grid"),
     totalScoreDisplay: document.getElementById("total-score-display"),
     groupFilter: document.getElementById("group-filter"),
-    interestInput: document.getElementById("interest-input"),
     resetScoresBtn: document.getElementById("reset-scores-btn"),
     preferenceChoiceGroups: document.querySelectorAll("[data-preference-group]"),
     interestPreferenceCount: document.getElementById("interest-preference-count"),
@@ -233,7 +232,6 @@
       input.value = "";
     });
     elements.groupFilter.value = "";
-    elements.interestInput.value = "";
     state.recommendations = null;
     elements.formAlert.classList.add("hidden");
     elements.resultsMeta.classList.add("hidden");
@@ -369,7 +367,6 @@
           combination: combo,
           scores: scores,
           group: elements.groupFilter.value,
-          interest: elements.interestInput.value.trim(),
           preferences: {
             interests: [...state.profile.interests],
             priorities: [...state.profile.priorities],
