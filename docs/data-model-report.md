@@ -89,7 +89,7 @@ An toàn (gap ≥ 1) / Phù hợp (-1 ≤ gap < 1) / Thử sức (-3 ≤ gap < -
 
 Khi không chọn sở thích, điểm xếp hạng kết hợp bốn tín hiệu: độ khớp điểm (0,40), lương tham khảo (0,25), nhu cầu việc làm (0,20) và độ ổn định lịch sử (0,15). Khi chọn sở thích, hệ thống dành 0,20 cho `interest_fit`; các trọng số ban đầu lần lượt là độ khớp điểm 0,35, lương 0,20, nhu cầu 0,15 và ổn định 0,10. Người dùng có thể thay đổi tương quan các trọng số bằng ưu tiên đã chọn.
 
-`interest_fit` được tính minh bạch từ mapping sở thích → từ khóa đặc trưng trong tên ngành, nhóm ngành và nhóm nghề: **Công nghệ**, **Kinh doanh**, **Sáng tạo**, **Xã hội & cộng đồng**. Mỗi sở thích khớp được 1 điểm, sau đó lấy trung bình theo số sở thích đã chọn. Đây là Content-Based Filtering; hệ thống không dùng Collaborative Filtering vì chưa thu thập ma trận tương tác/rating từ nhiều học sinh. Từ khóa trường/ngành người dùng tự nhập là bộ lọc cụ thể, không phải dữ liệu huấn luyện.
+`interest_fit` được tính minh bạch từ mapping sở thích → từ khóa đặc trưng trong tên ngành và nhóm ngành: **Công nghệ số**, **Kỹ thuật & xây dựng**, **Kinh doanh**, **Sáng tạo**, **Xã hội & cộng đồng**. Công nghệ số chỉ so khớp với tên ngành để không bị nhiễu bởi các nhãn nhóm lịch sử sai; các ngành xây dựng, kiến trúc, cơ khí, điện tử và tự động hóa được loại khỏi nhóm này. Mỗi sở thích khớp được 1 điểm, sau đó lấy trung bình theo số sở thích đã chọn. Đây là Content-Based Filtering; hệ thống không dùng Collaborative Filtering vì chưa thu thập ma trận tương tác/rating từ nhiều học sinh. Từ khóa trường/ngành người dùng tự nhập là bộ lọc cụ thể, không phải dữ liệu huấn luyện.
 
 ## 8. Giới hạn và cách diễn giải
 

@@ -59,9 +59,20 @@ SUBJECT_EXAM_COLUMN_MAP = {
 # tính đã có của phương án (tên ngành, nhóm ngành, nhóm nghề). Đây là content-
 # based filtering, không suy diễn từ hành vi của những người dùng khác.
 INTEREST_KEYWORDS = {
-    "cong nghe": (
-        "cong nghe", "tin hoc", "dien", "co khi", "tu dong hoa",
-        "du lieu", "tri tue nhan tao", "phan mem", "game",
+    # Không dùng từ khóa "công nghệ" đơn lẻ: nó xuất hiện trong tên nhiều
+    # ngành kỹ thuật (ví dụ Công nghệ kỹ thuật xây dựng). Công nghệ số chỉ
+    # bao gồm các ngành máy tính, dữ liệu và phần mềm.
+    "cong nghe so": (
+        "cong nghe thong tin", "tin hoc", "khoa hoc may tinh", "ky thuat may tinh",
+        "he thong thong tin", "mang may tinh", "truyen thong du lieu",
+        "an toan thong tin", "du lieu", "tri tue nhan tao", "phan mem",
+        "lap trinh", "internet van vat", "thuong mai dien tu", "game",
+    ),
+    "ky thuat & xay dung": (
+        "xay dung", "kien truc", "cong trinh", "giao thong", "co khi",
+        "co dien tu", "dien dien tu", "dien tu", "dien cong nghiep",
+        "tu dong hoa", "dieu khien", "o to", "vat lieu", "mo dia chat",
+        "ky thuat moi truong", "cong nghe ky thuat",
     ),
     "kinh doanh": (
         "kinh te", "quan tri", "thuong mai", "tai chinh", "ngan hang", "ke toan",
@@ -76,6 +87,23 @@ INTEREST_KEYWORDS = {
         "duoc", "van hoa", "quan ly nha nuoc", "cong tac xa hoi",
     ),
 }
+
+# Một số bản ghi lịch sử có nhãn nhóm ngành chưa chính xác. Với Công nghệ số,
+# tên ngành là nguồn đáng tin hơn, nên không dùng nhãn nhóm để kết luận khớp.
+INTERESTS_MATCHING_MAJOR_NAME_ONLY = {"cong nghe so"}
+
+# Các tín hiệu kỹ thuật này cũng luôn loại phương án khỏi nhóm Công nghệ số.
+# Đây là lớp bảo vệ cho tên ngành có cả thành phần số và thành phần kỹ thuật.
+INTEREST_EXCLUDED_MAJOR_KEYWORDS = {
+    "cong nghe so": (
+        "xay dung", "kien truc", "cong trinh", "giao thong", "co khi",
+        "co dien tu", "dien dien tu", "dien tu", "dien cong nghiep",
+        "tu dong hoa", "dieu khien", "o to", "vat lieu", "mo dia chat",
+    ),
+}
+
+# Duy trì dữ liệu hồ sơ đã lưu ở giao diện trước khi tách nhóm.
+INTEREST_ALIASES = {"cong nghe": "cong nghe so"}
 
 
 def calculate_interest_fit_scores(candidates: pd.DataFrame, interests: list[str]) -> np.ndarray:
@@ -103,18 +131,34 @@ def calculate_interest_fit_scores(candidates: pd.DataFrame, interests: list[str]
         ),
         axis=1,
     )
-    interest_keywords = []
+    major_names = candidates["major_name"].fillna("").map(
+        lambda value: remove_accents(str(value)).replace("_", " ")
+    )
+    interest_rules = []
     for interest in cleaned_interests:
         normalized_interest = remove_accents(interest)
-        interest_keywords.append(INTEREST_KEYWORDS.get(normalized_interest, (normalized_interest,)))
+        normalized_interest = INTEREST_ALIASES.get(normalized_interest, normalized_interest)
+        interest_rules.append((
+            normalized_interest,
+            INTEREST_KEYWORDS.get(normalized_interest, (normalized_interest,)),
+            INTEREST_EXCLUDED_MAJOR_KEYWORDS.get(normalized_interest, ()),
+        ))
 
     scores = []
-    for candidate_text in candidate_texts:
+    for candidate_text, major_name in zip(candidate_texts, major_names):
         matched_interests = sum(
-            any(keyword and keyword in candidate_text for keyword in keywords)
-            for keywords in interest_keywords
+            any(
+                keyword and keyword in (
+                    major_name
+                    if normalized_interest in INTERESTS_MATCHING_MAJOR_NAME_ONLY
+                    else candidate_text
+                )
+                for keyword in keywords
+            )
+            and not any(excluded_keyword in major_name for excluded_keyword in excluded_keywords)
+            for normalized_interest, keywords, excluded_keywords in interest_rules
         )
-        scores.append(matched_interests / len(interest_keywords))
+        scores.append(matched_interests / len(interest_rules))
     return np.asarray(scores, dtype=float)
 
 

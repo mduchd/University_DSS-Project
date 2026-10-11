@@ -245,13 +245,21 @@
   function loadStoredInterests() {
     try {
       const savedInterests = JSON.parse(localStorage.getItem("dss_user_interests") || "null");
-      if (Array.isArray(savedInterests)) return savedInterests;
+      if (Array.isArray(savedInterests)) return migrateLegacyInterests(savedInterests);
 
       const legacyProfile = JSON.parse(localStorage.getItem("dss_user_profile") || "null");
-      return Array.isArray(legacyProfile?.interests) ? legacyProfile.interests : [];
+      return Array.isArray(legacyProfile?.interests) ? migrateLegacyInterests(legacyProfile.interests) : [];
     } catch (_) {
       return [];
     }
+  }
+
+  // Hồ sơ cũ lưu "Công nghệ" trước khi tách thành hai nhóm. Chuyển lựa chọn
+  // cũ sang Công nghệ số để nút và dữ liệu gửi về backend luôn đồng nhất.
+  function migrateLegacyInterests(interests) {
+    return [...new Set(interests.map((interest) => (
+      interest === "Công nghệ" ? "Công nghệ số" : interest
+    )))];
   }
 
   function saveInterests() {
