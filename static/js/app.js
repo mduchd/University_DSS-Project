@@ -475,8 +475,8 @@
     const forecastCutoff = Number(item.cutoff);
     const isModelForecast = item.forecast_source === "xgboost_cutoff_v1";
     const forecastYear = item.forecast_year || "2024";
-    const forecastLabel = isModelForecast ? `Dự báo XGBoost ${forecastYear}` : "Mốc lịch sử 2024";
-    const forecastTag = isModelForecast ? `XGBoost · ${forecastYear}` : "Dữ liệu 2024";
+    const forecastLabel = isModelForecast ? `Dự báo điểm ${forecastYear}` : "Điểm chuẩn 2024";
+    const forecastTag = isModelForecast ? `Dự báo ${forecastYear}` : "Dữ liệu 2024";
     const recommendationScore = Number(item.recommendation_score || 0).toFixed(1);
     const interestFit = Number(item.interest_fit || 0).toFixed(0);
     const interestFitLabel = item.interest_fit_active ? ` Khớp sở thích ${interestFit}%.` : "";
@@ -527,7 +527,7 @@
           </div>
 
           <div class="metric-block">
-            <span class="metric-label">So với mốc dự báo</span>
+            <span class="metric-label">Chênh lệch với điểm bạn</span>
             <span class="gap-pill ${item.type}">${gapSign} đ</span>
           </div>
 
@@ -539,7 +539,7 @@
 
         <div class="rec-card-footer">
           <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>Gợi ý dựa trên điểm xét tuyển, dự báo xu hướng điểm và cơ hội việc làm.${interestFitLabel}</span>
+          <span>Gợi ý dựa trên điểm xét tuyển, mốc điểm dự kiến và cơ hội việc làm.${interestFitLabel}</span>
         </div>
       </article>
     `;
