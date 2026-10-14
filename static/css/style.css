@@ -1037,6 +1037,44 @@ body.dark-mode .badge-model {
   color: var(--text-muted);
 }
 
+.school-avatar {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  flex: 0 0 30px;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.school-avatar-image {
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  object-fit: contain;
+}
+
+.school-avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-light);
+}
+
+.school-table-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
 /* Metrics Grid */
 .rec-card-metrics {
   display: grid;
@@ -1624,9 +1662,20 @@ body.dark-mode .gap-pill.reach {
 .drawer-item-school {
   font-size: 11px;
   color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.drawer-item-school .school-avatar {
+  width: 22px;
+  height: 22px;
+  flex-basis: 22px;
+  border-radius: 6px;
+  font-size: 8px;
 }
 
 .drawer-item-scores {

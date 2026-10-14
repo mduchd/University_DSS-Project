@@ -7,6 +7,7 @@ import math
 from pathlib import Path
 import unicodedata
 from services.recommendation_service import recommendation_engine
+from services.university_logo_service import university_logo_service
 import logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
@@ -186,6 +187,12 @@ def search_admissions():
                 "note": row.get("Ghi chú", ""),
                 "scale": "Thang 40" if row.get("is_scale_40") else "Thang 30",
             }
+        )
+        results[-1].update(
+            university_logo_service.get(
+                results[-1].get("school_code", ""),
+                results[-1].get("school", ""),
+            )
         )
 
     # Sorting

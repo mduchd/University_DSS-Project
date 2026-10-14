@@ -462,9 +462,27 @@
         const cutoff = btn.dataset.cutoff;
         const code = btn.dataset.code;
         const gap = btn.dataset.gap;
-        toggleWishlist({ major, school, cutoff, code, gap });
+        toggleWishlist({ major, school, cutoff, code, gap, logo_url: item.logo_url, logo_alt: item.logo_alt });
       });
     });
+  }
+
+  function schoolInitials(name) {
+    const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return "DH";
+    const meaningful = words.filter((word) => !/^(trường|đại|học|học viện)$/i.test(word));
+    const source = meaningful.length ? meaningful : words;
+    return source.slice(-2).map((word) => word.charAt(0)).join("").toUpperCase();
+  }
+
+  function schoolAvatarHtml(item) {
+    const name = item.school || item.school_name || "Trường đại học";
+    const initials = schoolInitials(name);
+    const fallbackClass = item.logo_url ? "school-avatar-fallback hidden" : "school-avatar-fallback";
+    const logo = item.logo_url
+      ? `<img class="school-avatar-image" src="${escapeHtml(item.logo_url)}" alt="${escapeHtml(item.logo_alt || `Logo ${name}`)}" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" />`
+      : "";
+    return `<span class="school-avatar" aria-hidden="${item.logo_url ? "false" : "true"}">${logo}<span class="${fallbackClass}">${escapeHtml(initials)}</span></span>`;
   }
 
   function createRecommendationCardHtml(item) {
@@ -510,7 +528,7 @@
         <div class="rec-card-info">
           <h3 class="rec-major-title" title="${escapeHtml(item.major)}">${escapeHtml(item.major)}</h3>
           <p class="rec-school-name" title="${escapeHtml(item.school)}">
-            ${ICONS.school}
+            ${schoolAvatarHtml(item)}
             <span>${escapeHtml(item.school)}</span>
           </p>
         </div>
@@ -629,7 +647,7 @@
         return `
         <tr>
           <td><strong>${escapeHtml(row.school_code)}</strong></td>
-          <td style="font-weight: 600;">${escapeHtml(row.school)}</td>
+          <td style="font-weight: 600;"><span class="school-table-cell">${schoolAvatarHtml(row)}<span>${escapeHtml(row.school)}</span></span></td>
           <td><strong>${escapeHtml(row.major)}</strong></td>
           <td style="color: var(--text-secondary);">${escapeHtml(row.major_code)}</td>
           <td><span class="badge-tag">${escapeHtml(row.combination)}</span></td>
@@ -661,7 +679,7 @@
         const school = btn.dataset.school;
         const cutoff = btn.dataset.cutoff;
         const code = btn.dataset.code;
-        toggleWishlist({ major, school, cutoff, code, gap: "" });
+        toggleWishlist({ major, school, cutoff, code, gap: "", logo_url: row.logo_url, logo_alt: row.logo_alt });
       });
     });
   }
@@ -825,7 +843,7 @@
           <span class="drawer-item-index">NV${idx + 1}</span>
           <div class="drawer-item-info">
             <h4 class="drawer-item-major" title="${escapeHtml(item.major)}">${escapeHtml(item.major)}</h4>
-            <p class="drawer-item-school" title="${escapeHtml(item.school)}">${escapeHtml(item.school)}</p>
+            <p class="drawer-item-school" title="${escapeHtml(item.school)}">${schoolAvatarHtml(item)}<span>${escapeHtml(item.school)}</span></p>
           </div>
           <div class="drawer-item-scores">
             ${item.cutoff ? `${item.cutoff}đ` : ""}

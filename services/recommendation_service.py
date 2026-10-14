@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from services.data_repository import data_repo
 from services.cutoff_forecast_service import cutoff_forecast_service
+from services.university_logo_service import university_logo_service
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -369,6 +370,12 @@ class RecommendationEngine:
                 "region": str(r.get("region", "")),
                 "province": str(r.get("province", "")),
             }
+            item.update(
+                university_logo_service.get(
+                    item.get("school_code", ""),
+                    item.get("school", ""),
+                )
+            )
             if gap >= 1.0:
                 buckets["safe"].append(item)
             elif gap >= -1.0:
