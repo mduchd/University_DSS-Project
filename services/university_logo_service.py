@@ -31,10 +31,20 @@ class UniversityLogoService:
         row = self._load().get(self._normalise_code(school_code), {})
         name = str(school_name or row.get("school_name", "")).strip()
         logo_path = str(row.get("logo_path", "")).strip()
+        status = str(row.get("status", "")).strip() or "missing"
         return {
             "logo_url": logo_path or None,
             "logo_alt": str(row.get("alt_text", "")).strip() or f"Logo {name}",
             "has_logo": bool(logo_path),
+            "logo_kind": (
+                "generated_avatar"
+                if status == "generated_avatar"
+                else "favicon_proxy"
+                if status == "downloaded_favicon_proxy"
+                else "official"
+                if logo_path
+                else "missing"
+            ),
         }
 
     def clear_cache(self) -> None:
