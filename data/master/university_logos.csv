@@ -1,18 +1,18 @@
 school_code,school_name,official_url,source_url,logo_path,alt_text,status
 YHB,Trường Đại Học Y Hà Nội,https://hmu.edu.vn/,https://hmu.edu.vn/,/static/img/universities/YHB.png,Logo Trường Đại Học Y Hà Nội,downloaded_favicon_proxy
 NTH,Trường Đại học Ngoại thương,https://ftu.edu.vn/,,/static/img/universities/NTH.svg,Logo đại diện Trường Đại học Ngoại thương,generated_avatar
-NHH,Học Viện Ngân Hàng,https://hvnh.edu.vn/,https://hvnh.edu.vn/images/favicon.ico,/static/img/universities/NHH.ico,Logo Học Viện Ngân Hàng,downloaded
+NHH,Học Viện Ngân Hàng,https://hvnh.edu.vn/,https://hvnh.edu.vn/images/favicon.ico,/static/img/universities/NHH.ico,Logo Học Viện Ngân Hàng,downloaded_official_icon
 TMU,Trường Đại Học Thương Mại,https://tmu.edu.vn/,https://tmu.edu.vn/template_dhtm_v2/images/common/logo_image.svg,/static/img/universities/TMU.svg,Logo Trường Đại Học Thương Mại,downloaded
-YDS,Trường Đại Học Y Dược TPHCM,https://ump.edu.vn/,https://ump.edu.vn/img/favicon.ico,/static/img/universities/YDS.ico,Logo Trường Đại Học Y Dược TPHCM,downloaded
+YDS,Trường Đại Học Y Dược TPHCM,https://ump.edu.vn/,https://ump.edu.vn/img/favicon.ico,/static/img/universities/YDS.ico,Logo Trường Đại Học Y Dược TPHCM,downloaded_official_icon
 SPH,Trường Đại Học Sư Phạm Hà Nội,https://hnue.edu.vn/,https://hnue.edu.vn/,/static/img/universities/SPH.png,Logo Trường Đại Học Sư Phạm Hà Nội,downloaded_favicon_proxy
 HTC,Học Viện Tài chính,https://hvtc.edu.vn/,https://hvtc.edu.vn/css_moi/logo.png,/static/img/universities/HTC.png,Logo Học Viện Tài chính,downloaded
-BKA,Đại Học Bách Khoa Hà Nội,https://hust.edu.vn/,https://hust.edu.vn/uploads/sys/android-icon-36x36.png,/static/img/universities/BKA.png,Logo Đại Học Bách Khoa Hà Nội,downloaded
+BKA,Đại Học Bách Khoa Hà Nội,https://hust.edu.vn/,https://hust.edu.vn/uploads/sys/logobk-pc-1.png,/static/img/universities/BKA.png,Logo Đại Học Bách Khoa Hà Nội,downloaded_official_logo
 KMA,Học Viện Kỹ Thuật Mật Mã,https://actvn.edu.vn/,https://actvn.edu.vn/images/logoico.png,/static/img/universities/KMA.png,Logo Học Viện Kỹ Thuật Mật Mã,downloaded
 BVH,Học Viện Công Nghệ Bưu Chính Viễn Thông,https://ptit.edu.vn/,https://ptit.edu.vn/wp-content/uploads/2024/05/logo-ptit-1.svg,/static/img/universities/BVH.svg,Logo Học Viện Công Nghệ Bưu Chính Viễn Thông,downloaded
 HNM,Trường Đại học Thủ Đô Hà Nội,https://hnmu.edu.vn/,https://hnmu.edu.vn/sites/default/files/fav_0.png,/static/img/universities/HNM.png,Logo Trường Đại học Thủ Đô Hà Nội,downloaded
-YTB,Trường Đại Học Y Dược Thái Bình,https://tbump.edu.vn/,https://tbump.edu.vn/favicon.ico,/static/img/universities/YTB.ico,Logo Trường Đại Học Y Dược Thái Bình,downloaded
-DCN,Trường Đại Học Công Nghiệp Hà Nội,https://haui.edu.vn/,https://www.haui.edu.vn/dnn/web/haui/assets/images/favicon.png,/static/img/universities/DCN.png,Logo Trường Đại Học Công Nghiệp Hà Nội,downloaded
-YPB,Trường Đại Học Y Dược Hải Phòng,https://hpmu.edu.vn/,https://hpmu.edu.vn/hpmu/favicon.ico,/static/img/universities/YPB.ico,Logo Trường Đại Học Y Dược Hải Phòng,downloaded
+YTB,Trường Đại Học Y Dược Thái Bình,https://tbump.edu.vn/,https://tbump.edu.vn/uploads/logo_1.png,/static/img/universities/YTB.png,Logo Trường Đại Học Y Dược Thái Bình,downloaded_official_logo
+DCN,Trường Đại Học Công Nghiệp Hà Nội,https://haui.edu.vn/,https://www.haui.edu.vn/dnn/web/haui/assets/images/logo-ngang.svg?v=1.2,/static/img/universities/DCN.svg,Logo Trường Đại Học Công Nghiệp Hà Nội,downloaded_official_logo
+YPB,Trường Đại Học Y Dược Hải Phòng,https://hpmu.edu.vn/,https://hpmu.edu.vn/hpmu/uploads/banners/logo.jpeg,/static/img/universities/YPB.jpg,Logo Trường Đại Học Y Dược Hải Phòng,downloaded_official_logo
 ANH,Học Viện An Ninh Nhân Dân,https://hvann.edu.vn/,,/static/img/universities/ANH.svg,Logo đại diện Học Viện An Ninh Nhân Dân,generated_avatar
 KHA,Đại Học Kinh Tế Quốc Dân,https://neu.edu.vn/,https://neu.edu.vn/wp-content/uploads/2026/01/neu_new-1-scaled-180x180.webp,/static/img/universities/KHA.webp,Logo Đại Học Kinh Tế Quốc Dân,downloaded
 DKH,Trường Đại Học Dược Hà Nội,https://hup.edu.vn/,https://hup.edu.vn/data/orgs/2/2/1/images/logo-vi.png,/static/img/universities/DKH.png,Logo Trường Đại Học Dược Hà Nội,downloaded
@@ -33,25 +33,25 @@ CSS,Trường Đại Học Cảnh Sát Nhân Dân,https://dhcsnd.edu.vn/,https:/
 NHF,Trường Đại Học Hà Nội,https://hanu.vn/,https://hanu.vn/img/logo-256.png,/static/img/universities/NHF.png,Logo Trường Đại Học Hà Nội,downloaded
 YTC,Trường Đại Học Y Tế Công Cộng,https://huph.edu.vn/,https://huph.edu.vn/upload/images/logo/logo-huph-2.jpg,/static/img/universities/YTC.jpg,Logo Trường Đại Học Y Tế Công Cộng,downloaded
 HHK,Học Viện Hàng không Việt Nam,https://vaa.edu.vn/,https://vau.edu.vn/wp-content/uploads/2026/08/cropped-VAA-final1.png,/static/img/universities/HHK.png,Logo Học Viện Hàng không Việt Nam,downloaded
-HQT,Học Viện Ngoại Giao,https://dav.edu.vn/,https://static.dav.edu.vn/v2/App_themes/images/favicon.ico,/static/img/universities/HQT.ico,Logo Học Viện Ngoại Giao,downloaded
+HQT,Học Viện Ngoại Giao,https://dav.edu.vn/,https://static.dav.edu.vn/App_themes/images/logo.png?v=0.0.2,/static/img/universities/HQT.png,Logo Học Viện Ngoại Giao,downloaded_official_logo
 IUH,Trường Đại Học Công Nghiệp TPHCM,https://iuh.edu.vn/,https://iuh.edu.vn/assets/images/icons/logo.svg?v=51,/static/img/universities/IUH.svg,Logo Trường Đại Học Công Nghiệp TPHCM,downloaded
 TDM,Trường Đại học Thủ Dầu Một,https://tdmu.edu.vn/,https://tdmu.edu.vn/img/brand/Logo_TDMU_2024_nguyen_ban.svg,/static/img/universities/TDM.svg,Logo Trường Đại học Thủ Dầu Một,downloaded
-DTL,Trường Đại Học Thăng Long,https://thanglong.edu.vn/,https://thanglong.edu.vn/sites/default/files/favicon.ico,/static/img/universities/DTL.ico,Logo Trường Đại Học Thăng Long,downloaded
+DTL,Trường Đại Học Thăng Long,https://thanglong.edu.vn/,https://thanglong.edu.vn/themes/md_tlu_2/img/logo.svg,/static/img/universities/DTL.svg,Logo Trường Đại Học Thăng Long,downloaded_official_logo
 TYS,Trường Đại Học Y Khoa Phạm Ngọc Thạch,https://pnt.edu.vn/,https://pnt.edu.vn/Resources/assets/index/imgs/logo-footer.png,/static/img/universities/TYS.png,Logo Trường Đại Học Y Khoa Phạm Ngọc Thạch,downloaded
 GHA,Trường Đại Học Giao Thông Vận Tải,https://utc.edu.vn/,https://utc.edu.vn/assets/flatsome/images/logo.svg,/static/img/universities/GHA.svg,Logo Trường Đại Học Giao Thông Vận Tải,downloaded
 QST,Trường Đại Học Khoa Học Tự Nhiên TPHCM,https://hcmus.edu.vn/,https://hcmus.edu.vn/wp-content/uploads/2023/04/hcmus-logo-white.png,/static/img/universities/QST.png,Logo Trường Đại Học Khoa Học Tự Nhiên TPHCM,downloaded
 TLA,Trường Đại Học Thủy Lợi,https://tlu.edu.vn/,https://tlu.edu.vn/wp-content/uploads/2026/09/Logo-Quy-chuan_doPNG-.webp,/static/img/universities/TLA.webp,Logo Trường Đại Học Thủy Lợi,downloaded
-YCT,Trường Đại Học Y Dược Cần Thơ,https://ctump.edu.vn/,https://ctump.edu.vn/Themes/TH1079/Assets/img/favicon_ctump.png,/static/img/universities/YCT.png,Logo Trường Đại Học Y Dược Cần Thơ,downloaded
+YCT,Trường Đại Học Y Dược Cần Thơ,https://ctump.edu.vn/,https://media.ctump.edu.vn/Media\1_TH1076\FolderFunc\202403\Images/logo-ctump-headee-20240325094834-e.png,/static/img/universities/YCT.png,Logo Trường Đại Học Y Dược Cần Thơ,downloaded_official_logo
 ANS,Trường Đại Học An Ninh Nhân Dân,https://dhannd.edu.vn/,,/static/img/universities/ANS.svg,Logo đại diện Trường Đại Học An Ninh Nhân Dân,generated_avatar
 QHX,Trường Đại Học Khoa Học Xã Hội và Nhân Văn Hà Nội,https://ussh.vnu.edu.vn/,https://ussh.vnu.edu.vn/uploads/ussh/logo-ussh-2_100_100.png,/static/img/universities/QHX.png,Logo Trường Đại Học Khoa Học Xã Hội và Nhân Văn Hà Nội,downloaded
 HVN,Học Viện Nông Nghiệp Việt Nam,https://vnua.edu.vn/,https://vnua.edu.vn/Portals/0/logoHVNN.ico?ver=2018-12-25-093425-527,/static/img/universities/HVN.png,Logo Học Viện Nông Nghiệp Việt Nam,downloaded
-DTT,Trường Đại Học Tôn Đức Thắng,https://tdtu.edu.vn/,https://tdtu.edu.vn/sites/www/files/favicon.ico,/static/img/universities/DTT.ico,Logo Trường Đại Học Tôn Đức Thắng,downloaded
+DTT,Trường Đại Học Tôn Đức Thắng,https://tdtu.edu.vn/,https://tdtu.edu.vn/sites/www/files/logo-dh_0.png,/static/img/universities/DTT.png,Logo Trường Đại Học Tôn Đức Thắng,downloaded_official_logo
 QHE,Trường Đại Học Kinh Tế - ĐHQG Hà Nội,https://ueb.vnu.edu.vn/,,/static/img/universities/QHE.svg,Logo đại diện Trường Đại Học Kinh Tế - ĐHQG Hà Nội,generated_avatar
-QHT,Trường Đại Học Khoa Học Tự Nhiên Hà Nội,https://hus.vnu.edu.vn/,https://hus.vnu.edu.vn/Portals/0/DNN.ico?ver=Wwn67bsAs4t1hvMpaaW8vw%3d%3d,/static/img/universities/QHT.ico,Logo Trường Đại Học Khoa Học Tự Nhiên Hà Nội,downloaded
-LPH,Trường Đại Học Luật Hà Nội,https://hlu.edu.vn/,https://hlu.edu.vn/favicon.ico,/static/img/universities/LPH.png,Logo Trường Đại Học Luật Hà Nội,downloaded
+QHT,Trường Đại Học Khoa Học Tự Nhiên Hà Nội,https://hus.vnu.edu.vn/,https://hus.vnu.edu.vn/static//hus/img/core-img/logo.png,/static/img/universities/QHT.png,Logo Trường Đại Học Khoa Học Tự Nhiên Hà Nội,downloaded_official_logo
+LPH,Trường Đại Học Luật Hà Nội,https://hlu.edu.vn/,https://hlu.edu.vn/Content/Site/images/logo.png,/static/img/universities/LPH.png,Logo Trường Đại Học Luật Hà Nội,downloaded_official_logo
 DTS,Đại Học Sư Phạm Thái Nguyên,https://dts.tnu.edu.vn/,,/static/img/universities/DTS.svg,Logo đại diện Đại Học Sư Phạm Thái Nguyên,generated_avatar
 VHH,Trường Đại Học Văn Hóa Hà Nội,https://huc.edu.vn/,https://huc.edu.vn/img/logo/logohuc.png,/static/img/universities/VHH.png,Logo Trường Đại Học Văn Hóa Hà Nội,downloaded
-LCH,Trường Sĩ Quan Chính Trị - Đại Học Chính Trị,https://daihocchinhtri.edu.vn/,https://daihocchinhtri.edu.vn/favicon.ico,/static/img/universities/LCH.ico,Logo Trường Sĩ Quan Chính Trị - Đại Học Chính Trị,downloaded
+LCH,Trường Sĩ Quan Chính Trị - Đại Học Chính Trị,https://daihocchinhtri.edu.vn/,https://daihocchinhtri.edu.vn/favicon.ico,/static/img/universities/LCH.ico,Logo Trường Sĩ Quan Chính Trị - Đại Học Chính Trị,downloaded_official_icon
 DKS,Trường Đại học Kiểm Sát Hà Nội,https://tks.edu.vn/,,/static/img/universities/DKS.svg,Logo đại diện Trường Đại học Kiểm Sát Hà Nội,generated_avatar
 QSX,Trường Đại Học Khoa Học Xã Hội và Nhân Văn TPHCM,https://hcmussh.edu.vn/,https://cms.hcmussh.edu.vn/api/file/1beaa8d5-ebfc-41d8-a66b-c26256c997a8.webp,/static/img/universities/QSX.webp,Logo Trường Đại Học Khoa Học Xã Hội và Nhân Văn TPHCM,downloaded
 BPH,Học Viện Biên Phòng,https://hvbp.edu.vn/,,/static/img/universities/BPH.svg,Logo đại diện Học Viện Biên Phòng,generated_avatar
@@ -62,8 +62,8 @@ TCT,Trường Đại Học Cần Thơ,https://www.ctu.edu.vn/,https://www.ctu.ed
 QHF,Trường Đại Học Ngoại Ngữ - ĐH Quốc gia Hà Nội,https://ulis.vnu.edu.vn/,https://ulis.vnu.edu.vn/files/uploads/2024/01/Banner-ULIS-WEB-2024-1500-125px-.jpg,/static/img/universities/QHF.jpg,Logo Trường Đại Học Ngoại Ngữ - ĐH Quốc gia Hà Nội,downloaded
 NTS,Trường Đại học Ngoại thương (Cơ sở II),https://cs2.ftu.edu.vn/,,/static/img/universities/NTS.svg,Logo đại diện Trường Đại học Ngoại thương (Cơ sở II),generated_avatar
 HTA,Học viện Tòa án,https://hvta.toaan.gov.vn/,,/static/img/universities/HTA.svg,Logo đại diện Học viện Tòa án,generated_avatar
-QHS,Trường Đại Học Giáo Dục - ĐHQG Hà Nội,https://education.vnu.edu.vn/,https://education.vnu.edu.vn/images/brand/apple-icon-57x57.png,/static/img/universities/QHS.png,Logo Trường Đại Học Giáo Dục - ĐHQG Hà Nội,downloaded
-QSC,Trường Đại Học Công Nghệ Thông Tin - ĐHQG TPHCM,https://uit.edu.vn/,https://www.uit.edu.vn/media/favicon_1620ada787.ico,/static/img/universities/QSC.ico,Logo Trường Đại Học Công Nghệ Thông Tin - ĐHQG TPHCM,downloaded
+QHS,Trường Đại Học Giáo Dục - ĐHQG Hà Nội,https://education.vnu.edu.vn/,https://education.vnu.edu.vn/images/partner/logocongnghe.png,/static/img/universities/QHS.png,Logo Trường Đại Học Giáo Dục - ĐHQG Hà Nội,downloaded_official_logo
+QSC,Trường Đại Học Công Nghệ Thông Tin - ĐHQG TPHCM,https://uit.edu.vn/,https://www.uit.edu.vn/media/favicon_1620ada787.ico,/static/img/universities/QSC.ico,Logo Trường Đại Học Công Nghệ Thông Tin - ĐHQG TPHCM,downloaded_official_icon
 SP2,Trường Đại Học Sư Phạm Hà Nội 2,https://hpu2.edu.vn/,https://quanly.hpu2.edu.vn/center_data/hpu2.edu.vn/ps_cms_articles/image/Slider/tu_hoc.png,/static/img/universities/SP2.jpg,Logo Trường Đại Học Sư Phạm Hà Nội 2,downloaded
 HTN,Học Viện Thanh Thiếu Niên Việt Nam,https://hvtnvn.edu.vn/,,/static/img/universities/HTN.svg,Logo đại diện Học Viện Thanh Thiếu Niên Việt Nam,generated_avatar
 YQH,Học Viện Quân Y - Hệ Quân sự,https://hvqy.vn/,,/static/img/universities/YQH.svg,Logo đại diện Học Viện Quân Y - Hệ Quân sự,generated_avatar
@@ -71,85 +71,85 @@ DDS,Trường Đại Học Sư Phạm - Đại Học Đà Nẵng,https://ued.udn
 NQH,Học Viện Khoa Học Quân Sự - Hệ Quân sự,https://hvkhqs.edu.vn/,https://hvkhqs.edu.vn/wp-content/uploads/2024/05/hvqs.png,/static/img/universities/NQH.png,Logo Học Viện Khoa Học Quân Sự - Hệ Quân sự,downloaded
 LPS,Trường Đại Học Luật TPHCM,https://hcmulaw.edu.vn/,https://hcmulaw.edu.vn/Resources/assets/images/logo/logo.png,/static/img/universities/LPS.png,Logo Trường Đại Học Luật TPHCM,downloaded
 SPK,Trường Đại Học Sư Phạm Kỹ Thuật TPHCM,https://hcmute.edu.vn/,https://hcmute.edu.vn/logo/square-logo.png,/static/img/universities/SPK.png,Logo Trường Đại Học Sư Phạm Kỹ Thuật TPHCM,downloaded
-HEH,Học Viện Hậu Cần - Hệ Quân sự,https://hocvienhaucan.edu.vn/,https://hocvienhaucan.edu.vn/themes/hvhc/assets/images/favicon.png,/static/img/universities/HEH.png,Logo Học Viện Hậu Cần - Hệ Quân sự,downloaded
+HEH,Học Viện Hậu Cần - Hệ Quân sự,https://hocvienhaucan.edu.vn/,https://hocvienhaucan.edu.vn/themes/hvhc/assets/images/favicon.png,/static/img/universities/HEH.png,Logo Học Viện Hậu Cần - Hệ Quân sự,downloaded_official_icon
 QHY,Trường Đại học Y Dược - ĐHQG Hà Nội,https://med.vnu.edu.vn/,,/static/img/universities/QHY.svg,Logo đại diện Trường Đại học Y Dược - ĐHQG Hà Nội,generated_avatar
 QSK,Trường Đại học Kinh Tế Luật TPHCM,https://uel.edu.vn/,https://uel.edu.vn/storage/home/uel.png,/static/img/universities/QSK.png,Logo Trường Đại học Kinh Tế Luật TPHCM,downloaded
-VHS,Trường Đại Học Văn Hóa TPHCM,https://hcmuc.edu.vn/,https://hcmuc.edu.vn/img_data/images/LOGO/icon.png,/static/img/universities/VHS.png,Logo Trường Đại Học Văn Hóa TPHCM,downloaded
+VHS,Trường Đại Học Văn Hóa TPHCM,https://hcmuc.edu.vn/,https://hcmuc.edu.vn/img_data/images/LOGO/logo-hcmuc-470-70.png,/static/img/universities/VHS.png,Logo Trường Đại Học Văn Hóa TPHCM,downloaded_official_logo
 DHF,Trường Đại Học Ngoại Ngữ Huế,https://huflis.hueuni.edu.vn/,https://huflis.hueuni.edu.vn/,/static/img/universities/DHF.png,Logo Trường Đại Học Ngoại Ngữ Huế,downloaded_favicon_proxy
 DMS,Trường Đại Học Tài Chính Marketing,https://ufm.edu.vn/,https://ufm.edu.vn/,/static/img/universities/DMS.png,Logo Trường Đại Học Tài Chính Marketing,downloaded_favicon_proxy
-GSA,Trường Đại Học Giao Thông Vận Tải (Cơ sở 2),https://utc2.edu.vn/,https://utc2.edu.vn/assets/logo-icon-GCU48TCC.png,/static/img/universities/GSA.png,Logo Trường Đại Học Giao Thông Vận Tải (Cơ sở 2),downloaded
+GSA,Trường Đại Học Giao Thông Vận Tải (Cơ sở 2),https://utc2.edu.vn/,https://utc2.edu.vn/assets/logo-icon-GCU48TCC.png,/static/img/universities/GSA.png,Logo Trường Đại Học Giao Thông Vận Tải (Cơ sở 2),downloaded_official_icon
 LBH,Trường Sĩ Quan Lục Quân 2 - Đại học Nguyễn Huệ,https://tcu2.edu.vn/,,/static/img/universities/LBH.svg,Logo đại diện Trường Sĩ Quan Lục Quân 2 - Đại học Nguyễn Huệ,generated_avatar
 BVS,Học Viện Công Nghệ Bưu Chính Viễn Thông (Cơ sở TP.HCM),https://hcm.ptit.edu.vn/,https://hcm.ptit.edu.vn/,/static/img/universities/BVS.png,Logo Học Viện Công Nghệ Bưu Chính Viễn Thông (Cơ sở TP.HCM),downloaded_favicon_proxy
 DDF,Trường Đại Học Ngoại Ngữ Đà Nẵng,https://ufl.udn.vn/,"https://sp-ao.shortpixel.ai/client/to_webp,q_glossy,ret_img,w_32,h_32/https://ufl.udn.vn/wp-content/uploads/2025/08/logo-new.png",/static/img/universities/DDF.png,Logo Trường Đại Học Ngoại Ngữ Đà Nẵng,downloaded
-DDK,Trường Đại Học Bách Khoa Đà Nẵng,https://dut.udn.vn/,https://dut.udn.vn/,/static/img/universities/DDK.png,Logo Trường Đại Học Bách Khoa Đà Nẵng,downloaded_favicon_proxy
-LAH,Trường Sĩ Quan Lục Quân 1 - Đại học Trần Quốc Tuấn,https://tcu.edu.vn/,https://tcu.edu.vn/assets/web/images/favicon.ico,/static/img/universities/LAH.ico,Logo Trường Sĩ Quan Lục Quân 1 - Đại học Trần Quốc Tuấn,downloaded
-TTH,Trường Sĩ Quan Thông Tin - Hệ Quân sự - Đại Học Thông Tin Liên Lạc,https://tcu.edu.vn/,https://tcu.edu.vn/assets/web/images/favicon.ico,/static/img/universities/TTH.ico,Logo Trường Sĩ Quan Thông Tin - Hệ Quân sự - Đại Học Thông Tin Liên Lạc,downloaded
+DDK,Trường Đại Học Bách Khoa Đà Nẵng,https://dut.udn.vn/,https://dut.udn.vn/portals/_default/skins/dhbk/img/front/logo.png,/static/img/universities/DDK.png,Logo Trường Đại Học Bách Khoa Đà Nẵng,downloaded_official_logo
+LAH,Trường Sĩ Quan Lục Quân 1 - Đại học Trần Quốc Tuấn,https://tcu.edu.vn/,https://tcu.edu.vn/public/upload/Logo/Logo%20tr%C6%B0%E1%BB%9Dng%20%C4%91%E1%BA%A1i%20h%E1%BB%8Dc%20th%C3%B4ng%20tin%20li%C3%AAn%20l%E1%BA%A1c.png,/static/img/universities/LAH.png,Logo Trường Sĩ Quan Lục Quân 1 - Đại học Trần Quốc Tuấn,downloaded_official_logo
+TTH,Trường Sĩ Quan Thông Tin - Hệ Quân sự - Đại Học Thông Tin Liên Lạc,https://tcu.edu.vn/,https://tcu.edu.vn/public/upload/Logo/Logo%20tr%C6%B0%E1%BB%9Dng%20%C4%91%E1%BA%A1i%20h%E1%BB%8Dc%20th%C3%B4ng%20tin%20li%C3%AAn%20l%E1%BA%A1c.png,/static/img/universities/TTH.png,Logo Trường Sĩ Quan Thông Tin - Hệ Quân sự - Đại Học Thông Tin Liên Lạc,downloaded_official_logo
 DDY,Trường Y Dược Đà Nẵng,https://yds.danang.gov.vn/,,/static/img/universities/DDY.svg,Logo đại diện Trường Y Dược Đà Nẵng,generated_avatar
 YKV,Trường Đại Học Y Khoa Vinh,https://vmu.edu.vn/,https://x.onednn.com/img.thumb/png-57x0-0-74/cdn/vmu/logo-vmu.png,/static/img/universities/YKV.png,Logo Trường Đại Học Y Khoa Vinh,downloaded
-YDN,Trường Đại học Kỹ thuật Y Dược Đà Nẵng,https://dhktyduocdn.edu.vn/,https://dhktyduocdn.edu.vn/favicon.ico,/static/img/universities/YDN.ico,Logo Trường Đại học Kỹ thuật Y Dược Đà Nẵng,downloaded
-DHY,Trường Đại Học Y Dược Huế,https://huemed-univ.edu.vn/,https://huemed-univ.edu.vn/images/favicon/apple-icon-57x57.png,/static/img/universities/DHY.png,Logo Trường Đại Học Y Dược Huế,downloaded
-KTS,Trường Đại Học Kiến Trúc TPHCM,https://uah.edu.vn/,https://uah.edu.vn/themes/uah_asia/favicon/favicon-32x32.png,/static/img/universities/KTS.png,Logo Trường Đại Học Kiến Trúc TPHCM,downloaded
+YDN,Trường Đại học Kỹ thuật Y Dược Đà Nẵng,https://dhktyduocdn.edu.vn/,https://dhktyduocdn.edu.vn/favicon.ico,/static/img/universities/YDN.ico,Logo Trường Đại học Kỹ thuật Y Dược Đà Nẵng,downloaded_official_icon
+DHY,Trường Đại Học Y Dược Huế,https://huemed-univ.edu.vn/,https://huemed-univ.edu.vn/images/logo_dai.png,/static/img/universities/DHY.png,Logo Trường Đại Học Y Dược Huế,downloaded_official_logo
+KTS,Trường Đại Học Kiến Trúc TPHCM,https://uah.edu.vn/,https://uah.edu.vn/media/1/logo.png,/static/img/universities/KTS.png,Logo Trường Đại Học Kiến Trúc TPHCM,downloaded_official_logo
 HCA,Học Viện Chính Trị Công An Nhân Dân,https://hvctcand.edu.vn/,https://hvctcand.edu.vn/skins/default/images/footer-logo.png,/static/img/universities/HCA.png,Logo Học Viện Chính Trị Công An Nhân Dân,downloaded
 KSA,Đại Học Kinh Tế TPHCM,https://ueh.edu.vn/,https://ueh.edu.vn/images/logo-header.png,/static/img/universities/KSA.png,Logo Đại Học Kinh Tế TPHCM,downloaded
 QSQ,Trường Đại Học Quốc Tế - ĐHQG TPHCM,https://hcmiu.edu.vn/,,/static/img/universities/QSQ.svg,Logo đại diện Trường Đại Học Quốc Tế - ĐHQG TPHCM,generated_avatar
-THV,Trường Đại Học Hùng Vương,https://hvu.edu.vn/,https://hvu.edu.vn/favicon.ico,/static/img/universities/THV.ico,Logo Trường Đại Học Hùng Vương,downloaded
+THV,Trường Đại Học Hùng Vương,https://hvu.edu.vn/,https://hvu.edu.vn/favicon.ico,/static/img/universities/THV.ico,Logo Trường Đại Học Hùng Vương,downloaded_official_icon
 MHN,Trường Đại Học Mở Hà Nội,https://hou.edu.vn/,https://hou.edu.vn/,/static/img/universities/MHN.png,Logo Trường Đại Học Mở Hà Nội,downloaded_favicon_proxy
 HHA,Trường Đại Học Hàng Hải Việt Nam,https://vimaru.edu.vn/,,/static/img/universities/HHA.svg,Logo đại diện Trường Đại Học Hàng Hải Việt Nam,generated_avatar
 THP,Trường Đại Học Hải Phòng,https://dhhp.edu.vn/,https://dhhp.edu.vn/files/29480d45-435e-4303-b3c2-3afd0f104fc4/logo-full.jpg,/static/img/universities/THP.jpg,Logo Trường Đại Học Hải Phòng,downloaded
 TDV,Trường Đại Học Vinh,https://vinhuni.edu.vn/,https://vinhuni.edu.vn/pages/assets/images/logoVU-1.png,/static/img/universities/TDV.png,Logo Trường Đại Học Vinh,downloaded
 HCP,Học Viện Chính Sách và Phát Triển,https://apd.edu.vn/,https://apd.edu.vn/img/logo1.png,/static/img/universities/HCP.png,Logo Học Viện Chính Sách và Phát Triển,downloaded
-KTA,Trường Đại Học Kiến Trúc Hà Nội,https://hau.edu.vn/,,/static/img/universities/KTA.svg,Logo đại diện Trường Đại Học Kiến Trúc Hà Nội,generated_avatar
+KTA,Trường Đại Học Kiến Trúc Hà Nội,https://hau.edu.vn/,https://hau.edu.vn/images/logo.png,/static/img/universities/KTA.png,Logo Trường Đại Học Kiến Trúc Hà Nội,downloaded_official_logo
 TSN,Trường Đại Học Nha Trang,https://ntu.edu.vn/,https://ntu.edu.vn/Portals/6/truong-dai-hoc-nha-trang-ntu.jpg?ver=SErDQZEKWpO93jSQr58SAQ%3d%3d,/static/img/universities/TSN.jpg,Logo Trường Đại Học Nha Trang,downloaded
 QSA,Trường Đại Học An Giang,https://agu.edu.vn/,https://agu.edu.vn/,/static/img/universities/QSA.jpg,Logo Trường Đại Học An Giang,downloaded_favicon_proxy
 QHK,Trường Khoa học liên ngành và Nghệ thuật Hà Nội,https://sisa.vnu.edu.vn/,,/static/img/universities/QHK.svg,Logo đại diện Trường Khoa học liên ngành và Nghệ thuật Hà Nội,generated_avatar
 HCH,Học Viện Hành Chính và Quản trị công,https://apag.edu.vn/,https://apag.edu.vn/\Content\publishing_home\imgAPAG\logo-apag.png,/static/img/universities/HCH.png,Logo Học Viện Hành Chính và Quản trị công,downloaded
 DHC,Khoa Giáo Dục Thể Chất Huế,https://khoagddc.hueuni.edu.vn/,,/static/img/universities/DHC.svg,Logo đại diện Khoa Giáo Dục Thể Chất Huế,generated_avatar
 SGD,Trường Đại Học Sài Gòn,https://sgu.edu.vn/,https://www.sgu.edu.vn/wp-content/uploads/2026/07/sgu_logo_resized-removebg-preview.png,/static/img/universities/SGD.png,Logo Trường Đại Học Sài Gòn,downloaded
-SPD,Trường Đại Học Đồng Tháp,https://dthu.edu.vn/,https://dthu.edu.vn/img/logo_icon.png,/static/img/universities/SPD.png,Logo Trường Đại Học Đồng Tháp,downloaded
+SPD,Trường Đại Học Đồng Tháp,https://dthu.edu.vn/,https://dthu.edu.vn/img/logo_icon.png,/static/img/universities/SPD.png,Logo Trường Đại Học Đồng Tháp,downloaded_official_icon
 GNT,Trường Đại Học Sư Phạm Nghệ Thuật Trung Ương,https://spnttw.edu.vn/,https://spnttw.edu.vn/wp-content/uploads/2024/11/banner2.png.webp,/static/img/universities/GNT.webp,Logo Trường Đại Học Sư Phạm Nghệ Thuật Trung Ương,downloaded
 DTY,Trường Đại Học Y Dược Thái Nguyên,https://tnmc.edu.vn/,,/static/img/universities/DTY.svg,Logo đại diện Trường Đại Học Y Dược Thái Nguyên,generated_avatar
 DQN,Trường Đại Học Quy Nhơn,https://qnu.edu.vn/,https://qnu.edu.vn/Resources/assets/QNUNew/images/logo/LogoQNU.svg,/static/img/universities/DQN.svg,Logo Trường Đại Học Quy Nhơn,downloaded
-DDQ,Trường Đại Học Kinh Tế – Đại Học Đà Nẵng,https://due.udn.vn/,https://due.udn.vn/favicon.ico,/static/img/universities/DDQ.ico,Logo Trường Đại Học Kinh Tế – Đại Học Đà Nẵng,downloaded
+DDQ,Trường Đại Học Kinh Tế – Đại Học Đà Nẵng,https://due.udn.vn/,https://due.udn.vn/portals/_default/skins/dhkt/img/front/logoDUE.png,/static/img/universities/DDQ.png,Logo Trường Đại Học Kinh Tế – Đại Học Đà Nẵng,downloaded_official_logo
 DQB,Trường Đại Học Quảng Bình,https://quangbinhuni.edu.vn/,,/static/img/universities/DQB.svg,Logo đại diện Trường Đại Học Quảng Bình,generated_avatar
 LDA,Trường Đại Học Công Đoàn,https://dhcd.edu.vn/,,/static/img/universities/LDA.svg,Logo đại diện Trường Đại Học Công Đoàn,generated_avatar
-TTN,Trường Đại Học Tây Nguyên,https://ttn.edu.vn/,https://ttn.edu.vn/templates/sj_financial/favicon.ico,/static/img/universities/TTN.ico,Logo Trường Đại Học Tây Nguyên,downloaded
+TTN,Trường Đại Học Tây Nguyên,https://ttn.edu.vn/,https://ttn.edu.vn/images/Icon/logots.jpg,/static/img/universities/TTN.jpg,Logo Trường Đại Học Tây Nguyên,downloaded_official_icon
 DMT,Trường Đại học Tài Nguyên và Môi Trường Hà Nội,https://humt.edu.vn/,,/static/img/universities/DMT.svg,Logo đại diện Trường Đại học Tài Nguyên và Môi Trường Hà Nội,generated_avatar
-DPQ,Trường Đại Học Phạm Văn Đồng,https://pdu.edu.vn/,https://pdu.edu.vn/favicon.ico,/static/img/universities/DPQ.ico,Logo Trường Đại Học Phạm Văn Đồng,downloaded
-HHT,Trường Đại Học Hà Tĩnh,https://htu.edu.vn/,https://htu.edu.vn/plugins/system/jat3/jat3/base-themes/default/images/favicon.ico,/static/img/universities/HHT.ico,Logo Trường Đại Học Hà Tĩnh,downloaded
+DPQ,Trường Đại Học Phạm Văn Đồng,https://pdu.edu.vn/,https://pdu.edu.vn/favicon.ico,/static/img/universities/DPQ.ico,Logo Trường Đại Học Phạm Văn Đồng,downloaded_official_icon
+HHT,Trường Đại Học Hà Tĩnh,https://htu.edu.vn/,https://htu.edu.vn/plugins/system/jat3/jat3/base-themes/default/images/favicon.ico,/static/img/universities/HHT.ico,Logo Trường Đại Học Hà Tĩnh,downloaded_official_icon
 DLX,Trường Đại Học Lao Động – Xã Hội,https://ulsa.edu.vn/,https://ulsa.edu.vn/,/static/img/universities/DLX.png,Logo Trường Đại Học Lao Động – Xã Hội,downloaded_favicon_proxy
 DTF,Trường Ngoại Ngữ Thái Nguyên,https://sfl.tnu.edu.vn/,https://sfl.tnu.edu.vn/wp-content/uploads/2022/04/goerteklogo-1024x347.png,/static/img/universities/DTF.png,Logo Trường Ngoại Ngữ Thái Nguyên,downloaded
-DKT,Trường Đại Học Hải Dương,https://hdu.edu.vn/,,/static/img/universities/DKT.svg,Logo đại diện Trường Đại Học Hải Dương,generated_avatar
+DKT,Trường Đại Học Hải Dương,https://hdu.edu.vn/,https://media.hdu.edu.vn/Media/1_hdu_home/FolderFunc/202405/Images/logo-vla-20240518045549-e.jpg,/static/img/universities/DKT.jpg,Logo Trường Đại Học Hải Dương,downloaded_official_logo
 DLS,Trường Đại Học Lao Động – Xã Hội (Cơ sở II),https://ulsa2.edu.vn/,,/static/img/universities/DLS.svg,Logo đại diện Trường Đại Học Lao Động – Xã Hội (Cơ sở II),generated_avatar
-NHS,Trường Đại Học Ngân Hàng TPHCM,https://hub.edu.vn/,https://hub.edu.vn/Portals/0/favicon.ico?ver=CkXfXexT6TaPYmnftbRZZA%3d%3d,/static/img/universities/NHS.ico,Logo Trường Đại Học Ngân Hàng TPHCM,downloaded
-DPY,Trường Đại Học Phú Yên,https://pyu.edu.vn/,https://pyu.edu.vn/Resources/ImagesPortal/HomePage/imgs/favicon.png,/static/img/universities/DPY.png,Logo Trường Đại Học Phú Yên,downloaded
+NHS,Trường Đại Học Ngân Hàng TPHCM,https://hub.edu.vn/,https://hub.edu.vn/static/hub_v2/img/Logo-CEA-SAIGON.png,/static/img/universities/NHS.png,Logo Trường Đại Học Ngân Hàng TPHCM,downloaded_official_logo
+DPY,Trường Đại Học Phú Yên,https://pyu.edu.vn/,https://pyu.edu.vn/Resources/imagesPortlet/d5148d97-8087-41b9-b0f2-79588a5fc84d/Logo-TMA-BinhDinh.png,/static/img/universities/DPY.png,Logo Trường Đại Học Phú Yên,downloaded_official_logo
 HLU,Trường Đại Học Hạ Long,https://daihochalong.edu.vn/,,/static/img/universities/HLU.svg,Logo đại diện Trường Đại Học Hạ Long,generated_avatar
 DQU,Trường Đại Học Quảng Nam,https://qnamuni.edu.vn/,https://qnamuni.edu.vn/wp-content/uploads/2021/01/download-150x150.png,/static/img/universities/DQU.png,Logo Trường Đại Học Quảng Nam,downloaded
 VKU,Trường Đại học Công nghệ Thông tin và Truyền thông Việt Hàn - Đại học Đà Nẵng,https://vku.udn.vn/,https://vku.udn.vn/wp-content/uploads/2023/08/Logo.svg,/static/img/universities/VKU.svg,Logo Trường Đại học Công nghệ Thông tin và Truyền thông Việt Hàn - Đại học Đà Nẵng,downloaded
-QHQ,Trường Quốc Tế - ĐHQG Hà Nội,https://is.vnu.edu.vn/,https://www.is.vnu.edu.vn/favicon.ico,/static/img/universities/QHQ.ico,Logo Trường Quốc Tế - ĐHQG Hà Nội,downloaded
-KCN,Trường Đại Học Khoa Học Và Công Nghệ Hà Nội,https://usth.edu.vn/,https://usth.edu.vn/wp-content/themes/caia/images/favicon.ico,/static/img/universities/KCN.ico,Logo Trường Đại Học Khoa Học Và Công Nghệ Hà Nội,downloaded
-HCS,Học Viện Hành Chính Và Quản Trị Công (phía Nam),https://hcma.vn/,https://hcma.vn/favicon.ico,/static/img/universities/HCS.ico,Logo Học Viện Hành Chính Và Quản Trị Công (phía Nam),downloaded
+QHQ,Trường Quốc Tế - ĐHQG Hà Nội,https://is.vnu.edu.vn/,https://www.is.vnu.edu.vn/favicon.ico,/static/img/universities/QHQ.ico,Logo Trường Quốc Tế - ĐHQG Hà Nội,downloaded_official_icon
+KCN,Trường Đại Học Khoa Học Và Công Nghệ Hà Nội,https://usth.edu.vn/,https://usth.edu.vn/wp-content/uploads/2021/11/logo-number.jpg,/static/img/universities/KCN.jpg,Logo Trường Đại Học Khoa Học Và Công Nghệ Hà Nội,downloaded_official_logo
+HCS,Học Viện Hành Chính Và Quản Trị Công (phía Nam),https://hcma.vn/,https://hcma.vn/noidung/Lists/Banner/Attachments/13/logowweb.png,/static/img/universities/HCS.png,Logo Học Viện Hành Chính Và Quản Trị Công (phía Nam),downloaded_official_logo
 DCV,Trường Đại học Công nghiệp Vinh,https://vui.edu.vn/,https://vui.edu.vn/img/vui_logo.svg,/static/img/universities/DCV.svg,Logo Trường Đại học Công nghiệp Vinh,downloaded
 KCC,Trường Đại học Kỹ Thuật Công Nghệ Cần Thơ,https://ctuet.edu.vn/,https://ctuet.edu.vn/View/assets/images/logo.png,/static/img/universities/KCC.png,Logo Trường Đại học Kỹ Thuật Công Nghệ Cần Thơ,downloaded
 DBL,Trường Đại Học Bạc Liêu,https://blu.edu.vn/,https://blu.edu.vn/Content/themes/101/images/banner.png?v=2025.11.04,/static/img/universities/DBL.png,Logo Trường Đại Học Bạc Liêu,downloaded
-DDP,Phân Hiệu Đại Học Đà Nẵng tại Kon Tum,https://kontum.udn.vn/,https://kontum.udn.vn/assets/img/favicon.png,/static/img/universities/DDP.png,Logo Phân Hiệu Đại Học Đà Nẵng tại Kon Tum,downloaded
-SKH,Trường Đại Học Sư Phạm Kỹ Thuật Hưng Yên,https://utehy.edu.vn/,https://utehy.edu.vn/assets/images/favicon.png,/static/img/universities/SKH.jpg,Logo Trường Đại Học Sư Phạm Kỹ Thuật Hưng Yên,downloaded
-NLS,Trường Đại Học Nông Lâm TPHCM,https://hcmuaf.edu.vn/,https://nlu.edu.vn/be/Logo/favicon.png,/static/img/universities/NLS.png,Logo Trường Đại Học Nông Lâm TPHCM,downloaded
+DDP,Phân Hiệu Đại Học Đà Nẵng tại Kon Tum,https://kontum.udn.vn/,https://kontum.udn.vn/assets/img/logo/logo4.png,/static/img/universities/DDP.png,Logo Phân Hiệu Đại Học Đà Nẵng tại Kon Tum,downloaded_official_logo
+SKH,Trường Đại Học Sư Phạm Kỹ Thuật Hưng Yên,https://utehy.edu.vn/,https://utehy.edu.vn/assets/images/favicon.png,/static/img/universities/SKH.jpg,Logo Trường Đại Học Sư Phạm Kỹ Thuật Hưng Yên,downloaded_official_icon
+NLS,Trường Đại Học Nông Lâm TPHCM,https://hcmuaf.edu.vn/,https://nlu.edu.vn/be/Logo/favicon.png,/static/img/universities/NLS.png,Logo Trường Đại Học Nông Lâm TPHCM,downloaded_official_icon
 TDH,Trường Đại Học Sư Phạm Thể Dục Thể Thao Hà Nội,https://upes1.edu.vn/,https://upes1.edu.vn/wp-content/uploads/2024/10/logo-ban-nho-1.png,/static/img/universities/TDH.png,Logo Trường Đại Học Sư Phạm Thể Dục Thể Thao Hà Nội,downloaded
 HVC,Học viện cán bộ TPHCM,https://hcmca.edu.vn/,,/static/img/universities/HVC.svg,Logo đại diện Học viện cán bộ TPHCM,generated_avatar
-FBU,Trường Đại Học Tài Chính Ngân Hàng Hà Nội,https://fbu.edu.vn/,https://fbu.edu.vn/favicon.ico,/static/img/universities/FBU.png,Logo Trường Đại Học Tài Chính Ngân Hàng Hà Nội,downloaded
+FBU,Trường Đại Học Tài Chính Ngân Hàng Hà Nội,https://fbu.edu.vn/,https://fbu.edu.vn/favicon.ico,/static/img/universities/FBU.png,Logo Trường Đại Học Tài Chính Ngân Hàng Hà Nội,downloaded_official_icon
 DVT,Trường Đại Học Trà Vinh,https://tvu.edu.vn/,https://www.tvu.edu.vn/wp-content/uploads/2025/06/logotvu.png,/static/img/universities/DVT.png,Logo Trường Đại Học Trà Vinh,downloaded
 DDL,Trường Đại Học Điện Lực,https://epu.edu.vn/,https://epu.edu.vn/asset/logo-dark.svg,/static/img/universities/DDL.svg,Logo Trường Đại Học Điện Lực,downloaded
 XDA,Trường Đại Học Xây Dựng Hà Nội,https://huce.edu.vn/,https://huce.edu.vn/theme1/images/logo/LOGO_DHXD_1.png,/static/img/universities/XDA.png,Logo Trường Đại Học Xây Dựng Hà Nội,downloaded
 GTA,Trường Đại học Công nghệ Giao thông vận tải,https://utt.edu.vn/,https://utt.edu.vn/publics/template/portal2019/images/fav.ico,/static/img/universities/GTA.jpg,Logo Trường Đại học Công nghệ Giao thông vận tải,downloaded
-MDA,Trường Đại Học Mỏ Địa Chất,https://humg.edu.vn/,https://humg.edu.vn/favicon.ico?rev=23,/static/img/universities/MDA.ico,Logo Trường Đại Học Mỏ Địa Chất,downloaded
+MDA,Trường Đại Học Mỏ Địa Chất,https://humg.edu.vn/,https://humg.edu.vn/Publishing_Resources/web/images/logo.png,/static/img/universities/MDA.png,Logo Trường Đại Học Mỏ Địa Chất,downloaded_official_logo
 MBS,Trường Đại Học Mở TPHCM,https://ou.edu.vn/,https://ou.edu.vn/wp-content/uploads/2016/08/Logo.png,/static/img/universities/MBS.png,Logo Trường Đại Học Mở TPHCM,downloaded
 TDS,Trường Đại Học Thể Dục Thể Thao TPHCM,https://upes.edu.vn/,https://upes.edu.vn/wp-content/uploads/2023/05/logonew.png,/static/img/universities/TDS.png,Logo Trường Đại Học Thể Dục Thể Thao TPHCM,downloaded
 STS,Trường Đại Học Sư Phạm Thể Dục Thể Thao TPHCM,https://hcmupes.edu.vn/,,/static/img/universities/STS.svg,Logo đại diện Trường Đại Học Sư Phạm Thể Dục Thể Thao TPHCM,generated_avatar
 KTD,Trường Đại Học Kiến Trúc Đà Nẵng,https://dau.edu.vn/,https://media.dau.edu.vn/Media/1_TH1057/Images/logo-dhktdn-150.png,/static/img/universities/KTD.png,Logo Trường Đại Học Kiến Trúc Đà Nẵng,downloaded
 DSK,Trường Đại học Sư phạm Kỹ thuật - Đại học Đà Nẵng,https://ute.udn.vn/,https://ute.udn.vn/,/static/img/universities/DSK.png,Logo Trường Đại học Sư phạm Kỹ thuật - Đại học Đà Nẵng,downloaded_favicon_proxy
 NHB,Học Viện Ngân Hàng (Phân Viện Bắc Ninh),https://bni.edu.vn/,,/static/img/universities/NHB.svg,Logo đại diện Học Viện Ngân Hàng (Phân Viện Bắc Ninh),generated_avatar
-DPD,Trường Đại Học Phương Đông,https://phuongdong.edu.vn/,https://www.phuongdong.edu.vn/storage/fav-icon.svg,/static/img/universities/DPD.svg,Logo Trường Đại Học Phương Đông,downloaded
-DTK,Trường Đại Học Kỹ Thuật Công Nghiệp Thái Nguyên,https://tnut.edu.vn/,https://tnut.edu.vn/img/favicon.ico,/static/img/universities/DTK.ico,Logo Trường Đại Học Kỹ Thuật Công Nghiệp Thái Nguyên,downloaded
+DPD,Trường Đại Học Phương Đông,https://phuongdong.edu.vn/,https://www.phuongdong.edu.vn/storage/upd-primary-logo-upd-primary-logo-full-version.png,/static/img/universities/DPD.png,Logo Trường Đại Học Phương Đông,downloaded_official_logo
+DTK,Trường Đại Học Kỹ Thuật Công Nghiệp Thái Nguyên,https://tnut.edu.vn/,https://tnut.edu.vn/img/logo.png,/static/img/universities/DTK.png,Logo Trường Đại Học Kỹ Thuật Công Nghiệp Thái Nguyên,downloaded_official_logo
 DHI,Khoa Quốc tế - Đại học Huế,https://kqt.hueuni.edu.vn/,,/static/img/universities/DHI.svg,Logo đại diện Khoa Quốc tế - Đại học Huế,generated_avatar
 DHD,Trường Du Lịch - Đại Học Huế,https://htdl.hueuni.edu.vn/,,/static/img/universities/DHD.svg,Logo đại diện Trường Du Lịch - Đại Học Huế,generated_avatar
 KGH,Trường Sĩ Quan Không Quân - Hệ Đại học,https://pkka.edu.vn/,,/static/img/universities/KGH.svg,Logo đại diện Trường Sĩ Quan Không Quân - Hệ Đại học,generated_avatar
@@ -167,7 +167,7 @@ DVL,Trường Đại Học Văn Lang,https://vanlanguni.edu.vn/,,/static/img/uni
 DPC,Trường Đại Học Phan Châu Trinh,https://ptu.edu.vn/,,/static/img/universities/DPC.svg,Logo đại diện Trường Đại Học Phan Châu Trinh,generated_avatar
 UKB,Trường Đại Học Kinh Bắc,https://kbac.edu.vn/,,/static/img/universities/UKB.svg,Logo đại diện Trường Đại Học Kinh Bắc,generated_avatar
 DTC,Trường Đại học Công Nghệ Thông Tin và Truyền Thông Thái Nguyên,https://ictu.edu.vn/,https://ictu.edu.vn/wp-content/uploads/2023/02/cropped-logoww-32x32.png,/static/img/universities/DTC.png,Logo Trường Đại học Công Nghệ Thông Tin và Truyền Thông Thái Nguyên,downloaded
-DDT,Đại Học Duy Tân,https://duytan.edu.vn/,https://duytan.edu.vn/images/icon/logo_dtu_footer.png?v=1,/static/img/universities/DDT.png,Logo Đại Học Duy Tân,downloaded
+DDT,Đại Học Duy Tân,https://duytan.edu.vn/,https://duytan.edu.vn/images/icon/logo_dtu_while.png?v=1,/static/img/universities/DDT.png,Logo Đại Học Duy Tân,downloaded_official_icon
 HIU,Trường Đại Học Quốc Tế Hồng Bàng,https://hiu.vn/,https://hiu.vn/wp-content/uploads/2022/02/cropped-cropped-Logo-HBU-Final.png,/static/img/universities/HIU.png,Logo Trường Đại Học Quốc Tế Hồng Bàng,downloaded
 ETU,Trường Đại Học Hòa Bình,https://daihochoabinh.edu.vn/,https://vhb.edu.vn/wp-content/uploads/2026/09/logo.png,/static/img/universities/ETU.png,Logo Trường Đại Học Hòa Bình,downloaded
 TTU,Trường Đại học Tân Tạo,https://ttu.edu.vn/,https://ttu.edu.vn/wp-content/uploads/2026/07/logo-dai-hoc-tan-tao-favicom-298x300.png,/static/img/universities/TTU.png,Logo Trường Đại học Tân Tạo,downloaded
@@ -179,42 +179,42 @@ PBH,Trường Sĩ Quan Pháo Binh,https://phao-binh.edu.vn/,,/static/img/univers
 QHD,Trường Quản Trị và Kinh Doanh - ĐHQG Hà Nội,https://qtkd.vnu.edu.vn/,,/static/img/universities/QHD.svg,Logo đại diện Trường Quản Trị và Kinh Doanh - ĐHQG Hà Nội,generated_avatar
 DDN,Trường Đại Học Đại Nam,https://dainam.edu.vn/,https://dainam.edu.vn/img/logo/logo-ios-3.svg,/static/img/universities/DDN.svg,Logo Trường Đại Học Đại Nam,downloaded
 VLU,Trường Đại Học Sư Phạm Kỹ Thuật Vĩnh Long,https://vlute.edu.vn/,https://vlute.edu.vn/dist/images/logo.png,/static/img/universities/VLU.png,Logo Trường Đại Học Sư Phạm Kỹ Thuật Vĩnh Long,downloaded
-SDU,Trường Đại học Sao Đỏ,https://saodo.edu.vn/,https://saodo.edu.vn/uploads/favicon.ico,/static/img/universities/SDU.ico,Logo Trường Đại học Sao Đỏ,downloaded
+SDU,Trường Đại học Sao Đỏ,https://saodo.edu.vn/,https://saodo.edu.vn/uploads/banners/logo-tcct.png,/static/img/universities/SDU.png,Logo Trường Đại học Sao Đỏ,downloaded_official_logo
 TLS,Trường Đại Học Thủy Lợi (Cơ sở 2),https://tlu.edu.vn/,https://tlu.edu.vn/wp-content/uploads/2026/09/Logo-Quy-chuan_doPNG-.webp,/static/img/universities/TLS.webp,Logo Trường Đại Học Thủy Lợi (Cơ sở 2),downloaded
 PCS,Trường Đại Học Phòng Cháy Chữa Cháy (phía Nam),https://dhpccc.edu.vn/,,/static/img/universities/PCS.svg,Logo đại diện Trường Đại Học Phòng Cháy Chữa Cháy (phía Nam),generated_avatar
 PCH,Trường Đại Học Phòng Cháy Chữa Cháy (Phía Bắc),https://dhpccc.edu.vn/,,/static/img/universities/PCH.svg,Logo đại diện Trường Đại Học Phòng Cháy Chữa Cháy (Phía Bắc),generated_avatar
 QSY,Trường Đại học Khoa học sức khỏe TPHCM,https://uhsvnu.edu.vn/,https://uhsvnu.edu.vn/_next/image?url=https%3A%2F%2Fs3.uhsvnu.com%2Fuhscms%2Flogo%2Flogo-vn-horizontal.png&w=384&q=75,/static/img/universities/QSY.png,Logo Trường Đại học Khoa học sức khỏe TPHCM,downloaded
 VTT,Trường Đại Học Võ Trường Toản,https://vttu.edu.vn/,https://vttu.edu.vn/wp-content/uploads/2023/01/logo.png,/static/img/universities/VTT.png,Logo Trường Đại Học Võ Trường Toản,downloaded
 VGU,Trường Đại Học Việt Đức,https://vgu.edu.vn/,https://vgu.edu.vn/cms-vgu-theme-4/images/cms/vgu_logo.png,/static/img/universities/VGU.png,Logo Trường Đại Học Việt Đức,downloaded
-NLN,Phân hiệu Đại học Nông Lâm TPHCM tại Ninh Thuận,https://hcmuaf.edu.vn/,https://nlu.edu.vn/be/Logo/favicon.png,/static/img/universities/NLN.png,Logo Phân hiệu Đại học Nông Lâm TPHCM tại Ninh Thuận,downloaded
-DAD,Trường Đại Học Đông Á,https://donga.edu.vn/,https://donga.edu.vn/Portals/0/favicon.ico?ver=2018-03-20-135507-220,/static/img/universities/DAD.ico,Logo Trường Đại Học Đông Á,downloaded
+NLN,Phân hiệu Đại học Nông Lâm TPHCM tại Ninh Thuận,https://hcmuaf.edu.vn/,https://nlu.edu.vn/be/Logo/favicon.png,/static/img/universities/NLN.png,Logo Phân hiệu Đại học Nông Lâm TPHCM tại Ninh Thuận,downloaded_official_icon
+DAD,Trường Đại Học Đông Á,https://donga.edu.vn/,https://donga.edu.vn/portals/0/logo/48027c1f-29b5-4017-9c53-217e5213e0ee.jpeg,/static/img/universities/DAD.jpg,Logo Trường Đại Học Đông Á,downloaded_official_logo
 DHA,Trường Đại học Luật Huế,https://hule.edu.vn/,,/static/img/universities/DHA.svg,Logo đại diện Trường Đại học Luật Huế,generated_avatar
 DLH,Trường Đại Học Lạc Hồng,https://lhu.edu.vn/,https://lhu.edu.vn/ViewPage/LHUVNB4/_default/image/Logo_LHU_Vi_ASU.png,/static/img/universities/DLH.png,Logo Trường Đại Học Lạc Hồng,downloaded
-DKC,Trường Đại học Công Nghệ TPHCM,https://hutech.edu.vn/,https://www.hutech.edu.vn/favicon.ico,/static/img/universities/DKC.ico,Logo Trường Đại học Công Nghệ TPHCM,downloaded
+DKC,Trường Đại học Công Nghệ TPHCM,https://hutech.edu.vn/,https://hutech.edu.vn/images/logo/HUTECH_qs_starts.png,/static/img/universities/DKC.png,Logo Trường Đại học Công Nghệ TPHCM,downloaded_official_logo
 KSV,Đại học Kinh Tế TPHCM - Phân hiệu Vĩnh Long,https://ueh.edu.vn/,https://ueh.edu.vn/images/logo-header.png,/static/img/universities/KSV.png,Logo Đại học Kinh Tế TPHCM - Phân hiệu Vĩnh Long,downloaded
-DDU,Trường Đại Học Đông Đô,https://ddu.edu.vn/,https://ddu.edu.vn/favicon.ico,/static/img/universities/DDU.ico,Logo Trường Đại Học Đông Đô,downloaded
+DDU,Trường Đại Học Đông Đô,https://ddu.edu.vn/,https://hdiu.edu.vn/app/webroot/uploads/images/LOGO.png,/static/img/universities/DDU.png,Logo Trường Đại Học Đông Đô,downloaded_official_logo
 DTD,Trường Đại Học Tây Đô,https://tdu.edu.vn/,https://tdu.edu.vn/storage/images/ic-logos/ic-logo-full.png,/static/img/universities/DTD.png,Logo Trường Đại Học Tây Đô,downloaded
 VJU,Trường Đại học Việt Nhật - ĐHQG Hà Nội,https://vju.ac.vn/,https://vju.ac.vn/wp-content/uploads/2023/07/logo-footer.svg,/static/img/universities/VJU.svg,Logo Trường Đại học Việt Nhật - ĐHQG Hà Nội,downloaded
 DDB,Trường Đại Học Thành Đông,https://thanhdo.edu.vn/,https://thanhdo.edu.vn/wp-content/uploads/2022/08/cropped-fav-32x32.png,/static/img/universities/DDB.png,Logo Trường Đại Học Thành Đông,downloaded
 DBD,Trường Đại Học Bình Dương,https://bdu.edu.vn/,https://bdu.edu.vn/uploads/logo-bdu-2024.png,/static/img/universities/DBD.png,Logo Trường Đại Học Bình Dương,downloaded
-DTV,Trường Đại Học Lương Thế Vinh,https://ltvu.edu.vn/,https://ltvu.edu.vn/favicon.ico,/static/img/universities/DTV.ico,Logo Trường Đại Học Lương Thế Vinh,downloaded
-FPT,Trường Đại Học FPT,https://daihoc.fpt.edu.vn/,https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/cropped-cropped-favicon-4-192x192-1-32x32.png,/static/img/universities/FPT.png,Logo Trường Đại Học FPT,downloaded
+DTV,Trường Đại Học Lương Thế Vinh,https://ltvu.edu.vn/,https://ltvu.edu.vn/favicon.ico,/static/img/universities/DTV.ico,Logo Trường Đại Học Lương Thế Vinh,downloaded_official_icon
+FPT,Trường Đại Học FPT,https://daihoc.fpt.edu.vn/,https://daihoc.fpt.edu.vn/wp-content/themes/fpt-university/assets/images/logo.png,/static/img/universities/FPT.png,Logo Trường Đại Học FPT,downloaded_official_logo
 DKB,Trường Đại Học Kinh Tế Kỹ Thuật Bình Dương,https://ktktbinhduong.edu.vn/,,/static/img/universities/DKB.svg,Logo đại diện Trường Đại Học Kinh Tế Kỹ Thuật Bình Dương,generated_avatar
-MIT,Trường Đại học Công nghệ Miền Đông,https://mit.vn/,https://mit.vn/wp-content/uploads/2026/05/240319-MIT-Primary-Logo-EN-3-2-1024x265.png,/static/img/universities/MIT.png,Logo Trường Đại học Công nghệ Miền Đông,downloaded
+MIT,Trường Đại học Công nghệ Miền Đông,https://mit.vn/,https://mit.vn/wp-content/uploads/2026/05/240319-MIT-Primary-Logo-EN-3-2-1024x265.png,/static/img/universities/MIT.png,Logo Trường Đại học Công nghệ Miền Đông,downloaded_official_logo
 TDD,Trường Đại học Thành Đô,https://thanhdo.edu.vn/,https://thanhdo.edu.vn/wp-content/uploads/2022/08/cropped-fav-32x32.png,/static/img/universities/TDD.png,Logo Trường Đại học Thành Đô,downloaded
-DHN,Trường Đại Học Nghệ Thuật Huế,https://hueuni.edu.vn/,https://hueuni.edu.vn/portal/vi/favicon.ico,/static/img/universities/DHN.ico,Logo Trường Đại Học Nghệ Thuật Huế,downloaded
+DHN,Trường Đại Học Nghệ Thuật Huế,https://hueuni.edu.vn/,https://hueuni.edu.vn/portal/vi/favicon.ico,/static/img/universities/DHN.ico,Logo Trường Đại Học Nghệ Thuật Huế,downloaded_official_icon
 BVU,Trường Đại Học Bà Rịa – Vũng Tàu,https://bvu.edu.vn/,https://bvu.edu.vn/wp-content/uploads/Logo_header.png,/static/img/universities/BVU.png,Logo Trường Đại Học Bà Rịa – Vũng Tàu,downloaded
 DYD,Trường Đại Học Yersin Đà Lạt,https://yersin.edu.vn/,https://yersin.edu.vn/wp-content/uploads/2024/05/image-5.svg,/static/img/universities/DYD.svg,Logo Trường Đại Học Yersin Đà Lạt,downloaded
 DTE,Trường Đại học Kinh tế Quản trị kinh doanh Thái Nguyên,https://tueba.edu.vn/,https://tueba.edu.vn/public/images/header/logo.png,/static/img/universities/DTE.png,Logo Trường Đại học Kinh tế Quản trị kinh doanh Thái Nguyên,downloaded
 UEF,Trường Đại Học Kinh Tế Tài Chính TPHCM,https://uef.edu.vn/,https://static-cdn.uef.edu.vn/s-img/logo-uef-home.jpg,/static/img/universities/UEF.jpg,Logo Trường Đại Học Kinh Tế Tài Chính TPHCM,downloaded
 SKV,Trường Đại Học Sư Phạm Kỹ Thuật Vinh,https://vuted.edu.vn/,https://vuted.edu.vn/,/static/img/universities/SKV.png,Logo Trường Đại Học Sư Phạm Kỹ Thuật Vinh,downloaded_favicon_proxy
-CEA,Trường Đại học Kinh Tế Nghệ An,https://naue.edu.vn/,https://naue.edu.vn/Images/favicon.jpg,/static/img/universities/CEA.png,Logo Trường Đại học Kinh Tế Nghệ An,downloaded
+CEA,Trường Đại học Kinh Tế Nghệ An,https://naue.edu.vn/,https://naue.edu.vn/Images/new_layout/logo_dhktna_2022.png,/static/img/universities/CEA.png,Logo Trường Đại học Kinh Tế Nghệ An,downloaded_official_logo
 DQT,Trường Đại Học Quang Trung,https://qu.edu.vn/,,/static/img/universities/DQT.svg,Logo đại diện Trường Đại Học Quang Trung,generated_avatar
-SNH,Trường Sĩ Quan Công Binh - Hệ Quân sự - Đại học Ngô Quyền,https://tcu.edu.vn/,https://tcu.edu.vn/assets/web/images/favicon.ico,/static/img/universities/SNH.ico,Logo Trường Sĩ Quan Công Binh - Hệ Quân sự - Đại học Ngô Quyền,downloaded
+SNH,Trường Sĩ Quan Công Binh - Hệ Quân sự - Đại học Ngô Quyền,https://tcu.edu.vn/,https://tcu.edu.vn/public/upload/Logo/Logo%20tr%C6%B0%E1%BB%9Dng%20%C4%91%E1%BA%A1i%20h%E1%BB%8Dc%20th%C3%B4ng%20tin%20li%C3%AAn%20l%E1%BA%A1c.png,/static/img/universities/SNH.png,Logo Trường Sĩ Quan Công Binh - Hệ Quân sự - Đại học Ngô Quyền,downloaded_official_logo
 DPT,Trường Đại Học Phan Thiết,https://phtu.edu.vn/,,/static/img/universities/DPT.svg,Logo đại diện Trường Đại Học Phan Thiết,generated_avatar
 DNT,Trường Đại Học Ngoại Ngữ Tin Học TPHCM,https://huflit.edu.vn/,https://huflit.edu.vn/wp-content/uploads/huflit-brand/logo-huflit-vi-400.png,/static/img/universities/DNT.png,Logo Trường Đại Học Ngoại Ngữ Tin Học TPHCM,downloaded
 DVH,Trường Đại Học Văn Hiến,https://vhu.edu.vn/,https://vhu.edu.vn/Resources/Images/SubDomain/HomePage/Logo/1Logo_VHU.png,/static/img/universities/DVH.png,Logo Trường Đại Học Văn Hiến,downloaded
-TTG,Trường Đại Học Tiền Giang,https://tgu.edu.vn/,https://tgu.edu.vn/favicons/favicon.ico,/static/img/universities/TTG.ico,Logo Trường Đại Học Tiền Giang,downloaded
+TTG,Trường Đại Học Tiền Giang,https://tgu.edu.vn/,https://tgu.edu.vn/images/__logoTGU.png,/static/img/universities/TTG.png,Logo Trường Đại Học Tiền Giang,downloaded_official_logo
 LNH,Trường Đại Học Lâm nghiệp,https://vnuf.edu.vn/,https://vnuf.edu.vn/wp-content/uploads/2020/08/logo-footer.png,/static/img/universities/LNH.png,Logo Trường Đại Học Lâm nghiệp,downloaded
 DCD,Trường Đại Học Công Nghệ Đồng Nai,https://dntu.edu.vn/,https://dntu.edu.vn/storage/Setting/01JGN1H5W9NEWQFSTPSWSR2KT4.png,/static/img/universities/DCD.png,Logo Trường Đại Học Công Nghệ Đồng Nai,downloaded
 THU,Trường Đại học Y khoa Tokyo Việt Nam,https://vju.ac.vn/,https://vju.ac.vn/wp-content/uploads/2023/07/logo-footer.svg,/static/img/universities/THU.svg,Logo Trường Đại học Y khoa Tokyo Việt Nam,downloaded
@@ -223,14 +223,14 @@ YDD,Trường Đại Học Điều Dưỡng Nam Định,https://ndun.edu.vn/,htt
 DTB,Trường Đại Học Thái Bình,https://tbuniversity.edu.vn/,,/static/img/universities/DTB.svg,Logo đại diện Trường Đại Học Thái Bình,generated_avatar
 HSU,Trường Đại Học Hoa Sen,https://www.hoasen.edu.vn/,https://www.hoasen.edu.vn/wp-content/uploads/2025/01/HSU.png,/static/img/universities/HSU.png,Logo Trường Đại Học Hoa Sen,downloaded
 PVU,Trường Đại Học Dầu Khí Việt Nam,https://pvu.edu.vn/,https://pvu.edu.vn/images/headers/logo.png,/static/img/universities/PVU.png,Logo Trường Đại Học Dầu Khí Việt Nam,downloaded
-DHE,Khoa Kỹ thuật và Công nghệ - Đại học Huế,https://hueuni.edu.vn/,https://hueuni.edu.vn/portal/vi/favicon.ico,/static/img/universities/DHE.ico,Logo Khoa Kỹ thuật và Công nghệ - Đại học Huế,downloaded
+DHE,Khoa Kỹ thuật và Công nghệ - Đại học Huế,https://hueuni.edu.vn/,https://hueuni.edu.vn/portal/vi/favicon.ico,/static/img/universities/DHE.ico,Logo Khoa Kỹ thuật và Công nghệ - Đại học Huế,downloaded_official_icon
 DHT,Trường Đại Học Khoa Học Huế,https://husc.hueuni.edu.vn/,https://husc.hueuni.edu.vn/,/static/img/universities/DHT.png,Logo Trường Đại Học Khoa Học Huế,downloaded_favicon_proxy
-HVD,Học Viện Dân Tộc,https://hvdt.edu.vn/,https://hvdt.edu.vn/Content/Client/images/icon-home.png,/static/img/universities/HVD.png,Logo Học Viện Dân Tộc,downloaded
+HVD,Học Viện Dân Tộc,https://hvdt.edu.vn/,https://hvdt.edu.vn/Content/Client/images/logohometop.png,/static/img/universities/HVD.png,Logo Học Viện Dân Tộc,downloaded_official_logo
 DFA,Trường Đại học Tài chính Quản trị kinh doanh,https://ufba.edu.vn/,https://ufba.edu.vn/,/static/img/universities/DFA.png,Logo Trường Đại học Tài chính Quản trị kinh doanh,downloaded_favicon_proxy
 DTZ,Trường Đại Học Khoa Học Thái Nguyên,https://tnus.edu.vn/,https://tnus.edu.vn/images/logo.png,/static/img/universities/DTZ.png,Logo Trường Đại Học Khoa Học Thái Nguyên,downloaded
 NTU,Trường Đại Học Nguyễn Trãi,https://nguyentrai.edu.vn/,,/static/img/universities/NTU.svg,Logo đại diện Trường Đại Học Nguyễn Trãi,generated_avatar
-DTM,Trường Đại học Tài Nguyên và Môi Trường TPHCM,https://hcmunre.edu.vn/,https://hcmunre.edu.vn/upload/photo/favicon-8738.png,/static/img/universities/DTM.png,Logo Trường Đại học Tài Nguyên và Môi Trường TPHCM,downloaded
-HDT,Trường Đại Học Hồng Đức,https://hdu.edu.vn/,,/static/img/universities/HDT.svg,Logo đại diện Trường Đại Học Hồng Đức,generated_avatar
+DTM,Trường Đại học Tài Nguyên và Môi Trường TPHCM,https://hcmunre.edu.vn/,https://hcmunre.edu.vn/thumbs/120x120x1/upload/photo/logof-6276.png,/static/img/universities/DTM.png,Logo Trường Đại học Tài Nguyên và Môi Trường TPHCM,downloaded_official_logo
+HDT,Trường Đại Học Hồng Đức,https://hdu.edu.vn/,https://media.hdu.edu.vn/Media/1_hdu_home/FolderFunc/202405/Images/logo-vla-20240518045549-e.jpg,/static/img/universities/HDT.jpg,Logo Trường Đại Học Hồng Đức,downloaded_official_logo
 DDV,Viện nghiên cứu và đào tạo Việt Anh - Đại học Đà Nẵng,https://vnuk.udn.vn/,https://vnuk.udn.vn/,/static/img/universities/DDV.jpg,Logo Viện nghiên cứu và đào tạo Việt Anh - Đại học Đà Nẵng,downloaded_favicon_proxy
 LNS,Phân hiệu Đại Học Lâm nghiệp tại Đồng Nai,https://vnuf.edu.vn/,https://vnuf.edu.vn/wp-content/uploads/2020/08/logo-footer.png,/static/img/universities/LNS.png,Logo Phân hiệu Đại Học Lâm nghiệp tại Đồng Nai,downloaded
 VUI,Trường Đại Học Công Nghiệp Việt Trì,https://vui.edu.vn/,https://vui.edu.vn/img/vui_logo.svg,/static/img/universities/VUI.svg,Logo Trường Đại Học Công Nghiệp Việt Trì,downloaded
@@ -241,16 +241,16 @@ DBH,Trường Đại Học Quốc Tế Bắc Hà,https://dbu.edu.vn/,,/static/im
 SKN,Trường Đại Học Sư Phạm Kỹ Thuật Nam Định,https://spkt.namdinhuni.edu.vn/,,/static/img/universities/SKN.svg,Logo đại diện Trường Đại Học Sư Phạm Kỹ Thuật Nam Định,generated_avatar
 DCA,Trường Đại Học Chu Văn An,https://chuvanan.edu.vn/,https://chuvanan.edu.vn/templates/industrix/images/logo.png,/static/img/universities/DCA.png,Logo Trường Đại Học Chu Văn An,downloaded
 CCM,Trường Đại Học Công Nghiệp Dệt May Hà Nội,https://hict.edu.vn/,http://hict.edu.vn/pic/SystemWebsite/DHCNTMHN638913907709523038.jpg,/static/img/universities/CCM.jpg,Logo Trường Đại Học Công Nghiệp Dệt May Hà Nội,downloaded
-NLG,Phân hiệu Đại học Nông Lâm TPHCM tại Gia Lai,https://hcmuaf.edu.vn/,https://nlu.edu.vn/be/Logo/favicon.png,/static/img/universities/NLG.png,Logo Phân hiệu Đại học Nông Lâm TPHCM tại Gia Lai,downloaded
-DTN,Trường Đại Học Nông Lâm Thái Nguyên,https://tuaf.edu.vn/,https://tuaf.edu.vn/favicon.ico,/static/img/universities/DTN.ico,Logo Trường Đại Học Nông Lâm Thái Nguyên,downloaded
+NLG,Phân hiệu Đại học Nông Lâm TPHCM tại Gia Lai,https://hcmuaf.edu.vn/,https://nlu.edu.vn/be/Logo/favicon.png,/static/img/universities/NLG.png,Logo Phân hiệu Đại học Nông Lâm TPHCM tại Gia Lai,downloaded_official_icon
+DTN,Trường Đại Học Nông Lâm Thái Nguyên,https://tuaf.edu.vn/,http://tuaf.edu.vn/images/banners/2021/7/23/20210723024207logo-voyage-png.png,/static/img/universities/DTN.png,Logo Trường Đại Học Nông Lâm Thái Nguyên,downloaded_official_logo
 UMT,Trường Đại học Quản lý và công nghệ TPHCM,https://umt.edu.vn/,https://umt.edu.vn/_next/image?url=https%3A%2F%2Fsdn.umt.edu.vn%2FGUIDE_LOGO_2025_49444f13ff.png&w=2048&q=75,/static/img/universities/UMT.png,Logo Trường Đại học Quản lý và công nghệ TPHCM,downloaded
 DHQ,Phân Hiệu Đại Học Huế tại Quảng Trị,https://quangtri.hueuni.edu.vn/,,/static/img/universities/DHQ.svg,Logo đại diện Phân Hiệu Đại Học Huế tại Quảng Trị,generated_avatar
 DNU,Trường Đại Học Đồng Nai,https://dnu.edu.vn/,,/static/img/universities/DNU.svg,Logo đại diện Trường Đại Học Đồng Nai,generated_avatar
 DVB,Trường Đại Học Kinh tế công nghệ Thái Nguyên,,,/static/img/universities/DVB.svg,Logo đại diện Trường Đại Học Kinh tế công nghệ Thái Nguyên,generated_avatar
-DHV,Trường Đại học Hùng Vương TPHCM,https://hvu.edu.vn/,https://hvu.edu.vn/favicon.ico,/static/img/universities/DHV.ico,Logo Trường Đại học Hùng Vương TPHCM,downloaded
+DHV,Trường Đại học Hùng Vương TPHCM,https://hvu.edu.vn/,https://hvu.edu.vn/favicon.ico,/static/img/universities/DHV.ico,Logo Trường Đại học Hùng Vương TPHCM,downloaded_official_icon
 DCQ,Trường Đại Học Công Nghệ và Quản Lý Hữu Nghị,https://unihub.edu.vn/,https://unihub.edu.vn/themes/images/logo.png,/static/img/universities/DCQ.png,Logo Trường Đại Học Công Nghệ và Quản Lý Hữu Nghị,downloaded
-HPU,Trường Đại học Quản lý và Công nghệ Hải Phòng,https://hpu.edu.vn/,https://theme.hstatic.net/1000215755/1001198208/14/favicon.png?v=714,/static/img/universities/HPU.png,Logo Trường Đại học Quản lý và Công nghệ Hải Phòng,downloaded
-EIU,Trường Đại Học Quốc Tế Miền Đông,https://eiu.edu.vn/,https://eiu.edu.vn/wp-content/uploads/2025/03/cropped-Favicon-EIU-1-32x32.png,/static/img/universities/EIU.png,Logo Trường Đại Học Quốc Tế Miền Đông,downloaded
+HPU,Trường Đại học Quản lý và Công nghệ Hải Phòng,https://hpu.edu.vn/,https://theme.hstatic.net/1000215755/1001198208/14/logo.png?v=714,/static/img/universities/HPU.png,Logo Trường Đại học Quản lý và Công nghệ Hải Phòng,downloaded_official_logo
+EIU,Trường Đại Học Quốc Tế Miền Đông,https://eiu.edu.vn/,https://eiu.edu.vn/wp-content/uploads/2026/01/cropped-EIU-LOGO-1-1.png,/static/img/universities/EIU.png,Logo Trường Đại Học Quốc Tế Miền Đông,downloaded_official_logo
 LNA,Phân hiệu Đại học Lâm nghiệp tỉnh Gia Lai,,,/static/img/universities/LNA.svg,Logo đại diện Phân hiệu Đại học Lâm nghiệp tỉnh Gia Lai,generated_avatar
 NHP,Học Viện Ngân Hàng (Phân Viện Phú Yên),,,/static/img/universities/NHP.svg,Logo đại diện Học Viện Ngân Hàng (Phân Viện Phú Yên),generated_avatar
 UFA,Trường Đại học Tài Chính Kế Toán,https://dhtckt.edu.vn/,,/static/img/universities/UFA.svg,Logo đại diện Trường Đại học Tài Chính Kế Toán,generated_avatar
@@ -267,13 +267,13 @@ DTQ,Khoa Quốc Tế - Đại Học Thái Nguyên,https://is.tnu.edu.vn/,https:/
 TKG,Trường Đại học Kiên Giang,https://tuk.edu.vn/,,/static/img/universities/TKG.svg,Logo đại diện Trường Đại học Kiên Giang,generated_avatar
 DDM,Trường Đại Học Công Nghiệp Quảng Ninh,https://qui.edu.vn/,https://qui.edu.vn/uploads/logo-2022_3.png,/static/img/universities/DDM.png,Logo Trường Đại Học Công Nghiệp Quảng Ninh,downloaded
 DVD,"Trường Đại Học Văn Hóa, Thể Thao Và Du Lịch Thanh Hóa",https://dvtdt.edu.vn/,,/static/img/universities/DVD.svg,"Logo đại diện Trường Đại Học Văn Hóa, Thể Thao Và Du Lịch Thanh Hóa",generated_avatar
-DNB,Trường Đại Học Hoa Lư,https://hlu.edu.vn/,https://hlu.edu.vn/favicon.ico,/static/img/universities/DNB.png,Logo Trường Đại Học Hoa Lư,downloaded
+DNB,Trường Đại Học Hoa Lư,https://hlu.edu.vn/,https://hlu.edu.vn/Content/Site/images/logo.png,/static/img/universities/DNB.png,Logo Trường Đại Học Hoa Lư,downloaded_official_logo
 TQU,Trường Đại học Tân Trào,https://tqu.edu.vn/,,/static/img/universities/TQU.svg,Logo đại diện Trường Đại học Tân Trào,generated_avatar
-NVH,Học Viện Âm Nhạc Quốc Gia Việt Nam,https://vnam.edu.vn/,https://vnam.edu.vn/favicon.ico,/static/img/universities/NVH.ico,Logo Học Viện Âm Nhạc Quốc Gia Việt Nam,downloaded
+NVH,Học Viện Âm Nhạc Quốc Gia Việt Nam,https://vnam.edu.vn/,https://vnam.edu.vn/favicon.ico,/static/img/universities/NVH.ico,Logo Học Viện Âm Nhạc Quốc Gia Việt Nam,downloaded_official_icon
 DPX,Trường Đại Học Phú Xuân,https://phuxuan.edu.vn/,https://phuxuan.edu.vn/,/static/img/universities/DPX.png,Logo Trường Đại Học Phú Xuân,downloaded_favicon_proxy
 DVX,Trường Đại Học Công Nghệ Vạn Xuân,https://vux.edu.vn/,,/static/img/universities/DVX.svg,Logo đại diện Trường Đại Học Công Nghệ Vạn Xuân,generated_avatar
 NVS,Nhạc Viện TPHCM,https://hcmcons.vn/,https://hcmcons.vn/images/logo1.png,/static/img/universities/NVS.png,Logo Nhạc Viện TPHCM,downloaded
-DHH,Trường Đại Học Hà Hoa Tiên,https://hht.edu.vn/,https://hht.edu.vn/wp-content/uploads/2024/12/favicon.png,/static/img/universities/DHH.png,Logo Trường Đại Học Hà Hoa Tiên,downloaded
+DHH,Trường Đại Học Hà Hoa Tiên,https://hht.edu.vn/,https://hht.edu.vn/wp-content/uploads/2019/03/Bulsan_college_logo.png,/static/img/universities/DHH.png,Logo Trường Đại Học Hà Hoa Tiên,downloaded_official_logo
 MTS,Trường Đại Học Mỹ Thuật TPHCM,https://mythuat.edu.vn/,,/static/img/universities/MTS.svg,Logo đại diện Trường Đại Học Mỹ Thuật TPHCM,generated_avatar
 YHT,Phân hiệu Đại học Y Hà Nội tại Thanh Hóa,https://hmu.edu.vn/,https://hmu.edu.vn/,/static/img/universities/YHT.png,Logo Phân hiệu Đại học Y Hà Nội tại Thanh Hóa,downloaded_favicon_proxy
 SKD,Trường Đại Học Sân Khấu Điện Ảnh Hà Nội,https://skda.edu.vn/,http://skda.edu.vn/wp-content/uploads/SKDA-logo-W-2-2-1.png,/static/img/universities/SKD.png,Logo Trường Đại Học Sân Khấu Điện Ảnh Hà Nội,downloaded
@@ -286,7 +286,7 @@ BMU,Trường Đại học Y Dược Buôn Ma Thuột,https://bmtu.edu.vn/,,/sta
 MTH,Trường Đại Học Mỹ Thuật Việt Nam,https://mythuatvietnam.edu.vn/,https://mythuatvietnam.edu.vn/uploaded/logo/Logo.png,/static/img/universities/MTH.png,Logo Trường Đại Học Mỹ Thuật Việt Nam,downloaded
 MTU,Trường Đại Học Xây Dựng Miền Tây,https://mtu.edu.vn/,,/static/img/universities/MTU.svg,Logo đại diện Trường Đại Học Xây Dựng Miền Tây,generated_avatar
 DDA,Trường Đại Học Công Nghệ Đông Á,https://eaut.edu.vn/,https://eaut.edu.vn/wp-content/uploads/2018/11/logo-1.png,/static/img/universities/DDA.png,Logo Trường Đại Học Công Nghệ Đông Á,downloaded
-LBS,Trường Đại học Nguyễn Huệ,https://tcu.edu.vn/,https://tcu.edu.vn/assets/web/images/favicon.ico,/static/img/universities/LBS.ico,Logo Trường Đại học Nguyễn Huệ,downloaded
+LBS,Trường Đại học Nguyễn Huệ,https://tcu.edu.vn/,https://tcu.edu.vn/public/upload/Logo/Logo%20tr%C6%B0%E1%BB%9Dng%20%C4%91%E1%BA%A1i%20h%E1%BB%8Dc%20th%C3%B4ng%20tin%20li%C3%AAn%20l%E1%BA%A1c.png,/static/img/universities/LBS.png,Logo Trường Đại học Nguyễn Huệ,downloaded_official_logo
 XDT,Trường Đại Học Xây Dựng Miền Trung,https://mtu.edu.vn/,,/static/img/universities/XDT.svg,Logo đại diện Trường Đại Học Xây Dựng Miền Trung,generated_avatar
 DDG,Khoa Giáo dục thể chất Đà Nẵng,https://ued.udn.vn/,https://ued.udn.vn/wp-content/uploads/2025/08/text-ued-1.png,/static/img/universities/DDG.png,Logo Khoa Giáo dục thể chất Đà Nẵng,downloaded
 DTP,Phân Hiệu Đại Học Thái Nguyên Tại Lào Cai,https://laocai.tnu.edu.vn/,http://laocai.tnu.edu.vn/wp-content/uploads/2021/06/Logo-moi.png,/static/img/universities/DTP.png,Logo Phân Hiệu Đại Học Thái Nguyên Tại Lào Cai,downloaded

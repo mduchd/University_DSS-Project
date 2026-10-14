@@ -376,19 +376,41 @@ def official_url_for_school(school: dict[str, str], allow_search: bool = True) -
 
 
 def candidate_image_urls(page_url: str, body: bytes) -> list[str]:
+    """Return likely brand assets from an official page, best candidates first.
+
+    The previous crawler accepted favicons before inspecting unlabelled image
+    paths.  That made small browser icons look like school logos, and missed
+    legitimate assets such as ``/assets/img/logo/logo4.png``.  Prefer explicit
+    logo/brand files, then other header assets, then icons only as a final
+    fallback.
+    """
     parser = PageParser()
     parser.feed(body.decode("utf-8", errors="ignore"))
-    raw_urls: list[str] = []
-    raw_urls.extend(value for marker, value in parser.images if "logo" in marker or "brand" in marker or "header" in marker)
-    raw_urls.extend(value for rel, value in parser.links if "icon" in rel or "apple-touch-icon" in rel)
-    raw_urls.extend(value for key, value in parser.meta if key in {"og:image", "twitter:image"})
-    raw_urls.append("/favicon.ico")
-    result: list[str] = []
-    for value in raw_urls:
+    ranked: dict[str, int] = {}
+
+    def add(value: str, score: int) -> None:
         absolute = urljoin(page_url, value)
-        if absolute not in result and urlparse(absolute).scheme in {"http", "https"}:
-            result.append(absolute)
-    return result
+        if urlparse(absolute).scheme not in {"http", "https"}:
+            return
+        ranked[absolute] = max(score, ranked.get(absolute, -999))
+
+    for marker, value in parser.images:
+        haystack = f"{marker} {urlparse(value).path}".lower()
+        if "logo" in haystack or "brand" in haystack:
+            add(value, 100)
+        elif "header" in marker:
+            add(value, 60)
+
+    # Icons are usable if an official site publishes no logo asset, but they
+    # must never win over an actual logo image.
+    for rel, value in parser.links:
+        if "icon" in rel or "apple-touch-icon" in rel:
+            add(value, 20)
+    for key, value in parser.meta:
+        if key in {"og:image", "twitter:image"}:
+            add(value, 10)
+    add("/favicon.ico", 0)
+    return [url for url, _ in sorted(ranked.items(), key=lambda item: item[1], reverse=True)]
 
 
 def download_image(url: str) -> tuple[bytes, str] | None:
@@ -455,7 +477,11 @@ def crawl_school(school: dict[str, str], allow_search: bool = True) -> dict[str,
         target.write_bytes(body)
         row["source_url"] = image_url
         row["logo_path"] = f"/static/img/universities/{target.name}"
-        row["status"] = "downloaded"
+        row["status"] = (
+            "downloaded_official_icon"
+            if "favicon" in image_url.lower() or "icon" in urlparse(image_url).path.lower()
+            else "downloaded_official_logo"
+        )
         return row
     proxy = download_proxy_favicon(official_url)
     if proxy:
@@ -477,27 +503,69 @@ def main() -> None:
     parser.add_argument("--delay", type=float, default=0.35)
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--no-search", action="store_true", help="Only crawl explicitly known official domains")
+    parser.add_argument(
+        "--codes",
+        default="",
+        help="Comma-separated school codes to refresh while preserving all other metadata rows.",
+    )
     args = parser.parse_args()
     schools = load_schools()
+    requested_codes = {code.strip().upper() for code in args.codes.split(",") if code.strip()}
+    if requested_codes:
+        schools = [school for school in schools if school["school_code"] in requested_codes]
+        unknown_codes = requested_codes - {school["school_code"] for school in schools}
+        if unknown_codes:
+            raise SystemExit(f"Unknown school codes: {', '.join(sorted(unknown_codes))}")
     if args.max_schools > 0:
         schools = schools[: args.max_schools]
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
     fieldnames = ["school_code", "school_name", "official_url", "source_url", "logo_path", "alt_text", "status"]
+    with ThreadPoolExecutor(max_workers=max(1, args.workers)) as executor:
+        futures = {
+            executor.submit(crawl_school, school, not args.no_search): school
+            for school in schools
+        }
+        crawled_rows: dict[str, dict[str, str]] = {}
+        for index, future in enumerate(as_completed(futures), start=1):
+            row = future.result()
+            crawled_rows[row["school_code"]] = row
+            print(f"[{index}/{len(schools)}] {row['school_code']} {row['status']}", flush=True)
+            if args.delay:
+                time.sleep(max(0.0, args.delay))
+
+    if requested_codes and OUTPUT_PATH.exists():
+        with OUTPUT_PATH.open(encoding="utf-8-sig", newline="") as file:
+            rows_to_write = list(csv.DictReader(file))
+        # A refresh must never erase a working logo because a school's site is
+        # temporarily unavailable.  Replace an existing row only with an
+        # asset of equal or better quality.
+        quality = {
+            "not_found": 0,
+            "official_site_unreachable": 0,
+            "logo_not_found": 0,
+            "generated_avatar": 1,
+            "downloaded_favicon_proxy": 2,
+            "downloaded_official_icon": 3,
+            "downloaded": 3,
+            "downloaded_official_logo": 4,
+        }
+
+        def select_refresh(existing: dict[str, str]) -> dict[str, str]:
+            refreshed = crawled_rows.get(existing["school_code"])
+            if not refreshed or not refreshed.get("logo_path"):
+                return existing
+            if quality.get(refreshed.get("status", ""), 0) < quality.get(existing.get("status", ""), 0):
+                return existing
+            return refreshed
+
+        rows_to_write = [select_refresh(row) for row in rows_to_write]
+    else:
+        rows_to_write = [crawled_rows[school["school_code"]] for school in schools]
+
     with OUTPUT_PATH.open("w", encoding="utf-8", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
-        with ThreadPoolExecutor(max_workers=max(1, args.workers)) as executor:
-            futures = {
-                executor.submit(crawl_school, school, not args.no_search): school
-                for school in schools
-            }
-            for index, future in enumerate(as_completed(futures), start=1):
-                row = future.result()
-                writer.writerow(row)
-                file.flush()
-                print(f"[{index}/{len(schools)}] {row['school_code']} {row['status']}", flush=True)
-                if args.delay:
-                    time.sleep(max(0.0, args.delay))
+        writer.writerows(rows_to_write)
 
 
 if __name__ == "__main__":

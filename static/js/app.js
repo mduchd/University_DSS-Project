@@ -480,7 +480,7 @@
     const initials = schoolInitials(name);
     const fallbackClass = item.logo_url ? "school-avatar-fallback hidden" : "school-avatar-fallback";
     const logo = item.logo_url
-      ? `<img class="school-avatar-image" src="${escapeHtml(item.logo_url)}" alt="${escapeHtml(item.logo_alt || `Logo ${name}`)}" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" />`
+      ? `<img class="school-avatar-image" src="${escapeHtml(item.logo_url)}" alt="${escapeHtml(item.logo_alt || `Logo ${name}`)}" onload="if (this.naturalWidth > this.naturalHeight * 1.8) this.parentElement.classList.add('school-avatar--wide');" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" />`
       : "";
     return `<span class="school-avatar" aria-hidden="${item.logo_url ? "false" : "true"}">${logo}<span class="${fallbackClass}">${escapeHtml(initials)}</span></span>`;
   }
