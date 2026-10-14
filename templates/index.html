@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#4255ff" />
+    <meta name="theme-color" content="#0a092d" />
+    <link rel="icon" type="image/svg+xml" href="/static/img/logo-mark.svg" />
+    <link rel="apple-touch-icon" href="/static/img/logo-mark.svg" />
     <title>La bàn Đại học | Hệ thống Hỗ trợ Ra Quyết định Tuyển sinh</title>
     <!-- Google Fonts: Plus Jakarta Sans (Chính) & Inter (Fallback) - Thống nhất toàn hệ thống -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -11,19 +13,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   </head>
-  <body>
+  <body class="dark-mode">
     <!-- Ứng dụng Hỗ trợ Ra Quyết định Tuyển sinh Đại học (DSS) - Chuẩn phong cách Quizlet / Wayground: Flat, Đơn giản, Bộ Icon Vector Đồng Bộ -->
     <div class="app-wrapper">
       <!-- HEADER / NAVIGATION -->
       <header class="app-header">
         <div class="header-inner">
           <a href="#recommend" class="brand" data-nav="recommend" aria-label="Trang chủ La bàn Đại học">
-            <div class="brand-icon" aria-hidden="true">
-              <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-              </svg>
-            </div>
+            <img class="brand-icon" src="/static/img/logo-mark.svg" alt="" aria-hidden="true" />
             <div class="brand-text">
               <span class="brand-title">LA BÀN ĐẠI HỌC</span>
               <span class="brand-sub">Tuyển sinh 2024</span>
@@ -73,7 +70,6 @@
               <span>Tuyển sinh Đại học 2024</span>
             </div>
             <h1 class="hero-title">Chọn ngành &amp; trường phù hợp với điểm số của bạn</h1>
-            <p class="hero-desc">Nhập điểm thi THPT. Hệ thống đối chiếu trực tiếp với điểm chuẩn 2024 của hơn 20.000 ngành để gợi ý các mức độ: An toàn, Phù hợp và Thử sức.</p>
           </div>
 
           <!-- 2-COLUMN DECISION DASHBOARD -->
@@ -118,67 +114,45 @@
                     <span class="sum-number" id="total-score-display">—</span>
                     <span class="sum-max">/ 30.00</span>
                   </div>
-                </div>
-
-                <!-- Lọc theo nhóm ngành -->
-                <div class="form-group">
-                  <label class="form-label" for="group-filter">Nhóm ngành quan tâm <small>(không bắt buộc)</small></label>
-                  <select class="form-select" id="group-filter" name="group">
-                    <option value="">-- Tất cả nhóm ngành --</option>
-                    {% for group in major_groups %}
-                    <option value="{{ group }}">{{ group }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-
-                <!-- Tìm kiếm theo từ khóa -->
-                <div class="form-group">
-                  <label class="form-label" for="interest-input">Trường hoặc ngành cụ thể <small>(không bắt buộc)</small></label>
-                  <input type="text" class="form-input" id="interest-input" placeholder="Ví dụ: Công nghệ thông tin, Bách Khoa..." autocomplete="off" />
+                  <button type="button" class="reset-scores-btn" id="reset-scores-btn">Nhập lại</button>
                 </div>
 
                 <fieldset class="preference-section" aria-describedby="preference-helper">
                   <div class="preference-heading">
-                    <legend>Hồ sơ định hướng</legend>
+                    <legend>Sở thích của bạn</legend>
                     <span class="optional-label">Không bắt buộc</span>
                   </div>
-                  <p class="preference-helper" id="preference-helper">Chọn điều quan trọng với bạn để lưu cùng lộ trình. Điểm xét tuyển vẫn là căn cứ chính cho gợi ý hiện tại.</p>
+                  <p class="preference-helper" id="preference-helper">Chọn tối đa 2 điều bạn thích để hệ thống ưu tiên các nhóm ngành phù hợp.</p>
 
                   <div class="preference-group">
                     <div class="preference-label-row">
-                      <span class="form-label">Điều bạn quan tâm</span>
+                      <span class="form-label">Bạn thích làm gì?</span>
                       <span class="preference-limit" id="interest-preference-count">Chọn tối đa 2</span>
                     </div>
                     <div class="preference-choice-grid" data-preference-group="interests" data-max-selections="2">
-                      <button type="button" class="preference-chip" data-preference-value="Công nghệ">Công nghệ</button>
-                      <button type="button" class="preference-chip" data-preference-value="Kinh doanh">Kinh doanh</button>
-                      <button type="button" class="preference-chip" data-preference-value="Sáng tạo">Sáng tạo</button>
-                      <button type="button" class="preference-chip" data-preference-value="Xã hội & cộng đồng">Xã hội &amp; cộng đồng</button>
+                      <button type="button" class="preference-chip" data-preference-value="Khám phá máy tính, dữ liệu &amp; AI" aria-pressed="false">
+                        <span class="preference-chip-title">Khám phá máy tính, dữ liệu &amp; AI</span>
+                        <span class="preference-chip-detail">CNTT, dữ liệu &amp; AI, mạng máy tính, phần mềm, an toàn thông tin, lập trình &amp; game…</span>
+                      </button>
+                      <button type="button" class="preference-chip" data-preference-value="Thiết kế, chế tạo &amp; xây dựng" aria-pressed="false">
+                        <span class="preference-chip-title">Thiết kế, chế tạo &amp; xây dựng</span>
+                        <span class="preference-chip-detail">Xây dựng, kiến trúc, cơ khí, điện – điện tử, tự động hóa, ô tô, giao thông &amp; vật liệu…</span>
+                      </button>
+                      <button type="button" class="preference-chip" data-preference-value="Kinh doanh &amp; làm việc với thị trường" aria-pressed="false">
+                        <span class="preference-chip-title">Kinh doanh &amp; làm việc với thị trường</span>
+                        <span class="preference-chip-detail">Quản trị, kinh tế, tài chính – ngân hàng, kế toán, marketing, thương mại &amp; logistics…</span>
+                      </button>
+                      <button type="button" class="preference-chip" data-preference-value="Sáng tạo nội dung &amp; thiết kế" aria-pressed="false">
+                        <span class="preference-chip-title">Sáng tạo nội dung &amp; thiết kế</span>
+                        <span class="preference-chip-detail">Thiết kế, báo chí, PR – quảng cáo, truyền thông đa phương tiện, xuất bản &amp; nghệ thuật…</span>
+                      </button>
+                      <button type="button" class="preference-chip" data-preference-value="Làm việc với con người &amp; cộng đồng" aria-pressed="false">
+                        <span class="preference-chip-title">Làm việc với con người &amp; cộng đồng</span>
+                        <span class="preference-chip-detail">Luật, giáo dục, tâm lý, y tế – điều dưỡng, văn hóa, chính sách &amp; công tác xã hội…</span>
+                      </button>
                     </div>
                   </div>
 
-                  <div class="preference-group">
-                    <div class="preference-label-row">
-                      <span class="form-label">Ưu tiên khi chọn ngành</span>
-                      <span class="preference-limit" id="priority-preference-count">Chọn tối đa 2</span>
-                    </div>
-                    <div class="preference-choice-grid" data-preference-group="priorities" data-max-selections="2">
-                      <button type="button" class="preference-chip" data-preference-value="Cơ hội việc làm">Cơ hội việc làm</button>
-                      <button type="button" class="preference-chip" data-preference-value="Thu nhập">Thu nhập</button>
-                      <button type="button" class="preference-chip" data-preference-value="Ổn định">Ổn định</button>
-                      <button type="button" class="preference-chip" data-preference-value="Cơ hội quốc tế">Cơ hội quốc tế</button>
-                    </div>
-                  </div>
-
-                  <div class="preference-group preference-region-group">
-                    <label class="form-label" for="region-preference">Khu vực muốn học <small>(không bắt buộc)</small></label>
-                    <select class="form-select" id="region-preference" name="regionPreference">
-                      <option value="">Chưa giới hạn khu vực</option>
-                      <option value="Miền Bắc">Miền Bắc</option>
-                      <option value="Miền Trung">Miền Trung</option>
-                      <option value="Miền Nam">Miền Nam</option>
-                    </select>
-                  </div>
                 </fieldset>
 
                 <!-- Nút phân tích -->
@@ -187,6 +161,18 @@
                   <span>Phân tích lộ trình trúng tuyển</span>
                 </button>
                 <div class="form-alert hidden" id="form-alert" role="alert"></div>
+
+                <div class="form-sidebar-tips">
+                  <div class="tip-header">
+                    <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span>Quy tắc 3 nhóm nguyện vọng</span>
+                  </div>
+                  <ul class="tip-list">
+                    <li><span class="tip-dot safe"></span><strong>An toàn:</strong> Cao hơn điểm chuẩn từ +1.00đ trở lên</li>
+                    <li><span class="tip-dot match"></span><strong>Phù hợp:</strong> Cách điểm chuẩn trong khoảng &plusmn;1.00đ</li>
+                    <li><span class="tip-dot reach"></span><strong>Thử sức:</strong> Thấp hơn điểm chuẩn từ 1.00đ đến 3.00đ</li>
+                  </ul>
+                </div>
               </form>
             </div>
 

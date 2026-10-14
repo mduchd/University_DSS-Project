@@ -47,7 +47,7 @@
     },
     careerLoaded: false,
     wishlist: JSON.parse(localStorage.getItem("dss_user_wishlist") || "[]"),
-    profile: JSON.parse(localStorage.getItem("dss_user_profile") || '{"interests":[],"priorities":[],"region":""}'),
+    interests: loadStoredInterests(),
   };
 
   // DOM Elements
@@ -62,12 +62,9 @@
     comboSelect: document.getElementById("combination-select"),
     scoreGrid: document.getElementById("score-input-grid"),
     totalScoreDisplay: document.getElementById("total-score-display"),
-    groupFilter: document.getElementById("group-filter"),
-    interestInput: document.getElementById("interest-input"),
+    resetScoresBtn: document.getElementById("reset-scores-btn"),
     preferenceChoiceGroups: document.querySelectorAll("[data-preference-group]"),
     interestPreferenceCount: document.getElementById("interest-preference-count"),
-    priorityPreferenceCount: document.getElementById("priority-preference-count"),
-    regionPreference: document.getElementById("region-preference"),
     submitBtn: document.getElementById("submit-btn"),
     formAlert: document.getElementById("form-alert"),
 
@@ -138,6 +135,8 @@
      2. NAVIGATION & TABS
      ========================================================================== */
   function switchView(targetViewId) {
+    // Phiên bản tối giản chỉ duy trì một luồng: nhập điểm → nhận gợi ý.
+    if (targetViewId !== "recommend") targetViewId = "recommend";
     state.activeView = targetViewId;
     elements.views.forEach((view) => {
       view.classList.toggle("active", view.id === `${targetViewId}-view`);
@@ -225,31 +224,78 @@
     }
   }
 
-  elements.comboSelect.addEventListener("change", renderScoreInputs);
+  function resetRecommendationForm() {
+    elements.scoreGrid.querySelectorAll("input").forEach((input) => {
+      input.value = "";
+    });
+    state.recommendations = null;
+    elements.formAlert.classList.add("hidden");
+    elements.resultsMeta.classList.add("hidden");
+    elements.filterTabsBar.classList.add("hidden");
+    elements.recContainer.classList.add("hidden");
+    elements.loadingState.classList.add("hidden");
+    elements.emptyState.classList.remove("hidden");
+    updateTotalScoreDisplay();
+  }
 
-  /* Preference choices are intentionally stored locally until the API ranks by them. */
-  function saveProfile() {
-    localStorage.setItem("dss_user_profile", JSON.stringify(state.profile));
+  elements.comboSelect.addEventListener("change", renderScoreInputs);
+  elements.resetScoresBtn.addEventListener("click", resetRecommendationForm);
+
+  /* Interest choices are persisted locally and sent with each recommendation request. */
+  function loadStoredInterests() {
+    try {
+      const savedInterests = JSON.parse(localStorage.getItem("dss_user_interests") || "null");
+      if (Array.isArray(savedInterests)) return migrateLegacyInterests(savedInterests);
+
+      const legacyProfile = JSON.parse(localStorage.getItem("dss_user_profile") || "null");
+      return Array.isArray(legacyProfile?.interests) ? migrateLegacyInterests(legacyProfile.interests) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // Chuyển nhãn nhóm ngành cũ sang câu mô tả sở thích hiện hành để nút và dữ
+  // liệu gửi về backend luôn đồng nhất.
+  function migrateLegacyInterests(interests) {
+    const legacyInterestValues = {
+      "Công nghệ": "Khám phá máy tính, dữ liệu & AI",
+      "Công nghệ số": "Khám phá máy tính, dữ liệu & AI",
+      "Máy tính, dữ liệu & AI": "Khám phá máy tính, dữ liệu & AI",
+      "Kỹ thuật & xây dựng": "Thiết kế, chế tạo & xây dựng",
+      "Máy móc, công trình & kỹ thuật": "Thiết kế, chế tạo & xây dựng",
+      "Kinh doanh": "Kinh doanh & làm việc với thị trường",
+      "Kinh doanh & thị trường": "Kinh doanh & làm việc với thị trường",
+      "Sáng tạo": "Sáng tạo nội dung & thiết kế",
+      "Nội dung, thiết kế & truyền thông": "Sáng tạo nội dung & thiết kế",
+      "Xã hội & cộng đồng": "Làm việc với con người & cộng đồng",
+      "Con người, cộng đồng & dịch vụ": "Làm việc với con người & cộng đồng",
+    };
+    return [...new Set(interests.map((interest) => legacyInterestValues[interest] || interest))];
+  }
+
+  function saveInterests() {
+    localStorage.setItem("dss_user_interests", JSON.stringify(state.interests));
+    localStorage.removeItem("dss_user_profile");
   }
 
   function syncPreferenceGroup(groupName) {
     const group = document.querySelector(`[data-preference-group="${groupName}"]`);
     if (!group) return;
 
-    const selectedValues = state.profile[groupName] || [];
+    const selectedValues = state.interests;
     group.querySelectorAll(".preference-chip").forEach((button) => {
       const isSelected = selectedValues.includes(button.dataset.preferenceValue);
       button.classList.toggle("selected", isSelected);
       button.setAttribute("aria-pressed", String(isSelected));
     });
 
-    const countElement = groupName === "interests" ? elements.interestPreferenceCount : elements.priorityPreferenceCount;
-    if (countElement) countElement.textContent = `${selectedValues.length}/2 đã chọn`;
+    if (elements.interestPreferenceCount) {
+      elements.interestPreferenceCount.textContent = `${selectedValues.length}/2 đã chọn`;
+    }
   }
 
   function syncProfileSummary() {
-    const summaryParts = [...state.profile.interests, ...state.profile.priorities];
-    if (state.profile.region) summaryParts.push(state.profile.region);
+    const summaryParts = [...state.interests];
 
     if (!summaryParts.length) {
       elements.profileSummary.classList.add("hidden");
@@ -262,9 +308,8 @@
   }
 
   function initPreferenceProfile() {
-    if (!Array.isArray(state.profile.interests)) state.profile.interests = [];
-    if (!Array.isArray(state.profile.priorities)) state.profile.priorities = [];
-    if (typeof state.profile.region !== "string") state.profile.region = "";
+    if (!Array.isArray(state.interests)) state.interests = [];
+    saveInterests();
 
     elements.preferenceChoiceGroups.forEach((group) => {
       const groupName = group.dataset.preferenceGroup;
@@ -273,7 +318,7 @@
       group.querySelectorAll(".preference-chip").forEach((button) => {
         button.addEventListener("click", () => {
           const value = button.dataset.preferenceValue;
-          const selections = state.profile[groupName];
+          const selections = state.interests;
           const existingIndex = selections.indexOf(value);
 
           if (existingIndex >= 0) {
@@ -285,7 +330,7 @@
             return;
           }
 
-          saveProfile();
+          saveInterests();
           syncPreferenceGroup(groupName);
           syncProfileSummary();
         });
@@ -293,15 +338,6 @@
 
       syncPreferenceGroup(groupName);
     });
-
-    if (elements.regionPreference) {
-      elements.regionPreference.value = state.profile.region;
-      elements.regionPreference.addEventListener("change", () => {
-        state.profile.region = elements.regionPreference.value;
-        saveProfile();
-        syncProfileSummary();
-      });
-    }
 
     syncProfileSummary();
   }
@@ -348,9 +384,7 @@
         body: JSON.stringify({
           combination: combo,
           scores: scores,
-          group: elements.groupFilter.value,
-          interest: elements.interestInput.value,
-          preferences: state.profile,
+          interests: [...state.interests],
         }),
       });
 
@@ -406,9 +440,13 @@
     }
 
     if (listToRender.length === 0) {
+      const bucketLabels = { safe: "An toàn", match: "Phù hợp", reach: "Thử sức" };
+      const emptyMessage = state.recommendations.total_count === 0
+        ? state.recommendations.message || "Chưa tìm thấy ngành phù hợp với tổ hợp, mức điểm và sở thích đã chọn."
+        : `Không có ngành nào thuộc nhóm ${bucketLabels[state.activeBucket] || "đã chọn"}.`;
       elements.recList.innerHTML = `
         <div class="empty-state-box" style="padding: 32px 16px;">
-          <p class="empty-desc">Không tìm thấy ngành nào phù hợp với bộ lọc trong nhóm này.</p>
+          <p class="empty-desc">${escapeHtml(emptyMessage)}</p>
         </div>
       `;
       return;
@@ -424,9 +462,27 @@
         const cutoff = btn.dataset.cutoff;
         const code = btn.dataset.code;
         const gap = btn.dataset.gap;
-        toggleWishlist({ major, school, cutoff, code, gap });
+        toggleWishlist({ major, school, cutoff, code, gap, logo_url: item.logo_url, logo_alt: item.logo_alt });
       });
     });
+  }
+
+  function schoolInitials(name) {
+    const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return "DH";
+    const meaningful = words.filter((word) => !/^(trường|đại|học|học viện)$/i.test(word));
+    const source = meaningful.length ? meaningful : words;
+    return source.slice(-2).map((word) => word.charAt(0)).join("").toUpperCase();
+  }
+
+  function schoolAvatarHtml(item) {
+    const name = item.school || item.school_name || "Trường đại học";
+    const initials = schoolInitials(name);
+    const fallbackClass = item.logo_url ? "school-avatar-fallback hidden" : "school-avatar-fallback";
+    const logo = item.logo_url
+      ? `<img class="school-avatar-image" src="${escapeHtml(item.logo_url)}" alt="${escapeHtml(item.logo_alt || `Logo ${name}`)}" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" />`
+      : "";
+    return `<span class="school-avatar" aria-hidden="${item.logo_url ? "false" : "true"}">${logo}<span class="${fallbackClass}">${escapeHtml(initials)}</span></span>`;
   }
 
   function createRecommendationCardHtml(item) {
@@ -437,48 +493,24 @@
     const forecastCutoff = Number(item.cutoff);
     const isModelForecast = item.forecast_source === "xgboost_cutoff_v1";
     const forecastYear = item.forecast_year || "2024";
-    const forecastLabel = isModelForecast ? `Dự báo XGBoost ${forecastYear}` : "Mốc lịch sử 2024";
-    const forecastTag = isModelForecast ? `XGBoost · ${forecastYear}` : "Dữ liệu 2024";
+    const forecastLabel = isModelForecast ? `Dự báo điểm ${forecastYear}` : "Điểm chuẩn 2024";
+    const forecastTag = isModelForecast ? `Dự báo ${forecastYear}` : "Dữ liệu 2024";
     const recommendationScore = Number(item.recommendation_score || 0).toFixed(1);
+    const interestFit = Number(item.interest_fit || 0).toFixed(0);
+    const interestFitLabel = item.interest_fit_active ? ` Khớp sở thích ${interestFit}%.` : "";
     const saveIcon = isSaved
       ? `${ICONS.check} <span>Đã lưu NV</span>`
       : `${ICONS.plus} <span>Lưu NV</span>`;
 
     return `
-      <article class="rec-card">
-        <div class="rec-card-main">
+      <article class="rec-card rec-card-v2" data-type="${item.type}">
+        <div class="rec-card-top">
           <div class="rec-card-tags">
             <span class="badge ${item.type}">${typeLabel}</span>
             <span class="badge-tag">${escapeHtml(item.group || "Đại học")}</span>
             <span class="badge-tag">Mã: ${escapeHtml(item.major_code)}</span>
             <span class="badge-tag badge-model">${escapeHtml(forecastTag)}</span>
           </div>
-          <h3 class="rec-major-title" title="${escapeHtml(item.major)}">${escapeHtml(item.major)}</h3>
-          <p class="rec-school-name" title="${escapeHtml(item.school)}">
-            ${ICONS.school}
-            <span>${escapeHtml(item.school)}</span>
-          </p>
-          <p class="rec-explanation">
-            Điểm content-based <strong>${recommendationScore}/100</strong> · dựa trên độ phù hợp điểm, lương, nhu cầu việc làm và độ ổn định.
-          </p>
-        </div>
-
-        <div class="rec-card-scores">
-          <div class="score-block">
-            <span class="score-block-label">Điểm chuẩn 2024</span>
-            <span class="score-block-val">${historicalCutoff.toFixed(2)}</span>
-          </div>
-
-          <div class="score-block score-block-forecast">
-            <span class="score-block-label">${forecastLabel}</span>
-            <span class="score-block-val">${forecastCutoff.toFixed(2)}</span>
-          </div>
-
-          <div class="score-block">
-            <span class="score-block-label">So với mốc dự báo</span>
-            <span class="gap-pill ${item.type}">${gapSign} đ</span>
-          </div>
-
           <button
             type="button"
             class="btn-save-nv ${isSaved ? "saved" : ""}"
@@ -491,6 +523,41 @@
           >
             ${saveIcon}
           </button>
+        </div>
+
+        <div class="rec-card-info">
+          <h3 class="rec-major-title" title="${escapeHtml(item.major)}">${escapeHtml(item.major)}</h3>
+          <p class="rec-school-name" title="${escapeHtml(item.school)}">
+            ${schoolAvatarHtml(item)}
+            <span>${escapeHtml(item.school)}</span>
+          </p>
+        </div>
+
+        <div class="rec-card-metrics">
+          <div class="metric-block">
+            <span class="metric-label">Điểm chuẩn 2024</span>
+            <span class="metric-value">${historicalCutoff.toFixed(2)}</span>
+          </div>
+
+          <div class="metric-block metric-block-forecast">
+            <span class="metric-label">${forecastLabel}</span>
+            <span class="metric-value">${forecastCutoff.toFixed(2)}</span>
+          </div>
+
+          <div class="metric-block">
+            <span class="metric-label">Chênh lệch với điểm bạn</span>
+            <span class="gap-pill ${item.type}">${gapSign} đ</span>
+          </div>
+
+          <div class="metric-block metric-block-fit">
+            <span class="metric-label">Độ phù hợp</span>
+            <span class="metric-value metric-fit-score">${recommendationScore}<small>/100</small></span>
+          </div>
+        </div>
+
+        <div class="rec-card-footer">
+          <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Gợi ý dựa trên điểm xét tuyển, mốc điểm dự kiến và cơ hội việc làm.${interestFitLabel}</span>
         </div>
       </article>
     `;
@@ -580,7 +647,7 @@
         return `
         <tr>
           <td><strong>${escapeHtml(row.school_code)}</strong></td>
-          <td style="font-weight: 600;">${escapeHtml(row.school)}</td>
+          <td style="font-weight: 600;"><span class="school-table-cell">${schoolAvatarHtml(row)}<span>${escapeHtml(row.school)}</span></span></td>
           <td><strong>${escapeHtml(row.major)}</strong></td>
           <td style="color: var(--text-secondary);">${escapeHtml(row.major_code)}</td>
           <td><span class="badge-tag">${escapeHtml(row.combination)}</span></td>
@@ -612,7 +679,7 @@
         const school = btn.dataset.school;
         const cutoff = btn.dataset.cutoff;
         const code = btn.dataset.code;
-        toggleWishlist({ major, school, cutoff, code, gap: "" });
+        toggleWishlist({ major, school, cutoff, code, gap: "", logo_url: row.logo_url, logo_alt: row.logo_alt });
       });
     });
   }
@@ -776,7 +843,7 @@
           <span class="drawer-item-index">NV${idx + 1}</span>
           <div class="drawer-item-info">
             <h4 class="drawer-item-major" title="${escapeHtml(item.major)}">${escapeHtml(item.major)}</h4>
-            <p class="drawer-item-school" title="${escapeHtml(item.school)}">${escapeHtml(item.school)}</p>
+            <p class="drawer-item-school" title="${escapeHtml(item.school)}">${schoolAvatarHtml(item)}<span>${escapeHtml(item.school)}</span></p>
           </div>
           <div class="drawer-item-scores">
             ${item.cutoff ? `${item.cutoff}đ` : ""}
@@ -892,9 +959,9 @@
      8. DARK / LIGHT THEME TOGGLE
      ========================================================================== */
   function initTheme() {
-    const savedTheme = localStorage.getItem("dss_theme");
-    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isDark = savedTheme === "dark" || (!savedTheme && prefersDark);
+    // Không kế thừa thiết lập giao diện của bản nhiều màn hình trước đây.
+    const savedTheme = localStorage.getItem("dss_minimal_theme");
+    const isDark = savedTheme ? savedTheme === "dark" : true;
 
     applyTheme(isDark);
   }
@@ -903,7 +970,7 @@
     document.body.classList.toggle("dark-mode", isDark);
     elements.themeIconMoon.classList.toggle("hidden", isDark);
     elements.themeIconSun.classList.toggle("hidden", !isDark);
-    localStorage.setItem("dss_theme", isDark ? "dark" : "light");
+    localStorage.setItem("dss_minimal_theme", isDark ? "dark" : "light");
   }
 
   elements.themeToggleBtn.addEventListener("click", () => {

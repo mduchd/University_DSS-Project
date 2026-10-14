@@ -7,6 +7,7 @@ import math
 from pathlib import Path
 import unicodedata
 from services.recommendation_service import recommendation_engine
+from services.university_logo_service import university_logo_service
 import logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
@@ -187,6 +188,12 @@ def search_admissions():
                 "scale": "Thang 40" if row.get("is_scale_40") else "Thang 30",
             }
         )
+        results[-1].update(
+            university_logo_service.get(
+                results[-1].get("school_code", ""),
+                results[-1].get("school", ""),
+            )
+        )
 
     # Sorting
     if sort_by == "cutoff_asc":
@@ -274,10 +281,13 @@ def validate_payload(data):
                 if not isinstance(score, (int, float)) or score < 0 or score > 10:
                     errors.append({"field": f"scores.{subject}", "message": "Điểm phải là số nằm trong khoảng 0-10."})
 
-    priorities = data.get("priorities", {})
-    for key, value in priorities.items():
-        if not isinstance(value, (int, float)) or value < 0:
-            errors.append({"field": f"priorities.{key}", "message": "Mức độ ưu tiên không được là số âm."})
+    interests = data.get("interests", [])
+    if not isinstance(interests, list):
+        errors.append({"field": "interests", "message": "Sở thích phải là một danh sách."})
+    elif len(interests) > 2:
+        errors.append({"field": "interests", "message": "Chỉ được chọn tối đa 2 sở thích."})
+    elif any(not isinstance(value, str) or not value.strip() for value in interests):
+        errors.append({"field": "interests", "message": "Sở thích không hợp lệ."})
             
     return errors
 
