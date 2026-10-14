@@ -1038,15 +1038,15 @@ body.dark-mode .badge-model {
 }
 
 .school-avatar {
-  width: 30px;
-  height: 30px;
+  width: 46px;
+  height: 46px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   display: inline-grid;
   place-items: center;
   overflow: hidden;
-  flex: 0 0 30px;
+  flex: 0 0 46px;
   color: var(--primary);
   font-size: 10px;
   font-weight: 800;
@@ -1056,8 +1056,21 @@ body.dark-mode .badge-model {
 .school-avatar-image {
   width: 100%;
   height: 100%;
-  padding: 3px;
+  padding: 1px;
   object-fit: contain;
+}
+
+/* Most institutions use a compact seal, but a number of official identities
+   are horizontal wordmarks. Detect those after image load and give them a
+   proper logo lockup instead of shrinking them into a square. */
+.school-avatar--wide {
+  width: 132px;
+  flex-basis: 132px;
+  padding: 2px 4px;
+}
+
+.school-avatar--wide .school-avatar-image {
+  padding: 0;
 }
 
 .school-avatar-fallback {
@@ -1073,6 +1086,26 @@ body.dark-mode .badge-model {
   align-items: center;
   gap: 9px;
   min-width: 0;
+}
+
+/* Keep dense table and wishlist rows compact; recommendation cards use the
+   larger, easy-to-recognise brand mark above. */
+.school-table-cell .school-avatar,
+.drawer-item-school .school-avatar {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  border-radius: 8px;
+}
+
+.school-table-cell .school-avatar--wide {
+  width: 86px;
+  flex-basis: 86px;
+}
+
+.drawer-item-school .school-avatar--wide {
+  width: 62px;
+  flex-basis: 62px;
 }
 
 /* Metrics Grid */
@@ -1676,6 +1709,11 @@ body.dark-mode .gap-pill.reach {
   flex-basis: 22px;
   border-radius: 6px;
   font-size: 8px;
+}
+
+.drawer-item-school .school-avatar--wide {
+  width: 62px;
+  flex-basis: 62px;
 }
 
 .drawer-item-scores {
