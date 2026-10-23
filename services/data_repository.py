@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 import pandas as pd
+from sqlalchemy import create_engine
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -11,6 +12,20 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 ROOT = Path(__file__).resolve().parents[1]
 
+def get_db_connection():
+    """Khởi tạo kết nối ưu tiên dùng Biến môi trường (Khi Deploy), nếu không có sẽ dùng Neon Cloud DB (Khi Local)"""
+    
+    cloud_db_url = os.environ.get(
+        "DATABASE_URL", 
+        "postgresql+psycopg2://neondb_owner:npg_9WInofGih6qx@ep-bold-boat-azdvc0lj-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+    )
+    
+    try:
+        engine = create_engine(cloud_db_url)
+        return engine.connect()
+    except Exception as e:
+        logging.error(f"Lỗi kết nối CSDL - {e}")
+        return None
 
 class DataRepository:
     _instance = None
@@ -24,39 +39,96 @@ class DataRepository:
         return cls._instance
 
     def load_all_data(self):
-        """Nạp và cache dữ liệu từ processed và master vào RAM"""
+        """Nạp và cache dữ liệu từ Cloud PostgreSQL vào RAM (Tự động fallback về CSV nếu DB trống/lỗi)"""
         logging.info("Khởi động DataRepository: Đang nạp dữ liệu lên RAM...")
+        conn = get_db_connection()
 
-        # 1. Nạp dữ liệu điểm thi (Processed)
+        # 1. Nạp dữ liệu điểm thi (Processed) - Đọc CSV
         exam_path = ROOT / "data" / "processed" / "exam_processed.csv"
         if exam_path.exists():
             df_exam = pd.read_csv(exam_path, encoding="utf-8-sig")
-
             # BẢO MẬT: Đảm bảo không chứa Số báo danh (SBD) hoặc PII
             for pii_col in ["SBD", "sbd"]:
                 if pii_col in df_exam.columns:
                     df_exam.drop(columns=[pii_col], inplace=True)
-
             self._data_cache["exam_data"] = df_exam
             logging.info(f"- Đã nạp dữ liệu điểm thi: {len(df_exam)} dòng (Đã gỡ SBD).")
         else:
             logging.warning(f"- Không tìm thấy file: {exam_path}")
 
         # 2. Nạp dữ liệu điểm chuẩn / ngành nghề (Master Admission)
+        if conn:
+            try:
+                query_master = """
+                    SELECT 
+                        u.uni_code AS university_admission_code, 
+                        u.name AS university_name,
+                        m.major_code, 
+                        m.name AS major_name,
+                        m.major_group_code,
+                        m.major_group_name,
+                        c.code AS subject_combination, 
+                        a.year, 
+                        a.cutoff_score,
+                        a.cutoff_score_30 
+                    FROM admission_options a
+                    JOIN universities u ON a.university_id = u.id
+                    JOIN majors m ON a.major_id = m.id
+                    JOIN subject_combinations c ON a.combination_id = c.id
+                """
+                df_master = pd.read_sql(query_master, conn)
+                if not df_master.empty:
+                    self._data_cache["master_data"] = df_master
+                    logging.info(f"- Đã nạp dữ liệu Master từ Cloud Database: {len(df_master)} dòng.")
+                else:
+                    raise ValueError("Bảng admission_options đang trống.")
+            except Exception as e:
+                logging.warning(f"- Cloud DB Master trống hoặc lỗi ({e}), chuyển sang đọc file CSV...")
+                self._fallback_load_master()
+        else:
+            self._fallback_load_master()
+
+        # 3. Nạp dữ liệu thị trường việc làm theo danh mục (Jobs Summary)
+        if conn:
+            try:
+                query_jobs = """
+                    SELECT 
+                        category_name AS job_category, 
+                        demand_level AS job_demand_level, 
+                        posting_count AS job_posting_count, 
+                        avg_salary_million AS job_avg_salary_million, 
+                        median_salary_million AS job_median_salary_million
+                    FROM job_categories
+                """
+                df_jobs = pd.read_sql(query_jobs, conn)
+                if not df_jobs.empty:
+                    self._data_cache["job_market_data"] = df_jobs
+                    logging.info(f"- Đã nạp dữ liệu thị trường việc làm từ Cloud Database: {len(df_jobs)} nhóm nghề.")
+                else:
+                    raise ValueError("Bảng job_categories đang trống.")
+            except Exception as e:
+                logging.warning(f"- Cloud DB Jobs trống hoặc lỗi ({e}), chuyển sang đọc file CSV...")
+                self._fallback_load_jobs()
+            finally:
+                conn.close()
+        else:
+            self._fallback_load_jobs()
+
+    def _fallback_load_master(self):
         master_path = ROOT / "data" / "master" / "master_admission.csv"
         if master_path.exists():
             df_master = pd.read_csv(master_path, encoding="utf-8-sig")
             self._data_cache["master_data"] = df_master
-            logging.info(f"- Đã nạp dữ liệu Master: {len(df_master)} dòng.")
+            logging.info(f"- Đã nạp dữ liệu Master (CSV): {len(df_master)} dòng.")
         else:
             logging.warning(f"- Không tìm thấy file: {master_path}")
 
-        # 3. Nạp dữ liệu thị trường việc làm theo danh mục (Jobs Summary)
+    def _fallback_load_jobs(self):
         job_summary_path = ROOT / "data" / "processed" / "jobs" / "job_market_summary_by_category.csv"
         if job_summary_path.exists():
             df_jobs = pd.read_csv(job_summary_path, encoding="utf-8-sig")
             self._data_cache["job_market_data"] = df_jobs
-            logging.info(f"- Đã nạp dữ liệu thị trường việc làm: {len(df_jobs)} nhóm nghề.")
+            logging.info(f"- Đã nạp dữ liệu việc làm (CSV): {len(df_jobs)} nhóm nghề.")
         else:
             logging.warning(f"- Không tìm thấy file: {job_summary_path}")
 
@@ -94,7 +166,6 @@ class DataRepository:
 
         q = query.strip().casefold()
         if q:
-            # Dùng regex=False để an toàn tuyệt đối với các ký tự đặc biệt như [, ], (, )...
             match_mask = (
                 filtered["major_name"].astype(str).str.casefold().str.contains(q, regex=False, na=False)
                 | filtered["university_name"].astype(str).str.casefold().str.contains(q, regex=False, na=False)

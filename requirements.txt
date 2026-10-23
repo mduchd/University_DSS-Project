@@ -9,4 +9,5 @@ joblib>=1.6,<2
 matplotlib>=3.10,<4
 seaborn>=0.13,<1
 pytest>=8.4,<9 
-
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.10
