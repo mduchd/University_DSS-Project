@@ -11,6 +11,8 @@
 - Phân loại phương án bằng chênh lệch giữa tổng điểm của người dùng và mốc điểm chuẩn dự báo/tham chiếu.
 - Xếp hạng content-based theo độ khớp điểm, sở thích-ngành, lương tham khảo, nhu cầu tuyển dụng và độ ổn định của lịch sử điểm chuẩn.
 - Tra cứu điểm chuẩn, xem bối cảnh nghề nghiệp và lưu danh sách nguyện vọng trong trình duyệt.
+- Đăng ký/đăng nhập bằng tài khoản hoặc Google; người đã đăng nhập đồng bộ danh sách nguyện vọng qua PostgreSQL.
+- Trợ lý AI dùng dữ liệu DSS để trả lời; panel có câu hỏi nhanh, trả lời theo luồng và định dạng Markdown an toàn.
 
 Luồng recommendation dùng Content-Based Filtering kết hợp weighted scoring: sở thích được đối chiếu minh bạch với đặc trưng của ngành/trường, không sử dụng Collaborative Filtering vì hệ thống chưa có dữ liệu tương tác đa người dùng.
 
@@ -74,7 +76,8 @@ Test bao phủ làm sạch dữ liệu, feature/model dự báo, validation payl
 
 - Mô hình dùng dữ liệu điểm chuẩn 2018–2024 để tạo **mốc dự báo 2025**; đây là thí nghiệm lịch sử, không phải mốc tuyển sinh thời gian thực.
 - Trường/ngành chưa có lịch sử (cold-start) có sai số cao hơn; hệ thống giữ fallback lịch sử thay vì tạo dữ liệu giả.
-- Danh sách nguyện vọng chỉ lưu ở `localStorage`, không có tài khoản hay đồng bộ nhiều thiết bị.
+- Khách chưa đăng nhập lưu nguyện vọng trong `localStorage`; tài khoản đăng nhập có thể đồng bộ danh sách qua PostgreSQL khi `DATABASE_URL` và `JWT_SECRET_KEY` được cấu hình.
+- Chatbot yêu cầu đăng nhập và cần `DEEPSEEK_API_KEY` trên backend. Chi tiết luồng streaming ở [docs/chatbot-quick-stream.md](docs/chatbot-quick-stream.md).
 - Không có tra cứu số báo danh hoặc dữ liệu cá nhân của thí sinh trong API/giao diện công khai.
 
 ## Cấu trúc chính

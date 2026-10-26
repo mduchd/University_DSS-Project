@@ -1769,7 +1769,7 @@ body.dark-mode .gap-pill.reach {
   bottom: 84px;
   z-index: 61;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   width: min(420px, calc(100vw - 32px));
   height: min(580px, calc(100vh - 120px));
   overflow: hidden;
@@ -1790,6 +1790,44 @@ body.dark-mode .gap-pill.reach {
 
 .assistant-header h2 { font-size: 16px; }
 .assistant-header p { color: var(--text-secondary); font-size: 12px; }
+
+.assistant-quick-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 10px 14px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.assistant-quick-label {
+  flex-basis: 100%;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.assistant-question-chip {
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 11px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.assistant-question-chip:hover,
+.assistant-question-chip:focus-visible {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.assistant-question-chip:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
 
 .assistant-messages {
   display: grid;
@@ -1818,9 +1856,37 @@ body.dark-mode .gap-pill.reach {
   color: #ffffff;
 }
 
+.assistant-message--markdown {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+.assistant-message--markdown > :first-child { margin-top: 0; }
+.assistant-message--markdown > :last-child { margin-bottom: 0; }
+.assistant-message--markdown p,
+.assistant-message--markdown ul,
+.assistant-message--markdown ol,
+.assistant-message--markdown blockquote { margin: 0 0 9px; }
+.assistant-message--markdown ul,
+.assistant-message--markdown ol { padding-left: 20px; }
+.assistant-message--markdown h1,
+.assistant-message--markdown h2,
+.assistant-message--markdown h3 { margin: 10px 0 6px; font-size: 14px; }
+.assistant-message--markdown a { color: var(--primary); text-decoration: underline; }
+.assistant-message--markdown code { overflow-wrap: anywhere; }
+.assistant-message--markdown pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--bg-card);
+}
+.assistant-message--markdown pre code { overflow-wrap: normal; }
+
 .assistant-form {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 8px;
   padding: 14px;
   border-top: 1px solid var(--border-subtle);

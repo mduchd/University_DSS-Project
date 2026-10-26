@@ -7,7 +7,7 @@ import math
 import os
 from pathlib import Path
 import unicodedata
-from services.assistant_service import AssistantError, answer_question
+from services.assistant_service import AssistantError, answer_question, stream_answer
 from services.auth_service import AuthError, decode_token, login_google_user, login_user, register_user
 from services.data_repository import get_db_connection
 from sqlalchemy import text
@@ -17,7 +17,7 @@ from services.university_logo_service import university_logo_service
 import logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
 
 
 def remove_accents(input_str: str) -> str:
@@ -128,6 +128,21 @@ def assistant_chat_api():
         decode_token(_bearer_token(), _auth_secret())
         response = answer_question(payload.get("message"), payload.get("profile"), payload.get("history"))
         return jsonify({"status": "success", **response})
+    except (AuthError, AssistantError) as error:
+        return jsonify({"status": "error", "message": error.message}), error.status_code
+
+
+@app.post("/api/assistant/chat/stream")
+def assistant_chat_stream_api():
+    payload = request.get_json(silent=True) or {}
+    try:
+        decode_token(_bearer_token(), _auth_secret())
+        events = stream_answer(payload.get("message"), payload.get("profile"), payload.get("history"))
+        return Response(
+            events,
+            mimetype="text/event-stream",
+            headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
+        )
     except (AuthError, AssistantError) as error:
         return jsonify({"status": "error", "message": error.message}), error.status_code
 

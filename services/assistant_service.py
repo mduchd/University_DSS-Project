@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Any
+import json
+from typing import Any, Iterator
 
 import pandas as pd
 import requests
@@ -108,7 +109,7 @@ def _history_messages(history: object) -> list[dict[str, str]]:
     return messages
 
 
-def answer_question(message: object, profile: object, history: object) -> dict:
+def _prepare_request(message: object, profile: object, history: object) -> tuple[list[dict[str, str]], list[dict[str, str]], str]:
     question = _text(message)
     if not question or len(question) > MAX_MESSAGE_LENGTH:
         raise AssistantError(f"Câu hỏi cần có từ 1 đến {MAX_MESSAGE_LENGTH} ký tự.")
@@ -130,18 +131,28 @@ Không yêu cầu số báo danh, số điện thoại, địa chỉ hoặc thô
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(_history_messages(history))
     messages.append({"role": "user", "content": f"Ngữ cảnh DSS đã lọc:\n{context_prompt}\n\nCâu hỏi: {question}"})
+    return messages, admissions, api_key
+
+
+def _request_body(messages: list[dict[str, str]], *, stream: bool) -> dict:
+    return {
+        "model": os.environ.get("DEEPSEEK_MODEL", "deepseek-flash"),
+        "messages": messages,
+        "max_tokens": 700,
+        "thinking": {"type": "disabled"},
+        "stream": stream,
+    }
+
+
+def answer_question(message: object, profile: object, history: object) -> dict:
+    """Keep the original JSON endpoint available for existing clients."""
+    messages, admissions, api_key = _prepare_request(message, profile, history)
 
     try:
         response = requests.post(
             DEEPSEEK_URL,
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={
-                "model": os.environ.get("DEEPSEEK_MODEL", "deepseek-flash"),
-                "messages": messages,
-                "max_tokens": 700,
-                "thinking": {"type": "disabled"},
-                "stream": False,
-            },
+            json=_request_body(messages, stream=False),
             timeout=30,
         )
     except requests.RequestException as error:
@@ -157,3 +168,62 @@ Không yêu cầu số báo danh, số điện thoại, địa chỉ hoặc thô
     if not content:
         raise AssistantError("DeepSeek chưa tạo được câu trả lời.", 503)
     return {"answer": content, "sources": admissions, "model": payload.get("model", "deepseek-flash")}
+
+
+def _sse_event(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+def stream_answer(message: object, profile: object, history: object) -> Iterator[str]:
+    """Proxy DeepSeek's SSE deltas without exposing its API key to the browser."""
+    messages, admissions, api_key = _prepare_request(message, profile, history)
+    try:
+        upstream = requests.post(
+            DEEPSEEK_URL,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=_request_body(messages, stream=True),
+            stream=True,
+            timeout=(10, 60),
+        )
+    except requests.RequestException as error:
+        raise AssistantError("Không thể kết nối DeepSeek lúc này.", 503) from error
+    if not upstream.ok:
+        upstream.close()
+        raise AssistantError("DeepSeek chưa thể xử lý yêu cầu. Vui lòng thử lại sau.", 503)
+
+    def generate() -> Iterator[str]:
+        received_text = False
+        finished = False
+        model = os.environ.get("DEEPSEEK_MODEL", "deepseek-flash")
+        try:
+            yield _sse_event("ready", {})
+            for line in upstream.iter_lines(chunk_size=1):
+                if isinstance(line, bytes):
+                    line = line.decode("utf-8", errors="replace")
+                if not line.startswith("data:"):
+                    continue  # DeepSeek also sends SSE keep-alive comments.
+                data = line[5:].strip()
+                if data == "[DONE]":
+                    finished = True
+                    break
+                try:
+                    chunk = json.loads(data)
+                    model = chunk.get("model") or model
+                    delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content")
+                except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+                    continue
+                if isinstance(delta, str) and delta:
+                    received_text = True
+                    yield _sse_event("delta", {"text": delta})
+            if finished and received_text:
+                yield _sse_event("done", {"model": model, "sources": admissions})
+            elif received_text:
+                yield _sse_event("error", {"message": "Kết nối tới DeepSeek bị ngắt trước khi trả lời xong."})
+            else:
+                yield _sse_event("error", {"message": "DeepSeek chưa tạo được câu trả lời."})
+        except requests.RequestException:
+            yield _sse_event("error", {"message": "Kết nối tới DeepSeek bị gián đoạn."})
+        finally:
+            upstream.close()
+
+    return generate()

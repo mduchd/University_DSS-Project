@@ -56,6 +56,7 @@
       googleInitialized: false,
     },
     assistantHistory: [],
+    assistantAbortController: null,
   };
 
   // DOM Elements
@@ -90,9 +91,11 @@
     assistantCloseBtn: document.getElementById("assistant-close-btn"),
     assistantPanel: document.getElementById("assistant-panel"),
     assistantMessages: document.getElementById("assistant-messages"),
+    assistantQuickQuestions: document.getElementById("assistant-quick-questions"),
     assistantForm: document.getElementById("assistant-form"),
     assistantInput: document.getElementById("assistant-input"),
     assistantSendBtn: document.getElementById("assistant-send-btn"),
+    assistantStopBtn: document.getElementById("assistant-stop-btn"),
 
     // Recommender Form
     form: document.getElementById("recommend-form"),
@@ -292,6 +295,11 @@
   }
 
   function signOut() {
+    if (state.assistantAbortController) state.assistantAbortController.abort();
+    state.assistantHistory = [];
+    elements.assistantMessages.replaceChildren();
+    appendAssistantMessage("Chào bạn! Hãy hỏi về ngành học, trường hoặc cách sắp xếp nguyện vọng.", "assistant");
+    elements.assistantPanel.classList.add("hidden");
     state.wishlist = [];
     saveWishlist();
     updateWishlistUi();
@@ -383,6 +391,90 @@
     return message;
   }
 
+  function renderAssistantMarkdown(element, markdown) {
+    element.classList.add("assistant-message--markdown");
+    if (!window.marked?.parse || !window.DOMPurify?.isSupported) {
+      element.textContent = markdown;
+      return;
+    }
+    try {
+      const html = window.marked.parse(markdown, { gfm: true, breaks: true });
+      element.innerHTML = window.DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ["p", "br", "strong", "em", "del", "ul", "ol", "li", "code", "pre", "blockquote", "h1", "h2", "h3", "h4", "a", "hr", "table", "thead", "tbody", "tr", "th", "td"],
+        ALLOWED_ATTR: ["href", "title"],
+      });
+    } catch (_) {
+      element.textContent = markdown;
+      return;
+    }
+    element.querySelectorAll("a[href]").forEach((link) => {
+      let url;
+      try {
+        url = new URL(link.href, window.location.href);
+      } catch (_) {
+        link.removeAttribute("href");
+        return;
+      }
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        link.removeAttribute("href");
+        return;
+      }
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    });
+  }
+
+  async function readAssistantStream(response, onDelta) {
+    if (!response.body) throw new Error("Trình duyệt không hỗ trợ nhận câu trả lời theo luồng.");
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let pending = "";
+    let completed = false;
+
+    function handleFrame(frame) {
+      let event = "";
+      const dataLines = [];
+      frame.split("\n").forEach((line) => {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
+      });
+      if (!event || !dataLines.length) return;
+      let data;
+      try {
+        data = JSON.parse(dataLines.join("\n"));
+      } catch (_) {
+        throw new Error("Dữ liệu trả lời của trợ lý không hợp lệ.");
+      }
+      if (event === "delta" && typeof data.text === "string") onDelta(data.text);
+      if (event === "error") throw new Error(data.message || "Trợ lý AI bị gián đoạn.");
+      if (event === "done") completed = true;
+    }
+
+    function consumeFrames() {
+      let boundary = pending.indexOf("\n\n");
+      while (boundary !== -1) {
+        handleFrame(pending.slice(0, boundary));
+        pending = pending.slice(boundary + 2);
+        boundary = pending.indexOf("\n\n");
+      }
+    }
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        pending += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+        consumeFrames();
+      }
+      pending += decoder.decode().replace(/\r\n/g, "\n");
+      consumeFrames();
+      if (!completed) throw new Error("Câu trả lời bị ngắt trước khi hoàn tất.");
+    } finally {
+      if (!completed) await reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+  }
+
   function assistantProfile() {
     const scores = {};
     elements.scoreGrid.querySelectorAll("input[name]").forEach((input) => {
@@ -409,32 +501,69 @@
 
   elements.assistantOpenBtn.addEventListener("click", openAssistant);
   elements.assistantCloseBtn.addEventListener("click", closeAssistant);
-  elements.assistantForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const message = elements.assistantInput.value.trim();
-    if (!message || !state.auth.token) return;
+  elements.assistantStopBtn.addEventListener("click", () => state.assistantAbortController?.abort());
+
+  async function sendAssistantQuestion(message) {
+    if (!message || !state.auth.token || state.assistantAbortController) return;
 
     appendAssistantMessage(message, "user");
     elements.assistantInput.value = "";
     elements.assistantSendBtn.disabled = true;
+    elements.assistantStopBtn.classList.remove("hidden");
+    elements.assistantQuickQuestions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+    elements.assistantMessages.setAttribute("aria-busy", "true");
+    const controller = new AbortController();
+    state.assistantAbortController = controller;
     const waiting = appendAssistantMessage("Đang tham chiếu dữ liệu DSS…", "assistant");
+    let answer = "";
+    let renderFrame = null;
+    function scheduleRender() {
+      if (renderFrame !== null) return;
+      renderFrame = requestAnimationFrame(() => {
+        renderFrame = null;
+        renderAssistantMarkdown(waiting, answer);
+        elements.assistantMessages.scrollTop = elements.assistantMessages.scrollHeight;
+      });
+    }
     try {
-      const response = await fetch("/api/assistant/chat", {
+      const response = await fetch("/api/assistant/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${state.auth.token}` },
         body: JSON.stringify({ message, profile: assistantProfile(), history: state.assistantHistory }),
+        signal: controller.signal,
       });
-      const data = await response.json();
-      waiting.remove();
-      if (!response.ok || !data.answer) throw new Error(data.message || "Trợ lý AI chưa thể trả lời.");
-      appendAssistantMessage(data.answer, "assistant");
-      state.assistantHistory.push({ role: "user", content: message }, { role: "assistant", content: data.answer });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || "Trợ lý AI chưa thể trả lời.");
+      }
+      await readAssistantStream(response, (delta) => {
+        answer += delta;
+        scheduleRender();
+      });
+      if (renderFrame !== null) cancelAnimationFrame(renderFrame);
+      renderAssistantMarkdown(waiting, answer);
+      state.assistantHistory.push({ role: "user", content: message }, { role: "assistant", content: answer });
       state.assistantHistory = state.assistantHistory.slice(-6);
     } catch (error) {
-      waiting.textContent = error.message || "Không thể kết nối trợ lý AI.";
+      if (renderFrame !== null) cancelAnimationFrame(renderFrame);
+      const explanation = error.name === "AbortError" ? "Đã dừng trả lời." : (error.message || "Không thể kết nối trợ lý AI.");
+      if (answer) renderAssistantMarkdown(waiting, `${answer}\n\n_${explanation}_`);
+      else waiting.textContent = explanation;
     } finally {
+      state.assistantAbortController = null;
       elements.assistantSendBtn.disabled = false;
+      elements.assistantStopBtn.classList.add("hidden");
+      elements.assistantQuickQuestions.querySelectorAll("button").forEach((button) => { button.disabled = false; });
+      elements.assistantMessages.setAttribute("aria-busy", "false");
     }
+  }
+
+  elements.assistantQuickQuestions.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", () => sendAssistantQuestion(button.dataset.assistantQuestion));
+  });
+  elements.assistantForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    sendAssistantQuestion(elements.assistantInput.value.trim());
   });
 
   /* ==========================================================================
