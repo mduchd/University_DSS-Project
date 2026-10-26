@@ -12,10 +12,13 @@ import csv
 from html.parser import HTMLParser
 import html
 import re
+import ssl
 import time
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from urllib.parse import parse_qs, quote_plus, unquote, urljoin, urlparse
+from urllib.error import URLError
+from urllib.parse import parse_qs, quote, quote_plus, unquote, urljoin, urlparse
 from urllib.request import Request, urlopen
 
 
@@ -63,7 +66,7 @@ KNOWN_DOMAINS = {
     "ANH": "https://hvann.edu.vn/",
     "DKY": "https://hmtu.edu.vn/",
     "GTS": "https://ut.edu.vn/",
-    "HYD": "https://hvydhct.edu.vn/",
+    "HYD": "https://vutm.edu.vn/",
     "CSH": "https://hvcsnd.edu.vn/",
     "DKK": "https://uneti.edu.vn/",
     "LAH": "https://tcu.edu.vn/",
@@ -89,13 +92,13 @@ KNOWN_DOMAINS = {
     "QHT": "https://hus.vnu.edu.vn/",
     "QHE": "https://ueb.vnu.edu.vn/",
     "QSX": "https://hcmussh.edu.vn/",
-    "DTS": "https://dts.tnu.edu.vn/",
+    "DTS": "https://tnue.edu.vn/",
     "LCH": "https://daihocchinhtri.edu.vn/",
     "TCT": "https://www.ctu.edu.vn/",
-    "DKS": "https://tks.edu.vn/",
+    "DKS": "https://kiemsat.edu.vn/",
     "BPH": "https://hvbp.edu.vn/",
     "QHL": "https://law.vnu.edu.vn/",
-    "DHS": "https://dhsphue.hueuni.edu.vn/",
+    "DHS": "https://dhsphue.edu.vn/",
     "QSC": "https://uit.edu.vn/",
     "SGD": "https://sgu.edu.vn/",
     "NQH": "https://hvkhqs.edu.vn/",
@@ -147,7 +150,7 @@ KNOWN_DOMAINS = {
     "VKU": "https://vku.udn.vn/",
     "DTF": "https://sfl.tnu.edu.vn/",
     "HLU": "https://daihochalong.edu.vn/",
-    "DKT": "https://hdu.edu.vn/",
+    "DKT": "https://uhd.edu.vn/",
     "DQB": "https://quangbinhuni.edu.vn/",
     "DPQ": "https://pdu.edu.vn/",
     "HHT": "https://htu.edu.vn/",
@@ -215,7 +218,7 @@ KNOWN_DOMAINS = {
     "DKC": "https://hutech.edu.vn/",
     "DDU": "https://ddu.edu.vn/",
     "DLH": "https://lhu.edu.vn/",
-    "DDB": "https://thanhdo.edu.vn/",
+    "DDB": "https://thanhdong.edu.vn/",
     "DHA": "https://hule.edu.vn/",
     "DYD": "https://yersin.edu.vn/",
     "TDD": "https://thanhdo.edu.vn/",
@@ -239,7 +242,7 @@ KNOWN_DOMAINS = {
     "DPT": "https://phtu.edu.vn/",
     "DVP": "https://trungvuong.edu.vn/",
     "YDD": "https://ndun.edu.vn/",
-    "THU": "https://vju.ac.vn/",
+    "THU": "https://tokyo-human.edu.vn/",
     "DCD": "https://dntu.edu.vn/",
     "EIU": "https://eiu.edu.vn/",
     "TDB": "https://tdttbacninh.edu.vn/",
@@ -248,7 +251,7 @@ KNOWN_DOMAINS = {
     "DHT": "https://husc.hueuni.edu.vn/",
     "DTZ": "https://tnus.edu.vn/",
     "HDT": "https://hdu.edu.vn/",
-    "DNU": "https://dnu.edu.vn/",
+    "DNU": "https://dnpu.edu.vn/",
     "DTM": "https://hcmunre.edu.vn/",
     "NTU": "https://nguyentrai.edu.vn/",
     "CCM": "https://hict.edu.vn/",
@@ -257,7 +260,7 @@ KNOWN_DOMAINS = {
     "DTQ": "https://is.tnu.edu.vn/",
     "SIU": "https://siu.edu.vn/",
     "DCA": "https://chuvanan.edu.vn/",
-    "DLA": "https://dlu.edu.vn/",
+    "DLA": "https://daihoclongan.edu.vn/",
     "DBH": "https://dbu.edu.vn/",
     "SKN": "https://spkt.namdinhuni.edu.vn/",
     "DTN": "https://tuaf.edu.vn/",
@@ -265,7 +268,7 @@ KNOWN_DOMAINS = {
     "DCQ": "https://unihub.edu.vn/",
     "DHQ": "https://quangtri.hueuni.edu.vn/",
     "TBD": "https://tbd.edu.vn/",
-    "DHV": "https://hvu.edu.vn/",
+    "DHV": "https://dhv.edu.vn/",
     "DPX": "https://phuxuan.edu.vn/",
     "HPU": "https://hpu.edu.vn/",
     "MTU": "https://mtu.edu.vn/",
@@ -273,7 +276,7 @@ KNOWN_DOMAINS = {
     "UFA": "https://dhtckt.edu.vn/",
     "GDU": "https://gdu.edu.vn/",
     "DDM": "https://qui.edu.vn/",
-    "XDT": "https://mtu.edu.vn/",
+    "XDT": "https://muce.edu.vn/",
     "DSG": "https://stu.edu.vn/",
     "DBG": "https://nlbg.edu.vn/",
     "TTB": "https://utb.edu.vn/",
@@ -281,7 +284,7 @@ KNOWN_DOMAINS = {
     "TQU": "https://tqu.edu.vn/",
     "TKG": "https://tuk.edu.vn/",
     "DVD": "https://dvtdt.edu.vn/",
-    "DNB": "https://hlu.edu.vn/",
+    "DNB": "http://hluv.edu.vn/",
     "NVH": "https://vnam.edu.vn/",
     "NVS": "https://hcmcons.vn/",
     "DVX": "https://vux.edu.vn/",
@@ -309,7 +312,7 @@ KNOWN_DOMAINS = {
     "DDV": "https://vnuk.udn.vn/",
     "HVD": "https://hvdt.edu.vn/",
     "LNS": "https://vnuf.edu.vn/",
-    "QSP": "https://vnu.edu.vn/",
+    "QSP": "https://vnuhcm-cbt.edu.vn/",
     "NLG": "https://hcmuaf.edu.vn/",
     "DTP": "https://laocai.tnu.edu.vn/",
     "DTG": "https://hagiang.tnu.edu.vn/",
@@ -317,6 +320,78 @@ KNOWN_DOMAINS = {
     "YHT": "https://hmu.edu.vn/",
     "VPH": "https://tdn.edu.vn/",
     "DDG": "https://ued.udn.vn/",
+    "XDN": "https://muce.edu.vn/",
+    "LNA": "https://vnuf.edu.vn/",
+    "NHP": "https://hvnh.edu.vn/",
+}
+
+COMMON_SCHOOL_WORDS = {
+    "truong", "dai", "hoc", "vien", "khoa", "phan", "hieu", "co", "so",
+    "he", "quan", "su", "viet", "nam", "va", "tai", "tp", "thanh", "pho",
+}
+PARTNER_MARKERS = {
+    "sponsor", "partner", "doi tac", "tai tro", "quang cao", "qc", "swiper slide",
+    "khach hang", "doanh nghiep", "lien ket", "logos", "bgdvadt", "bo giao duc",
+    "facebook", "youtube", "zalo", "linkedin", "goertek", "tma binhdinh", "logo vla",
+    "bulsan", "strive", "cea saigon", "logo vnpt", "khoavnh", "nghean gov",
+    "nxb thong tin", "publisher", "thiet ke logo", "banner", "tuyen sinh",
+    "tin tuc", "news", "article", "eventnews", "thumb",
+}
+
+# Official files that are more reliable than the corresponding home page.
+# These cover sites whose HTML prominently exposes ministry, partner or news
+# images before the actual institutional mark.
+KNOWN_LOGO_URLS = {
+    "NTH": "https://hanoidep.vn/wp-content/uploads/2025/11/FTU_logo_2020.svg_1_-1200x1200.png",
+    "NTS": "https://hanoidep.vn/wp-content/uploads/2025/11/FTU_logo_2020.svg_1_-1200x1200.png",
+    "ANH": "https://congan.gialai.gov.vn/uploads/about/logo-hoc-vien-annd-c500.jpg",
+    "ANS": "https://congan.gialai.gov.vn/uploads/about/logo-dai-hoc-annd.jpg",
+    "GTS": "https://icons.duckduckgo.com/ip3/ut.edu.vn.ico",
+    "PKH": "https://edus3.leaderbook.com/prod/upload/img/656d80c9104e6700468c5f28-logo-hoc-vien-phong-khong-khong-quan-emxRdzHz.webp",
+    "KHA": "https://neu.edu.vn/wp-content/uploads/2026/01/neu_new-1-scaled-180x180.webp",
+    "DKH": "https://hup.edu.vn/data/orgs/2/2/1/images/logo-vi.png",
+    "CSS": "https://dhcsnd.edu.vn/_next/image?url=%2Flogo_new.png&w=256&q=90",
+    "HVN": "https://vnua.edu.vn/Portals/0/logoHVNN.ico?ver=2018-12-25-093425-527",
+    "HBT": "https://ajc.edu.vn/SMPT_Publishing_UC/TinTuc/AnhSEO.ashx?u=https%3a%2f%2fajc.edu.vn%2fContent%2fimages%2flogonew.png",
+    "QHS": "https://education.vnu.edu.vn/images/uncategorised/logo_goc_08-08-2019__File_d__n_n___n_trong_su___t_.png",
+    "QHF": "https://ulis.vnu.edu.vn/files/uploads/2026/03/LOGO-NGUYEN-BAN-TRUONG-DHNN-DHQGHN4-1024x1024.png",
+    "BVS": "https://ptit.edu.vn/wp-content/uploads/2024/05/logo-ptit-1.svg",
+    "YKV": "https://x.onednn.com/img.thumb/png-180x0-0-74/cdn/vmu/logo-vmu.png",
+    "HCH": "https://apag.edu.vn/Content/publishing_home/imgAPAG/logo-apag.png",
+    "SPD": "https://dthu.edu.vn/img/logo_icon.png",
+    "NHS": "https://fileserver2.hub.edu.vn/IMAGES/2025/01/04/20250104204622hublog.jpg",
+    "VKU": "https://vku.udn.vn/wp-content/uploads/2023/08/Logo.svg",
+    "DTD": "https://tdu.edu.vn/storage/images/ic-logos/ic-logo-full.png",
+    "VHD": "https://vhu.edu.vn/Resources/Images/SubDomain/HomePage/Logo/1Logo_VHU.png",
+    "DVH": "https://vhu.edu.vn/Resources/Images/SubDomain/HomePage/Logo/1Logo_VHU.png",
+    "HDT": "https://knn.hdu.edu.vn/Content/images/hdu1.png",
+    "QSQ": "https://icons.duckduckgo.com/ip3/hcmiu.edu.vn.ico",
+    "MTS": "https://icons.duckduckgo.com/ip3/mythuat.edu.vn.ico",
+    "NHB": "https://hvnh.edu.vn/medias/hvnh/vi/08.2025/hvnh.admin/album/BAV%20LOGO.png",
+    "DLS": "https://ulsa.edu.vn/wp-content/uploads/2023/06/logo-footer.png",
+    "DKS": "https://copyshop.vn/wp-content/uploads/2025/02/Logo-truong-dai-hoc-kiem-sat-Ha-Noi.jpg",
+    "DHS": "https://tckhgd.dhsphue.edu.vn/public/site/logo_dhsp.png",
+    "HTA": "https://cdn.haitrieu.com/wp-content/uploads/2021/11/Logo-Hoc-Vien-Toa-An-Viet-Nam-HVTA.png",
+    "HTN": "https://cdn.haitrieu.com/wp-content/uploads/2022/08/logo-hoc-vien-thanh-thieu-nien-viet-nam-vya.png",
+    "YQH": "https://edus3.leaderbook.com/prod/upload/img/6566e4eee10b2a0052ef4074-logo-hoc-vien-quan-y-he-quan-su-st85ds7b.webp",
+    "QHY": "https://cdnportal.vnu.edu.vn/data/upload/2010/08/14002/image/VNU-UMP-logo.jpg",
+    "BPH": "https://edus3.leaderbook.com/prod/upload/img/6566e50de10b2a0052ef4312-logo-hoc-vien-bien-phong-8wNZPhSb.webp",
+    "LBH": "https://www.egitech.vn/assets/img/university-admission/university/4/LBH1.jpg",
+    "TGH": "https://edus3.leaderbook.com/prod/upload/img/6566e4f2e10b2a0052ef40c5-logo-truong-si-quan-tang-thiet-giap-nzWNtehp.webp",
+    "HGH": "https://navigates.vn/wp-content/uploads/2023/10/truong-si-quan-phong-hoa-1.jpg",
+    "KGH": "https://reviewedu.net/wp-content/uploads/2021/08/Truong-Si-quan-Khong-quan-3.jpg",
+    "VPH": "https://edus3.leaderbook.com/prod/upload/img/6566e4ede10b2a0052ef4066-logo-truong-si-quan-ki-thuat-quan-su-he-dan-su-dai-hoc-tran-dai-nghia-ql07BiCN.webp",
+    "PBH": "https://cdn.thuvienphapluat.vn/uploads/Hoidapphapluat/2025/NNL/01082025/siquanphaobinh.jpg",
+    "DMT": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/HUNRE_Logo.png/960px-HUNRE_Logo.png",
+    "HVC": "https://edus3.leaderbook.com/prod/upload/img/6566ea7ce10b2a0052ef528b-logo-hoc-vien-can-bo-tp-hcm-pO69j1Kt.webp",
+    "STS": "https://cdn.haitrieu.com/wp-content/uploads/2022/11/Logo-Truong-DH-Su-pham-The-duc-The-thao-TPHCM-635x635.png",
+    "HVQ": "https://navigates.vn/wp-content/uploads/2023/05/logo-hoc-vien-quan-ly-giao-duc-1.jpg",
+    "DPC": "https://pctu.edu.vn/vnt_upload/weblink/logo.png",
+    "DCL": "https://lms.mku.edu.vn/pluginfile.php/1/theme_edumy/footerlogo1/1740739461/Logo_Tr%C6%B0%E1%BB%9Dng_%C4%90%E1%BA%A1i_h%E1%BB%8Dc_C%E1%BB%ADu_Long.svg.png",
+    "DPT": "https://edus3.leaderbook.com/prod/upload/img/6566e504e10b2a0052ef4242-logo-dai-hoc-phan-thiet-II53mzB8.webp",
+    "SKN": "https://reviewedu.net/wp-content/uploads/2021/07/dai-hoc-su-pham-ky-thuat-nam-dinh-nute-1.jpg",
+    "UKB": "https://cdn.ketnoibongda.vn/upload/images/team/logo-dai-hoc-kinh-bac-2025-04-01.webp",
+    "LDA": "https://copyshop.vn/wp-content/uploads/2023/05/logo-truong-dai-hoc-cong-doan-1024x983.png",
 }
 
 
@@ -336,15 +411,31 @@ class PageParser(HTMLParser):
                 self.meta.append((key.lower(), values["content"]))
         elif tag == "link" and values.get("href"):
             self.links.append((values.get("rel", "").lower(), values["href"]))
-        elif tag == "img" and values.get("src"):
+        elif tag == "img" and any(values.get(key) for key in ("src", "data-src", "data-lazy-src", "data-original")):
             marker = " ".join(values.get(k, "") for k in ("alt", "title", "class", "id")).lower()
-            self.images.append((marker, values["src"]))
+            source = next(
+                values[key]
+                for key in ("src", "data-src", "data-lazy-src", "data-original")
+                if values.get(key)
+            )
+            self.images.append((marker, source))
 
 
 def request_bytes(url: str, timeout: int = 12) -> tuple[bytes, str]:
+    url = quote(url, safe=":/?=&%#+,;@[]!$'()*")
     request = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
-    with urlopen(request, timeout=timeout) as response:
-        return response.read(MAX_BYTES + 1), response.headers.get_content_type()
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            return response.read(MAX_BYTES + 1), response.headers.get_content_type()
+    except (ssl.SSLCertVerificationError, URLError) as error:
+        reason = getattr(error, "reason", error)
+        if not isinstance(reason, ssl.SSLCertVerificationError):
+            raise
+        # Several official Vietnamese university sites serve an incomplete
+        # certificate chain. Retry only that specific validation failure.
+        context = ssl._create_unverified_context()
+        with urlopen(request, timeout=timeout, context=context) as response:
+            return response.read(MAX_BYTES + 1), response.headers.get_content_type()
 
 
 def official_search_url(school_name: str) -> str | None:
@@ -375,7 +466,25 @@ def official_url_for_school(school: dict[str, str], allow_search: bool = True) -
     return known or (official_search_url(school["school_name"]) if allow_search else None)
 
 
-def candidate_image_urls(page_url: str, body: bytes) -> list[str]:
+def _ascii_text(value: str) -> str:
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", " ", value).strip()
+
+
+def _school_tokens(school_name: str) -> set[str]:
+    return {
+        word
+        for word in _ascii_text(school_name).split()
+        if len(word) > 2 and word not in COMMON_SCHOOL_WORDS
+    }
+
+
+def candidate_image_urls(
+    page_url: str,
+    body: bytes,
+    school_name: str = "",
+    school_code: str = "",
+) -> list[str]:
     """Return likely brand assets from an official page, best candidates first.
 
     The previous crawler accepted favicons before inspecting unlabelled image
@@ -390,16 +499,49 @@ def candidate_image_urls(page_url: str, body: bytes) -> list[str]:
 
     def add(value: str, score: int) -> None:
         absolute = urljoin(page_url, value)
+        if urlparse(page_url).scheme == "https" and absolute.startswith("http://"):
+            absolute = "https://" + absolute[len("http://"):]
         if urlparse(absolute).scheme not in {"http", "https"}:
             return
         ranked[absolute] = max(score, ranked.get(absolute, -999))
 
-    for marker, value in parser.images:
-        haystack = f"{marker} {urlparse(value).path}".lower()
+    school_tokens = _school_tokens(school_name)
+    for index, (marker, value) in enumerate(parser.images):
+        value = value.replace("\\", "/")
+        decoded_value = unquote(unquote(value))
+        path = urlparse(decoded_value).path
+        haystack = _ascii_text(f"{marker} {decoded_value}")
+        basename = Path(path).stem.lower()
+        basename_ascii = _ascii_text(basename)
+        score = max(0, 50 - index)
+        is_brand_candidate = False
         if "logo" in haystack or "brand" in haystack:
-            add(value, 100)
-        elif "header" in marker:
-            add(value, 60)
+            score += 100
+            is_brand_candidate = True
+        if "logo" in haystack:
+            score += 800
+        if "header" in haystack or "trang chu" in haystack:
+            score += 70
+            is_brand_candidate = True
+        if (
+            re.fullmatch(r"(?:(?:header|footer) )?logo(?: (?:image|img|icon|new|vi|vn|en|ph|\d+))*", basename_ascii)
+            or (basename_ascii.startswith("logo ") and len(basename_ascii) <= 24)
+        ):
+            score += 140
+            is_brand_candidate = True
+        if "footer logo" in haystack:
+            score += 100
+        overlap = school_tokens.intersection(haystack.split())
+        score += 35 * len(overlap)
+        if len(overlap) >= min(2, len(school_tokens)) and overlap:
+            score += 100
+        if school_code and school_code.lower() in haystack.split():
+            score += 60
+            is_brand_candidate = True
+        if any(partner_marker in haystack for partner_marker in PARTNER_MARKERS):
+            score -= 1200
+        if is_brand_candidate and score > 20:
+            add(value, score)
 
     # Icons are usable if an official site publishes no logo asset, but they
     # must never win over an actual logo image.
@@ -408,7 +550,10 @@ def candidate_image_urls(page_url: str, body: bytes) -> list[str]:
             add(value, 20)
     for key, value in parser.meta:
         if key in {"og:image", "twitter:image"}:
-            add(value, 10)
+            score = 10
+            if "logo" in _ascii_text(unquote(unquote(urlparse(value).path))):
+                score += 800
+            add(value, score)
     add("/favicon.ico", 0)
     return [url for url, _ in sorted(ranked.items(), key=lambda item: item[1], reverse=True)]
 
@@ -456,6 +601,19 @@ def load_schools() -> list[dict[str, str]]:
         return list(unique.values())
 
 
+def write_asset(target: Path, body: bytes) -> bool:
+    """Write a crawled asset, tolerating short-lived Windows file locks."""
+    for attempt in range(3):
+        try:
+            target.write_bytes(body)
+            return True
+        except OSError:
+            if attempt == 2:
+                return False
+            time.sleep(0.05)
+    return False
+
+
 def crawl_school(school: dict[str, str], allow_search: bool = True) -> dict[str, str]:
     code, name = school["school_code"], school["school_name"]
     row = {**school, "official_url": "", "source_url": "", "logo_path": "", "alt_text": f"Logo {name}", "status": "not_found"}
@@ -463,18 +621,32 @@ def crawl_school(school: dict[str, str], allow_search: bool = True) -> dict[str,
     if not official_url:
         return row
     row["official_url"] = official_url
+    known_logo_url = KNOWN_LOGO_URLS.get(code)
+    if known_logo_url:
+        downloaded = download_image(known_logo_url)
+        if downloaded:
+            body, extension = downloaded
+            target = ASSET_DIR / f"{code}.{extension}"
+            if not write_asset(target, body):
+                return row
+            row["source_url"] = known_logo_url
+            row["logo_path"] = f"/static/img/universities/{target.name}"
+            row["status"] = "downloaded_official_logo"
+            return row
     try:
         page_body, _ = request_bytes(official_url)
     except Exception:
         page_body = b""
         row["status"] = "official_site_unreachable"
-    for image_url in candidate_image_urls(official_url, page_body):
+    for image_url in candidate_image_urls(official_url, page_body, name, code):
         downloaded = download_image(image_url)
         if not downloaded:
             continue
         body, extension = downloaded
         target = ASSET_DIR / f"{code}.{extension}"
-        target.write_bytes(body)
+        if not write_asset(target, body):
+            row["status"] = "asset_write_failed"
+            return row
         row["source_url"] = image_url
         row["logo_path"] = f"/static/img/universities/{target.name}"
         row["status"] = (
@@ -487,7 +659,9 @@ def crawl_school(school: dict[str, str], allow_search: bool = True) -> dict[str,
     if proxy:
         body, extension = proxy
         target = ASSET_DIR / f"{code}.{extension}"
-        target.write_bytes(body)
+        if not write_asset(target, body):
+            row["status"] = "asset_write_failed"
+            return row
         row["source_url"] = official_url
         row["logo_path"] = f"/static/img/universities/{target.name}"
         row["status"] = "downloaded_favicon_proxy"
@@ -507,6 +681,11 @@ def main() -> None:
         "--codes",
         default="",
         help="Comma-separated school codes to refresh while preserving all other metadata rows.",
+    )
+    parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        help="With --codes, replace an existing row whenever the refreshed crawl found an asset.",
     )
     args = parser.parse_args()
     schools = load_schools()
@@ -554,6 +733,8 @@ def main() -> None:
             refreshed = crawled_rows.get(existing["school_code"])
             if not refreshed or not refreshed.get("logo_path"):
                 return existing
+            if args.force_refresh:
+                return refreshed
             if quality.get(refreshed.get("status", ""), 0) < quality.get(existing.get("status", ""), 0):
                 return existing
             return refreshed
