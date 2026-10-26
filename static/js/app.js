@@ -243,6 +243,7 @@
       state.auth.token = data.token;
       state.auth.user = data.user;
       localStorage.setItem("dss_auth_token", data.token);
+      await syncWishlistFromServer();
       renderAuthUi();
       closeAuthModal();
       showToast(data.message || "Đăng nhập Google thành công.");
@@ -323,7 +324,7 @@
       const data = await response.json();
       if (!response.ok || !data.user) throw new Error("invalid session");
       state.auth.user = data.user;
-      syncWishlistFromServer();
+      await syncWishlistFromServer();
     } catch (_) {
       state.auth.token = null;
       localStorage.removeItem("dss_auth_token");
@@ -365,6 +366,7 @@
       state.auth.user = data.user;
       localStorage.setItem("dss_auth_token", data.token);
       elements.authPassword.value = "";
+      await syncWishlistFromServer();
       renderAuthUi();
       closeAuthModal();
       showToast(data.message || "Đăng nhập thành công.");
@@ -897,7 +899,7 @@
         const cutoff = btn.dataset.cutoff;
         const code = btn.dataset.code;
         const gap = btn.dataset.gap;
-        toggleWishlist({ major, school, cutoff, code, gap, logo_url: item.logo_url, logo_alt: item.logo_alt });
+        toggleWishlist({ major, school, cutoff, code, gap, logo_url: btn.dataset.logoUrl || "", logo_alt: btn.dataset.logoAlt || "" });
       });
     });
   }
@@ -954,6 +956,8 @@
             data-code="${escapeHtml(item.major_code)}"
             data-cutoff="${forecastCutoff.toFixed(2)}"
             data-gap="${gapSign}"
+            data-logo-url="${escapeHtml(item.logo_url || "")}"
+            data-logo-alt="${escapeHtml(item.logo_alt || "")}"
             aria-label="Lưu vào danh sách nguyện vọng"
           >
             ${saveIcon}
@@ -1097,6 +1101,8 @@
               data-code="${escapeHtml(row.major_code)}"
               data-cutoff="${row.cutoff.toFixed(2)}"
               data-gap=""
+              data-logo-url="${escapeHtml(row.logo_url || "")}"
+              data-logo-alt="${escapeHtml(row.logo_alt || "")}"
               aria-label="Lưu vào danh sách nguyện vọng"
             >
               ${saveIcon}
@@ -1114,7 +1120,7 @@
         const school = btn.dataset.school;
         const cutoff = btn.dataset.cutoff;
         const code = btn.dataset.code;
-        toggleWishlist({ major, school, cutoff, code, gap: "", logo_url: row.logo_url, logo_alt: row.logo_alt });
+        toggleWishlist({ major, school, cutoff, code, gap: "", logo_url: btn.dataset.logoUrl || "", logo_alt: btn.dataset.logoAlt || "" });
       });
     });
   }
@@ -1240,20 +1246,26 @@
     return state.wishlist.some((item) => item.school === school && item.major === major);
   }
 
-  function toggleWishlist(item) {
+  async function toggleWishlist(item) {
     const index = state.wishlist.findIndex((w) => w.school === item.school && w.major === item.major);
     if (index > -1) {
-      removeWishlistFromServer(item.school, item.major);
+      const removed = await removeWishlistFromServer(item.school, item.major);
+      if (!removed) {
+        showToast("Chưa thể xóa nguyện vọng khỏi tài khoản. Vui lòng thử lại.");
+        return;
+      }
       state.wishlist.splice(index, 1);
       showToast(`Đã bỏ khỏi danh sách nguyện vọng: ${item.major}`);
     } else {
-      state.wishlist.push(item);
-      addWishlistToServer(item).then((serverId) => {
-        if (serverId) {
-          const savedItem = state.wishlist.find((w) => w.school === item.school && w.major === item.major);
-          if (savedItem) savedItem._server_id = serverId;
+      if (state.auth.token) {
+        const serverId = await addWishlistToServer(item);
+        if (!serverId) {
+          showToast("Chưa thể lưu nguyện vọng vào tài khoản. Hãy kiểm tra kết nối rồi thử lại.");
+          return;
         }
-      });
+        item._server_id = serverId;
+      }
+      state.wishlist.push(item);
       showToast(`Đã thêm vào nguyện vọng: ${item.major} - ${item.school}`);
     }
     saveWishlist();
@@ -1280,7 +1292,15 @@
           logo_url: i.logo_url || "", logo_alt: i.logo_alt || "",
           _server_id: i.id
         }));
-        state.wishlist = serverItems;
+        const serverKeys = new Set(serverItems.map((item) => `${item.school}\u0000${item.major}`));
+        const localOnlyItems = state.wishlist.filter(
+          (item) => !serverKeys.has(`${item.school}\u0000${item.major}`)
+        );
+        for (const item of localOnlyItems) {
+          const serverId = await addWishlistToServer(item);
+          if (serverId) item._server_id = serverId;
+        }
+        state.wishlist = [...serverItems, ...localOnlyItems];
         saveWishlist();
         updateWishlistUi();
         refreshCardButtons();
@@ -1304,16 +1324,17 @@
   }
 
   async function removeWishlistFromServer(school, major) {
-    if (!state.auth.token) return;
+    if (!state.auth.token) return true;
     const item = state.wishlist.find(i => i.school === school && i.major === major);
     const serverId = item?._server_id;
-    if (!serverId) return;
+    if (!serverId) return true;
     try {
-      await fetch(`/api/wishlist/${serverId}`, {
+      const response = await fetch(`/api/wishlist/${serverId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${state.auth.token}` }
       });
-    } catch (_) {}
+      return response.ok;
+    } catch (_) { return false; }
   }
 
   function updateWishlistUi() {
@@ -1374,8 +1395,17 @@
     });
 
     elements.wishlistItemsContainer.querySelectorAll("[data-remove]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const i = parseInt(btn.dataset.remove, 10);
+        const item = state.wishlist[i];
+        if (!item) return;
+        btn.disabled = true;
+        const removed = await removeWishlistFromServer(item.school, item.major);
+        if (!removed) {
+          btn.disabled = false;
+          showToast("Chưa thể xóa nguyện vọng khỏi tài khoản. Vui lòng thử lại.");
+          return;
+        }
         state.wishlist.splice(i, 1);
         saveWishlist();
         updateWishlistUi();
