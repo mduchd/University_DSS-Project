@@ -528,20 +528,38 @@
       });
     }
     try {
-      const response = await fetch("/api/assistant/chat/stream", {
+      const requestBody = JSON.stringify({ message, profile: assistantProfile(), history: state.assistantHistory });
+      let response = await fetch("/api/assistant/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${state.auth.token}` },
-        body: JSON.stringify({ message, profile: assistantProfile(), history: state.assistantHistory }),
+        body: requestBody,
         signal: controller.signal,
       });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || "Trợ lý AI chưa thể trả lời.");
+      if (response.status === 404 || response.status === 405) {
+        // Older API deployments have the JSON endpoint but not the streaming route yet.
+        response = await fetch("/api/assistant/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${state.auth.token}` },
+          body: requestBody,
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.message || "Trợ lý AI chưa thể trả lời.");
+        }
+        const data = await response.json();
+        answer = typeof data.answer === "string" ? data.answer.trim() : "";
+        if (!answer) throw new Error("Trợ lý AI chưa tạo được câu trả lời.");
+      } else {
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.message || "Trợ lý AI chưa thể trả lời.");
+        }
+        await readAssistantStream(response, (delta) => {
+          answer += delta;
+          scheduleRender();
+        });
       }
-      await readAssistantStream(response, (delta) => {
-        answer += delta;
-        scheduleRender();
-      });
       if (renderFrame !== null) cancelAnimationFrame(renderFrame);
       renderAssistantMarkdown(waiting, answer);
       state.assistantHistory.push({ role: "user", content: message }, { role: "assistant", content: answer });
