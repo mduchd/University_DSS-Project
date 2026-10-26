@@ -4,8 +4,10 @@ import csv
 from functools import lru_cache
 import json
 import math
+import os
 from pathlib import Path
 import unicodedata
+from services.auth_service import AuthError, decode_token, login_user, register_user
 from services.recommendation_service import recommendation_engine
 from services.university_logo_service import university_logo_service
 import logging
@@ -52,6 +54,48 @@ SUBJECT_NAMES = {
 }
 
 app = Flask(__name__)
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "")
+
+
+def _auth_secret() -> str:
+    return str(app.config.get("JWT_SECRET_KEY", ""))
+
+
+def _bearer_token() -> str:
+    scheme, _, token = request.headers.get("Authorization", "").partition(" ")
+    if scheme.casefold() != "bearer" or not token.strip():
+        raise AuthError("Cần đăng nhập để thực hiện yêu cầu này.", 401)
+    return token.strip()
+
+
+@app.post("/api/auth/register")
+def register_api():
+    payload = request.get_json(silent=True) or {}
+    try:
+        account = register_user(payload.get("username"), payload.get("password"), _auth_secret())
+        return jsonify({"status": "success", "message": "Đăng ký thành công.", **account}), 201
+    except AuthError as error:
+        return jsonify({"status": "error", "message": error.message}), error.status_code
+
+
+@app.post("/api/auth/login")
+def login_api():
+    payload = request.get_json(silent=True) or {}
+    try:
+        account = login_user(payload.get("username"), payload.get("password"), _auth_secret())
+        return jsonify({"status": "success", "message": "Đăng nhập thành công.", **account})
+    except AuthError as error:
+        return jsonify({"status": "error", "message": error.message}), error.status_code
+
+
+@app.get("/api/auth/me")
+def current_user_api():
+    try:
+        return jsonify({"status": "success", "user": decode_token(_bearer_token(), _auth_secret())})
+    except AuthError as error:
+        return jsonify({"status": "error", "message": error.message}), error.status_code
+
+
 @app.get("/api/health")
 def health_check():
     return jsonify({

@@ -47,6 +47,10 @@
           </nav>
 
           <div class="header-actions">
+            <button type="button" class="auth-btn" id="auth-open-btn">
+              <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+              <span id="auth-button-label">Đăng nhập</span>
+            </button>
             <button type="button" class="wishlist-btn" id="open-wishlist-btn" aria-label="Xem danh sách nguyện vọng">
               <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
               <span>Nguyện vọng</span>
@@ -446,6 +450,33 @@
           </button>
         </div>
       </aside>
+
+      <!-- AUTHENTICATION MODAL -->
+      <div class="auth-backdrop hidden" id="auth-backdrop"></div>
+      <section class="auth-modal hidden" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <div class="auth-modal-header">
+          <div>
+            <h2 id="auth-title">Đăng nhập</h2>
+            <p id="auth-description">Lưu và đồng bộ dữ liệu tài khoản của bạn.</p>
+          </div>
+          <button type="button" class="drawer-close-btn" id="auth-close-btn" aria-label="Đóng đăng nhập">
+            <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <form id="auth-form" novalidate>
+          <label class="form-label" for="auth-username">Tên đăng nhập</label>
+          <input class="form-input" id="auth-username" name="username" autocomplete="username" minlength="3" maxlength="50" required />
+          <label class="form-label" for="auth-password">Mật khẩu</label>
+          <input class="form-input" id="auth-password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" required />
+          <div class="form-alert hidden" id="auth-alert" role="alert"></div>
+          <button type="submit" class="btn btn-primary btn-block" id="auth-submit-btn">Đăng nhập</button>
+        </form>
+        <button type="button" class="auth-switch-btn" id="auth-switch-btn">Chưa có tài khoản? Đăng ký</button>
+        <div class="auth-signed-in hidden" id="auth-signed-in">
+          <p>Bạn đang đăng nhập với <strong id="auth-current-username"></strong>.</p>
+          <button type="button" class="btn btn-outline btn-block" id="auth-logout-btn">Đăng xuất</button>
+        </div>
+      </section>
 
       <!-- TOAST NOTIFICATION -->
       <div class="toast hidden" id="app-toast" role="status" aria-live="polite"></div>

@@ -48,6 +48,11 @@
     careerLoaded: false,
     wishlist: JSON.parse(localStorage.getItem("dss_user_wishlist") || "[]"),
     interests: loadStoredInterests(),
+    auth: {
+      token: localStorage.getItem("dss_auth_token"),
+      user: null,
+      mode: "login",
+    },
   };
 
   // DOM Elements
@@ -56,6 +61,22 @@
     navBtns: document.querySelectorAll(".nav-btn"),
     views: document.querySelectorAll(".app-view"),
     brandLink: document.querySelector(".brand"),
+    authOpenBtn: document.getElementById("auth-open-btn"),
+    authButtonLabel: document.getElementById("auth-button-label"),
+    authBackdrop: document.getElementById("auth-backdrop"),
+    authModal: document.getElementById("auth-modal"),
+    authCloseBtn: document.getElementById("auth-close-btn"),
+    authForm: document.getElementById("auth-form"),
+    authTitle: document.getElementById("auth-title"),
+    authDescription: document.getElementById("auth-description"),
+    authUsername: document.getElementById("auth-username"),
+    authPassword: document.getElementById("auth-password"),
+    authAlert: document.getElementById("auth-alert"),
+    authSubmitBtn: document.getElementById("auth-submit-btn"),
+    authSwitchBtn: document.getElementById("auth-switch-btn"),
+    authSignedIn: document.getElementById("auth-signed-in"),
+    authCurrentUsername: document.getElementById("auth-current-username"),
+    authLogoutBtn: document.getElementById("auth-logout-btn"),
 
     // Recommender Form
     form: document.getElementById("recommend-form"),
@@ -130,6 +151,123 @@
       elements.toast.classList.add("hidden");
     }, 2800);
   }
+
+  /* ========================================================================
+     1.1 AUTHENTICATION
+     ======================================================================== */
+  function renderAuthUi() {
+    const signedIn = Boolean(state.auth.user);
+    elements.authButtonLabel.textContent = signedIn ? state.auth.user.username : "Đăng nhập";
+    elements.authSignedIn.classList.toggle("hidden", !signedIn);
+    elements.authForm.classList.toggle("hidden", signedIn);
+    elements.authSwitchBtn.classList.toggle("hidden", signedIn);
+    if (signedIn) {
+      elements.authCurrentUsername.textContent = state.auth.user.username;
+      return;
+    }
+
+    const registering = state.auth.mode === "register";
+    elements.authTitle.textContent = registering ? "Tạo tài khoản" : "Đăng nhập";
+    elements.authDescription.textContent = registering
+      ? "Tạo tài khoản để sử dụng các tính năng cá nhân hóa."
+      : "Đăng nhập để tiếp tục với tài khoản của bạn.";
+    elements.authSubmitBtn.textContent = registering ? "Tạo tài khoản" : "Đăng nhập";
+    elements.authSwitchBtn.textContent = registering ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký";
+    elements.authPassword.autocomplete = registering ? "new-password" : "current-password";
+  }
+
+  function showAuthError(message) {
+    elements.authAlert.textContent = message;
+    elements.authAlert.classList.remove("hidden");
+  }
+
+  function clearAuthError() {
+    elements.authAlert.textContent = "";
+    elements.authAlert.classList.add("hidden");
+  }
+
+  function openAuthModal() {
+    clearAuthError();
+    renderAuthUi();
+    elements.authBackdrop.classList.remove("hidden");
+    elements.authModal.classList.remove("hidden");
+    if (!state.auth.user) elements.authUsername.focus();
+  }
+
+  function closeAuthModal() {
+    elements.authBackdrop.classList.add("hidden");
+    elements.authModal.classList.add("hidden");
+  }
+
+  function signOut() {
+    state.auth.token = null;
+    state.auth.user = null;
+    localStorage.removeItem("dss_auth_token");
+    renderAuthUi();
+    closeAuthModal();
+    showToast("Đã đăng xuất.");
+  }
+
+  async function restoreSession() {
+    if (!state.auth.token) {
+      renderAuthUi();
+      return;
+    }
+    try {
+      const response = await fetch("/api/auth/me", {
+        headers: { Authorization: `Bearer ${state.auth.token}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.user) throw new Error("invalid session");
+      state.auth.user = data.user;
+    } catch (_) {
+      state.auth.token = null;
+      localStorage.removeItem("dss_auth_token");
+    }
+    renderAuthUi();
+  }
+
+  elements.authOpenBtn.addEventListener("click", openAuthModal);
+  elements.authCloseBtn.addEventListener("click", closeAuthModal);
+  elements.authBackdrop.addEventListener("click", closeAuthModal);
+  elements.authSwitchBtn.addEventListener("click", () => {
+    state.auth.mode = state.auth.mode === "login" ? "register" : "login";
+    clearAuthError();
+    renderAuthUi();
+  });
+  elements.authLogoutBtn.addEventListener("click", signOut);
+  elements.authForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    clearAuthError();
+    const username = elements.authUsername.value.trim();
+    const password = elements.authPassword.value;
+    const endpoint = state.auth.mode === "register" ? "/api/auth/register" : "/api/auth/login";
+    elements.authSubmitBtn.disabled = true;
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.token || !data.user) throw new Error(data.message || "Không thể xác thực tài khoản.");
+      state.auth.token = data.token;
+      state.auth.user = data.user;
+      localStorage.setItem("dss_auth_token", data.token);
+      elements.authPassword.value = "";
+      renderAuthUi();
+      closeAuthModal();
+      showToast(data.message || "Đăng nhập thành công.");
+    } catch (error) {
+      showAuthError(error.message || "Không thể kết nối đến dịch vụ tài khoản.");
+    } finally {
+      elements.authSubmitBtn.disabled = false;
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !elements.authModal.classList.contains("hidden")) closeAuthModal();
+  });
 
   /* ==========================================================================
      2. NAVIGATION & TABS
@@ -997,6 +1135,7 @@
   renderScoreInputs();
   initPreferenceProfile();
   updateWishlistUi();
+  restoreSession();
 
   // Check URL hash for direct tab navigation
   const hash = window.location.hash.replace("#", "");

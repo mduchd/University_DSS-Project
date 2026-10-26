@@ -273,6 +273,23 @@ a {
   gap: 10px;
 }
 
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-weight: 700;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.auth-btn:hover {
+  background-color: var(--primary-light);
+  border-color: var(--primary);
+}
+
 .wishlist-btn {
   display: inline-flex;
   align-items: center;
@@ -1582,6 +1599,75 @@ body.dark-mode .gap-pill.reach {
   background-color: rgba(10, 9, 45, 0.45);
   z-index: 90;
   backdrop-filter: blur(2px);
+}
+
+.auth-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(10, 9, 45, 0.58);
+  backdrop-filter: blur(2px);
+}
+
+.auth-modal {
+  position: fixed;
+  z-index: 71;
+  top: 50%;
+  left: 50%;
+  width: min(420px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
+  transform: translate(-50%, -50%);
+}
+
+.auth-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.auth-modal-header h2 {
+  font-size: 20px;
+}
+
+.auth-modal-header p {
+  margin-top: 3px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.auth-modal form {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-modal .form-label:not(:first-child) {
+  margin-top: 8px;
+}
+
+.auth-modal .form-alert {
+  margin-top: 8px;
+}
+
+.auth-switch-btn {
+  display: block;
+  margin: 16px auto 0;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.auth-signed-in {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-signed-in p {
+  color: var(--text-secondary);
 }
 
 .wishlist-drawer {
