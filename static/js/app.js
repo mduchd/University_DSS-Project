@@ -55,6 +55,7 @@
       googleEnabled: false,
       googleInitialized: false,
     },
+    assistantHistory: [],
   };
 
   // DOM Elements
@@ -85,6 +86,13 @@
     authSignedIn: document.getElementById("auth-signed-in"),
     authCurrentUsername: document.getElementById("auth-current-username"),
     authLogoutBtn: document.getElementById("auth-logout-btn"),
+    assistantOpenBtn: document.getElementById("assistant-open-btn"),
+    assistantCloseBtn: document.getElementById("assistant-close-btn"),
+    assistantPanel: document.getElementById("assistant-panel"),
+    assistantMessages: document.getElementById("assistant-messages"),
+    assistantForm: document.getElementById("assistant-form"),
+    assistantInput: document.getElementById("assistant-input"),
+    assistantSendBtn: document.getElementById("assistant-send-btn"),
 
     // Recommender Form
     form: document.getElementById("recommend-form"),
@@ -357,6 +365,72 @@
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !elements.authModal.classList.contains("hidden")) closeAuthModal();
+  });
+
+  /* ========================================================================
+     1.2 AI ADMISSION ADVISOR
+     ======================================================================== */
+  function appendAssistantMessage(content, role) {
+    const message = document.createElement("div");
+    message.className = `assistant-message assistant-message--${role}`;
+    message.textContent = content;
+    elements.assistantMessages.appendChild(message);
+    elements.assistantMessages.scrollTop = elements.assistantMessages.scrollHeight;
+    return message;
+  }
+
+  function assistantProfile() {
+    const scores = {};
+    elements.scoreGrid.querySelectorAll("input[name]").forEach((input) => {
+      if (!input.value.trim()) return;
+      const value = Number(input.value);
+      if (Number.isFinite(value)) scores[input.name] = value;
+    });
+    return { combination: elements.comboSelect.value, scores, interests: state.interests };
+  }
+
+  function openAssistant() {
+    if (!state.auth.user || !state.auth.token) {
+      showToast("Hãy đăng nhập để dùng trợ lý AI.");
+      openAuthModal("login");
+      return;
+    }
+    elements.assistantPanel.classList.remove("hidden");
+    elements.assistantInput.focus();
+  }
+
+  function closeAssistant() {
+    elements.assistantPanel.classList.add("hidden");
+  }
+
+  elements.assistantOpenBtn.addEventListener("click", openAssistant);
+  elements.assistantCloseBtn.addEventListener("click", closeAssistant);
+  elements.assistantForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = elements.assistantInput.value.trim();
+    if (!message || !state.auth.token) return;
+
+    appendAssistantMessage(message, "user");
+    elements.assistantInput.value = "";
+    elements.assistantSendBtn.disabled = true;
+    const waiting = appendAssistantMessage("Đang tham chiếu dữ liệu DSS…", "assistant");
+    try {
+      const response = await fetch("/api/assistant/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${state.auth.token}` },
+        body: JSON.stringify({ message, profile: assistantProfile(), history: state.assistantHistory }),
+      });
+      const data = await response.json();
+      waiting.remove();
+      if (!response.ok || !data.answer) throw new Error(data.message || "Trợ lý AI chưa thể trả lời.");
+      appendAssistantMessage(data.answer, "assistant");
+      state.assistantHistory.push({ role: "user", content: message }, { role: "assistant", content: data.answer });
+      state.assistantHistory = state.assistantHistory.slice(-6);
+    } catch (error) {
+      waiting.textContent = error.message || "Không thể kết nối trợ lý AI.";
+    } finally {
+      elements.assistantSendBtn.disabled = false;
+    }
   });
 
   /* ==========================================================================

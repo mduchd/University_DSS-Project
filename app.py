@@ -7,6 +7,7 @@ import math
 import os
 from pathlib import Path
 import unicodedata
+from services.assistant_service import AssistantError, answer_question
 from services.auth_service import AuthError, decode_token, login_google_user, login_user, register_user
 from services.recommendation_service import recommendation_engine
 from services.university_logo_service import university_logo_service
@@ -113,6 +114,18 @@ def current_user_api():
     try:
         return jsonify({"status": "success", "user": decode_token(_bearer_token(), _auth_secret())})
     except AuthError as error:
+        return jsonify({"status": "error", "message": error.message}), error.status_code
+
+
+@app.post("/api/assistant/chat")
+def assistant_chat_api():
+    payload = request.get_json(silent=True) or {}
+    try:
+        # Authentication limits paid-model access to signed-in users.
+        decode_token(_bearer_token(), _auth_secret())
+        response = answer_question(payload.get("message"), payload.get("profile"), payload.get("history"))
+        return jsonify({"status": "success", **response})
+    except (AuthError, AssistantError) as error:
         return jsonify({"status": "error", "message": error.message}), error.status_code
 
 

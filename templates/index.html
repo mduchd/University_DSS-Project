@@ -494,6 +494,30 @@
         </div>
       </section>
 
+      <!-- AI ADMISSION ADVISOR -->
+      <button type="button" class="assistant-launcher" id="assistant-open-btn" aria-label="Mở trợ lý AI">
+        <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-7 7v3a4 4 0 0 0 4 4h1l2 3 2-3h1a4 4 0 0 0 4-4v-3a7 7 0 0 0-7-7Z"/><path d="M9 11h.01M15 11h.01"/></svg>
+        <span>Hỏi trợ lý AI</span>
+      </button>
+      <section class="assistant-panel hidden" id="assistant-panel" aria-labelledby="assistant-title">
+        <div class="assistant-header">
+          <div>
+            <h2 id="assistant-title">Trợ lý hướng nghiệp AI</h2>
+            <p>Dựa trên dữ liệu tuyển sinh của hệ thống</p>
+          </div>
+          <button type="button" class="drawer-close-btn" id="assistant-close-btn" aria-label="Đóng trợ lý AI">
+            <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="assistant-messages" id="assistant-messages" aria-live="polite">
+          <div class="assistant-message assistant-message--assistant">Chào bạn! Hãy hỏi về ngành học, trường hoặc cách sắp xếp nguyện vọng. Mình sẽ dùng dữ liệu DSS để tư vấn.</div>
+        </div>
+        <form class="assistant-form" id="assistant-form">
+          <input class="form-input" id="assistant-input" maxlength="1000" placeholder="Ví dụ: 24 điểm D01 nên chọn ngành nào?" required />
+          <button type="submit" class="btn btn-primary" id="assistant-send-btn">Gửi</button>
+        </form>
+      </section>
+
       <!-- TOAST NOTIFICATION -->
       <div class="toast hidden" id="app-toast" role="status" aria-live="polite"></div>
     </div>

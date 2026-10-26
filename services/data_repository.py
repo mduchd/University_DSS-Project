@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-import os
 from pathlib import Path
 import pandas as pd
 from sqlalchemy import create_engine

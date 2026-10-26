@@ -71,3 +71,37 @@ def test_google_login_returns_first_party_session(monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json()["user"]["username"] == "Google Student"
+
+
+def test_assistant_chat_requires_authentication():
+    client = app.test_client()
+    response = client.post("/api/assistant/chat", json={"message": "Gợi ý cho mình ngành CNTT"})
+
+    assert response.status_code == 401
+
+
+def test_assistant_chat_returns_grounded_answer(monkeypatch):
+    app.config["JWT_SECRET_KEY"] = "test-auth-secret"
+    token = jwt.encode(
+        {"sub": "7", "username": "student", "exp": dt.datetime.now(dt.UTC) + dt.timedelta(minutes=5)},
+        app.config["JWT_SECRET_KEY"],
+        algorithm="HS256",
+    )
+    monkeypatch.setattr(
+        "app.answer_question",
+        lambda message, profile, history: {
+            "answer": "Bạn có thể cân nhắc các ngành CNTT trong dữ liệu DSS.",
+            "sources": [],
+            "model": "deepseek-flash",
+        },
+    )
+    client = app.test_client()
+
+    response = client.post(
+        "/api/assistant/chat",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"message": "Gợi ý cho mình ngành CNTT", "profile": {}, "history": []},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["answer"].startswith("Bạn có thể")
