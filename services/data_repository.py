@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import os
 from pathlib import Path
 import pandas as pd
 from sqlalchemy import create_engine
@@ -15,10 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 def get_db_connection():
     """Khởi tạo kết nối ưu tiên dùng Biến môi trường (Khi Deploy), nếu không có sẽ dùng Neon Cloud DB (Khi Local)"""
     
-    cloud_db_url = os.environ.get(
-        "DATABASE_URL", 
-        "postgresql+psycopg2://neondb_owner:npg_9WInofGih6qx@ep-bold-boat-azdvc0lj-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-    )
+    cloud_db_url = os.environ.get("DATABASE_URL")
+    if not cloud_db_url:
+        logging.info("DATABASE_URL is not set; using local CSV data.")
+        return None
     
     try:
         engine = create_engine(cloud_db_url)

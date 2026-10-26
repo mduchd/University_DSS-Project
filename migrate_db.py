@@ -1,9 +1,13 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
 from pathlib import Path
+import os
 
-# Cấu hình CSDL Cloud (Neon - PostgreSQL)
-CONNECTION_STRING = "postgresql+psycopg2://neondb_owner:npg_9WInofGih6qx@ep-bold-boat-azdvc0lj-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+# The database URL must be supplied by the deployment environment.
+CONNECTION_STRING = os.environ.get("DATABASE_URL")
+if not CONNECTION_STRING:
+    raise RuntimeError("DATABASE_URL must be set before running a database migration.")
+
 engine = create_engine(CONNECTION_STRING)
 ROOT = Path(__file__).resolve().parent
 
