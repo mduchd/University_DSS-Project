@@ -9,6 +9,9 @@ from pathlib import Path
 import unicodedata
 from services.assistant_service import AssistantError, answer_question
 from services.auth_service import AuthError, decode_token, login_google_user, login_user, register_user
+from services.data_repository import get_db_connection
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from services.recommendation_service import recommendation_engine
 from services.university_logo_service import university_logo_service
 import logging
@@ -127,6 +130,157 @@ def assistant_chat_api():
         return jsonify({"status": "success", **response})
     except (AuthError, AssistantError) as error:
         return jsonify({"status": "error", "message": error.message}), error.status_code
+
+
+def _create_wishlist_table(connection) -> None:
+    connection.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS wishlist_items (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                school TEXT NOT NULL,
+                major TEXT NOT NULL,
+                school_code TEXT,
+                cutoff TEXT,
+                gap TEXT,
+                logo_url TEXT,
+                logo_alt TEXT,
+                position INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, school, major)
+            )
+            """
+        )
+    )
+
+
+@app.get("/api/wishlist")
+def get_wishlist():
+    try:
+        user = decode_token(_bearer_token(), _auth_secret())
+    except AuthError as error:
+        return jsonify({"status": "error", "message": error.message}), error.status_code
+    connection = get_db_connection()
+    if connection is None:
+        return jsonify({"status": "error", "message": "Không thể kết nối cơ sở dữ liệu."}), 503
+    try:
+        with connection.begin():
+            _create_wishlist_table(connection)
+            rows = connection.execute(
+                text(
+                    "SELECT id, school, major, school_code, cutoff, gap, logo_url, logo_alt, position "
+                    "FROM wishlist_items WHERE user_id = :uid ORDER BY position ASC, created_at ASC"
+                ),
+                {"uid": user["id"]},
+            ).fetchall()
+        items = [
+            {
+                "id": row.id,
+                "school": row.school,
+                "major": row.major,
+                "school_code": row.school_code,
+                "cutoff": row.cutoff,
+                "gap": row.gap,
+                "logo_url": row.logo_url,
+                "logo_alt": row.logo_alt,
+                "position": row.position,
+            }
+            for row in rows
+        ]
+        return jsonify({"items": items})
+    except SQLAlchemyError as error:
+        logging.error(f"Lỗi GET /api/wishlist: {error}")
+        return jsonify({"status": "error", "message": "Lỗi truy vấn cơ sở dữ liệu."}), 500
+    finally:
+        connection.close()
+
+
+@app.post("/api/wishlist")
+def add_wishlist():
+    try:
+        user = decode_token(_bearer_token(), _auth_secret())
+    except AuthError as error:
+        return jsonify({"status": "error", "message": error.message}), error.status_code
+    body = request.get_json(silent=True) or {}
+    school = str(body.get("school", "")).strip()
+    major = str(body.get("major", "")).strip()
+    if not school or not major:
+        return jsonify({"status": "error", "message": "school và major là bắt buộc."}), 400
+    connection = get_db_connection()
+    if connection is None:
+        return jsonify({"status": "error", "message": "Không thể kết nối cơ sở dữ liệu."}), 503
+    try:
+        with connection.begin():
+            _create_wishlist_table(connection)
+            row = connection.execute(
+                text(
+                    "INSERT INTO wishlist_items (user_id, school, major, school_code, cutoff, gap, logo_url, logo_alt) "
+                    "VALUES (:uid, :school, :major, :school_code, :cutoff, :gap, :logo_url, :logo_alt) "
+                    "ON CONFLICT (user_id, school, major) DO NOTHING "
+                    "RETURNING id, school, major, school_code, cutoff, gap, logo_url, logo_alt, position"
+                ),
+                {
+                    "uid": user["id"],
+                    "school": school,
+                    "major": major,
+                    "school_code": str(body.get("school_code", "") or "").strip() or None,
+                    "cutoff": str(body.get("cutoff", "") or "").strip() or None,
+                    "gap": str(body.get("gap", "") or "").strip() or None,
+                    "logo_url": str(body.get("logo_url", "") or "").strip() or None,
+                    "logo_alt": str(body.get("logo_alt", "") or "").strip() or None,
+                },
+            ).fetchone()
+        if row is None:
+            # Already exists — fetch existing record
+            with connection.begin():
+                row = connection.execute(
+                    text(
+                        "SELECT id, school, major, school_code, cutoff, gap, logo_url, logo_alt, position "
+                        "FROM wishlist_items WHERE user_id = :uid AND school = :school AND major = :major"
+                    ),
+                    {"uid": user["id"], "school": school, "major": major},
+                ).fetchone()
+        return jsonify({
+            "id": row.id,
+            "school": row.school,
+            "major": row.major,
+            "school_code": row.school_code,
+            "cutoff": row.cutoff,
+            "gap": row.gap,
+            "logo_url": row.logo_url,
+            "logo_alt": row.logo_alt,
+            "position": row.position,
+        })
+    except SQLAlchemyError as error:
+        logging.error(f"Lỗi POST /api/wishlist: {error}")
+        return jsonify({"status": "error", "message": "Lỗi truy vấn cơ sở dữ liệu."}), 500
+    finally:
+        connection.close()
+
+
+@app.delete("/api/wishlist/<int:item_id>")
+def delete_wishlist(item_id: int):
+    try:
+        user = decode_token(_bearer_token(), _auth_secret())
+    except AuthError as error:
+        return jsonify({"status": "error", "message": error.message}), error.status_code
+    connection = get_db_connection()
+    if connection is None:
+        return jsonify({"status": "error", "message": "Không thể kết nối cơ sở dữ liệu."}), 503
+    try:
+        with connection.begin():
+            _create_wishlist_table(connection)
+            connection.execute(
+                text("DELETE FROM wishlist_items WHERE id = :id AND user_id = :uid"),
+                {"id": item_id, "uid": user["id"]},
+            )
+        return jsonify({"status": "success"})
+    except SQLAlchemyError as error:
+        logging.error(f"Lỗi DELETE /api/wishlist/{item_id}: {error}")
+        return jsonify({"status": "error", "message": "Lỗi truy vấn cơ sở dữ liệu."}), 500
+    finally:
+        connection.close()
 
 
 @app.get("/api/health")

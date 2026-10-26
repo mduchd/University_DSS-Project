@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LA BÀN ĐẠI HỌC - HỆ THỐNG HỖ TRỢ RA QUYẾT ĐỊNH TUYỂN SINH
  * JavaScript Application Logic
  * Icon System: Unified SVG Vector Icons (Lucide/Feather style, 24x24 viewBox, stroke-width=2)
@@ -292,6 +292,9 @@
   }
 
   function signOut() {
+    state.wishlist = [];
+    saveWishlist();
+    updateWishlistUi();
     state.auth.token = null;
     state.auth.user = null;
     localStorage.removeItem("dss_auth_token");
@@ -312,6 +315,7 @@
       const data = await response.json();
       if (!response.ok || !data.user) throw new Error("invalid session");
       state.auth.user = data.user;
+      syncWishlistFromServer();
     } catch (_) {
       state.auth.token = null;
       localStorage.removeItem("dss_auth_token");
@@ -1110,10 +1114,17 @@
   function toggleWishlist(item) {
     const index = state.wishlist.findIndex((w) => w.school === item.school && w.major === item.major);
     if (index > -1) {
+      removeWishlistFromServer(item.school, item.major);
       state.wishlist.splice(index, 1);
       showToast(`Đã bỏ khỏi danh sách nguyện vọng: ${item.major}`);
     } else {
       state.wishlist.push(item);
+      addWishlistToServer(item).then((serverId) => {
+        if (serverId) {
+          const savedItem = state.wishlist.find((w) => w.school === item.school && w.major === item.major);
+          if (savedItem) savedItem._server_id = serverId;
+        }
+      });
       showToast(`Đã thêm vào nguyện vọng: ${item.major} - ${item.school}`);
     }
     saveWishlist();
@@ -1123,6 +1134,57 @@
 
   function saveWishlist() {
     localStorage.setItem("dss_user_wishlist", JSON.stringify(state.wishlist));
+  }
+
+  async function syncWishlistFromServer() {
+    if (!state.auth.token) return;
+    try {
+      const res = await fetch("/api/wishlist", {
+        headers: { Authorization: `Bearer ${state.auth.token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.items)) {
+        const serverItems = data.items.map(i => ({
+          school: i.school, major: i.major, cutoff: i.cutoff || "",
+          code: i.school_code || "", gap: i.gap || "",
+          logo_url: i.logo_url || "", logo_alt: i.logo_alt || "",
+          _server_id: i.id
+        }));
+        state.wishlist = serverItems;
+        saveWishlist();
+        updateWishlistUi();
+        refreshCardButtons();
+      }
+    } catch (_) {}
+  }
+
+  async function addWishlistToServer(item) {
+    if (!state.auth.token) return null;
+    try {
+      const res = await fetch("/api/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${state.auth.token}` },
+        body: JSON.stringify({ school: item.school, major: item.major, school_code: item.code,
+          cutoff: item.cutoff, gap: item.gap, logo_url: item.logo_url, logo_alt: item.logo_alt })
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.id || null;
+    } catch (_) { return null; }
+  }
+
+  async function removeWishlistFromServer(school, major) {
+    if (!state.auth.token) return;
+    const item = state.wishlist.find(i => i.school === school && i.major === major);
+    const serverId = item?._server_id;
+    if (!serverId) return;
+    try {
+      await fetch(`/api/wishlist/${serverId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${state.auth.token}` }
+      });
+    } catch (_) {}
   }
 
   function updateWishlistUi() {
