@@ -1708,6 +1708,32 @@ body.dark-mode .gap-pill.reach {
   justify-content: center;
 }
 
+.auth-google-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.auth-google-fallback:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--primary);
+}
+
+.auth-google-mark {
+  color: #4285f4;
+  font-family: Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
 .auth-signed-in {
   display: grid;
   gap: 16px;

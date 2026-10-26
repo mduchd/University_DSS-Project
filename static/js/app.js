@@ -81,6 +81,7 @@
     authSwitchBtn: document.getElementById("auth-switch-btn"),
     authGoogleSection: document.getElementById("auth-google-section"),
     authGoogleButton: document.getElementById("auth-google-button"),
+    authGoogleFallbackBtn: document.getElementById("auth-google-fallback-btn"),
     authSignedIn: document.getElementById("auth-signed-in"),
     authCurrentUsername: document.getElementById("auth-current-username"),
     authLogoutBtn: document.getElementById("auth-logout-btn"),
@@ -171,7 +172,8 @@
     elements.authButtonLabel.textContent = signedIn ? state.auth.user.username : "";
     elements.authSignedIn.classList.toggle("hidden", !signedIn);
     elements.authForm.classList.toggle("hidden", signedIn);
-    elements.authGoogleSection.classList.toggle("hidden", signedIn || !state.auth.googleEnabled);
+    elements.authGoogleSection.classList.toggle("hidden", signedIn);
+    elements.authGoogleFallbackBtn.classList.toggle("hidden", state.auth.googleEnabled);
     elements.authSwitchBtn.classList.toggle("hidden", signedIn);
     if (signedIn) {
       elements.authCurrentUsername.textContent = state.auth.user.username;
@@ -321,6 +323,9 @@
   });
   elements.authLogoutBtn.addEventListener("click", signOut);
   elements.authHeaderLogoutBtn.addEventListener("click", signOut);
+  elements.authGoogleFallbackBtn.addEventListener("click", () => {
+    showAuthError("Đăng nhập Google chưa được cấu hình. Hãy thêm GOOGLE_CLIENT_ID trên Render rồi deploy lại API.");
+  });
   elements.authForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     clearAuthError();
