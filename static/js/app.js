@@ -52,6 +52,8 @@
       token: localStorage.getItem("dss_auth_token"),
       user: null,
       mode: "login",
+      googleEnabled: false,
+      googleInitialized: false,
     },
   };
 
@@ -77,6 +79,8 @@
     authAlert: document.getElementById("auth-alert"),
     authSubmitBtn: document.getElementById("auth-submit-btn"),
     authSwitchBtn: document.getElementById("auth-switch-btn"),
+    authGoogleSection: document.getElementById("auth-google-section"),
+    authGoogleButton: document.getElementById("auth-google-button"),
     authSignedIn: document.getElementById("auth-signed-in"),
     authCurrentUsername: document.getElementById("auth-current-username"),
     authLogoutBtn: document.getElementById("auth-logout-btn"),
@@ -167,6 +171,7 @@
     elements.authButtonLabel.textContent = signedIn ? state.auth.user.username : "";
     elements.authSignedIn.classList.toggle("hidden", !signedIn);
     elements.authForm.classList.toggle("hidden", signedIn);
+    elements.authGoogleSection.classList.toggle("hidden", signedIn || !state.auth.googleEnabled);
     elements.authSwitchBtn.classList.toggle("hidden", signedIn);
     if (signedIn) {
       elements.authCurrentUsername.textContent = state.auth.user.username;
@@ -193,10 +198,79 @@
     elements.authAlert.classList.add("hidden");
   }
 
+  function loadGoogleIdentityScript() {
+    if (window.google?.accounts?.id) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (existing) {
+        existing.addEventListener("load", resolve, { once: true });
+        existing.addEventListener("error", reject, { once: true });
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  async function handleGoogleCredential(response) {
+    clearAuthError();
+    try {
+      const request = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      const data = await request.json();
+      if (!request.ok || !data.token || !data.user) throw new Error(data.message || "Không thể đăng nhập Google.");
+      state.auth.token = data.token;
+      state.auth.user = data.user;
+      localStorage.setItem("dss_auth_token", data.token);
+      renderAuthUi();
+      closeAuthModal();
+      showToast(data.message || "Đăng nhập Google thành công.");
+    } catch (error) {
+      showAuthError(error.message || "Không thể đăng nhập Google.");
+    }
+  }
+
+  async function initializeGoogleAuth() {
+    if (state.auth.googleInitialized || state.auth.user) return;
+    try {
+      const response = await fetch("/api/auth/config");
+      const config = await response.json();
+      if (!response.ok || !config.google_enabled || !config.google_client_id) return;
+      await loadGoogleIdentityScript();
+      window.google.accounts.id.initialize({
+        client_id: config.google_client_id,
+        callback: handleGoogleCredential,
+        auto_select: false,
+      });
+      window.google.accounts.id.renderButton(elements.authGoogleButton, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        shape: "rectangular",
+        width: 320,
+      });
+      state.auth.googleEnabled = true;
+      state.auth.googleInitialized = true;
+      renderAuthUi();
+    } catch (_) {
+      // Password login stays available if Google Identity Services is unreachable.
+    }
+  }
+
   function openAuthModal(mode = state.auth.mode) {
     state.auth.mode = mode;
     clearAuthError();
     renderAuthUi();
+    initializeGoogleAuth();
     elements.authBackdrop.classList.remove("hidden");
     elements.authModal.classList.remove("hidden");
     if (!state.auth.user) elements.authUsername.focus();

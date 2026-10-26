@@ -7,7 +7,7 @@ import math
 import os
 from pathlib import Path
 import unicodedata
-from services.auth_service import AuthError, decode_token, login_user, register_user
+from services.auth_service import AuthError, decode_token, login_google_user, login_user, register_user
 from services.recommendation_service import recommendation_engine
 from services.university_logo_service import university_logo_service
 import logging
@@ -55,10 +55,15 @@ SUBJECT_NAMES = {
 
 app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "")
+app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID", "")
 
 
 def _auth_secret() -> str:
     return str(app.config.get("JWT_SECRET_KEY", ""))
+
+
+def _google_client_id() -> str:
+    return str(app.config.get("GOOGLE_CLIENT_ID", ""))
 
 
 def _bearer_token() -> str:
@@ -84,6 +89,21 @@ def login_api():
     try:
         account = login_user(payload.get("username"), payload.get("password"), _auth_secret())
         return jsonify({"status": "success", "message": "Đăng nhập thành công.", **account})
+    except AuthError as error:
+        return jsonify({"status": "error", "message": error.message}), error.status_code
+
+
+@app.get("/api/auth/config")
+def auth_config_api():
+    return jsonify({"google_client_id": _google_client_id(), "google_enabled": bool(_google_client_id())})
+
+
+@app.post("/api/auth/google")
+def google_login_api():
+    payload = request.get_json(silent=True) or {}
+    try:
+        account = login_google_user(payload.get("credential"), _google_client_id(), _auth_secret())
+        return jsonify({"status": "success", "message": "Đăng nhập Google thành công.", **account})
     except AuthError as error:
         return jsonify({"status": "error", "message": error.message}), error.status_code
 

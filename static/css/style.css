@@ -1682,6 +1682,32 @@ body.dark-mode .gap-pill.reach {
   font-weight: 700;
 }
 
+.auth-google-section {
+  margin-top: 16px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+  content: "";
+}
+
+.auth-google-button {
+  display: flex;
+  justify-content: center;
+}
+
 .auth-signed-in {
   display: grid;
   gap: 16px;

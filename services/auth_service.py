@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import re
 
 import jwt
+from google.auth.transport import requests as google_requests
+from google.auth.exceptions import GoogleAuthError
+from google.oauth2 import id_token as google_id_token
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -44,9 +48,20 @@ def _create_users_table(connection) -> None:
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(50) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
+                google_sub VARCHAR(255) UNIQUE,
+                display_name VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
+        )
+    )
+    # Existing deployments may have been created before Google sign-in was added.
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(255)"))
+    connection.execute(
+        text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_unique "
+            "ON users (google_sub) WHERE google_sub IS NOT NULL"
         )
     )
 
@@ -109,6 +124,65 @@ def login_user(username: object, password: object, secret_key: str) -> dict:
         raise
     except SQLAlchemyError as error:
         raise AuthError("Không thể đăng nhập lúc này.", 503) from error
+    finally:
+        connection.close()
+
+
+def login_google_user(credential: object, client_id: str, secret_key: str) -> dict:
+    if not isinstance(credential, str) or not credential.strip():
+        raise AuthError("Google chưa trả về thông tin đăng nhập.")
+    if not client_id:
+        raise AuthError("Đăng nhập Google chưa được cấu hình.", 503)
+
+    try:
+        identity = google_id_token.verify_oauth2_token(
+            credential.strip(), google_requests.Request(), client_id
+        )
+    except (ValueError, GoogleAuthError) as error:
+        # Verification checks the signature, audience, issuer and expiry before
+        # any identity fields are accepted.
+        raise AuthError("Không thể xác minh tài khoản Google.", 401) from error
+
+    google_sub = str(identity.get("sub", "")).strip()
+    email = str(identity.get("email", "")).strip()
+    display_name = str(identity.get("name") or email or "Google user").strip()[:255]
+    if not google_sub or not email or not identity.get("email_verified"):
+        raise AuthError("Tài khoản Google cần có email đã xác minh.", 401)
+
+    connection = get_db_connection()
+    if connection is None:
+        raise AuthError("Dịch vụ tài khoản chưa kết nối được cơ sở dữ liệu.", 503)
+    try:
+        with connection.begin():
+            _create_users_table(connection)
+            user = connection.execute(
+                text("SELECT id, username, display_name FROM users WHERE google_sub = :google_sub"),
+                {"google_sub": google_sub},
+            ).fetchone()
+            if user is None:
+                username = f"google_{hashlib.sha256(google_sub.encode()).hexdigest()[:16]}"
+                user = connection.execute(
+                    text(
+                        "INSERT INTO users (username, password_hash, google_sub, display_name) "
+                        "VALUES (:username, :password_hash, :google_sub, :display_name) "
+                        "RETURNING id, username, display_name"
+                    ),
+                    {
+                        "username": username,
+                        "password_hash": generate_password_hash(hashlib.sha256(google_sub.encode()).hexdigest()),
+                        "google_sub": google_sub,
+                        "display_name": display_name,
+                    },
+                ).fetchone()
+        account_name = str(user.display_name or user.username)
+        return {
+            "token": _issue_token(int(user.id), account_name, secret_key),
+            "user": {"id": int(user.id), "username": account_name},
+        }
+    except AuthError:
+        raise
+    except (IntegrityError, SQLAlchemyError) as error:
+        raise AuthError("Không thể đăng nhập Google lúc này.", 503) from error
     finally:
         connection.close()
 

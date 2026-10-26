@@ -13,3 +13,4 @@ SQLAlchemy==2.0.36
 psycopg2-binary==2.9.10
 PyJWT==2.8.0
 Werkzeug>=3.1,<4
+google-auth[requests]>=2.39,<3

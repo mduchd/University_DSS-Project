@@ -40,3 +40,34 @@ def test_register_rejects_invalid_credentials_before_database_access():
 
     assert response.status_code == 400
     assert response.get_json()["status"] == "error"
+
+
+def test_auth_config_exposes_google_client_id_for_browser(monkeypatch):
+    monkeypatch.setitem(app.config, "GOOGLE_CLIENT_ID", "example.apps.googleusercontent.com")
+    client = app.test_client()
+
+    response = client.get("/api/auth/config")
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "google_client_id": "example.apps.googleusercontent.com",
+        "google_enabled": True,
+    }
+
+
+def test_google_login_returns_first_party_session(monkeypatch):
+    monkeypatch.setitem(app.config, "GOOGLE_CLIENT_ID", "example.apps.googleusercontent.com")
+    monkeypatch.setitem(app.config, "JWT_SECRET_KEY", "test-auth-secret")
+    monkeypatch.setattr(
+        "app.login_google_user",
+        lambda credential, client_id, secret: {
+            "token": "first-party-jwt",
+            "user": {"id": 7, "username": "Google Student"},
+        },
+    )
+    client = app.test_client()
+
+    response = client.post("/api/auth/google", json={"credential": "google-id-token"})
+
+    assert response.status_code == 200
+    assert response.get_json()["user"]["username"] == "Google Student"
