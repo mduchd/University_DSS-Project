@@ -273,6 +273,12 @@ a {
   gap: 10px;
 }
 
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .auth-btn {
   display: inline-flex;
   align-items: center;
@@ -288,6 +294,21 @@ a {
 .auth-btn:hover {
   background-color: var(--primary-light);
   border-color: var(--primary);
+}
+
+.auth-btn-primary {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.auth-btn-primary:hover {
+  background-color: var(--primary-hover);
+  color: #ffffff;
+}
+
+.auth-logout-btn {
+  color: var(--danger-text);
 }
 
 .wishlist-btn {

@@ -61,7 +61,10 @@
     navBtns: document.querySelectorAll(".nav-btn"),
     views: document.querySelectorAll(".app-view"),
     brandLink: document.querySelector(".brand"),
-    authOpenBtn: document.getElementById("auth-open-btn"),
+    authLoginBtn: document.getElementById("auth-login-btn"),
+    authRegisterBtn: document.getElementById("auth-register-btn"),
+    authAccountBtn: document.getElementById("auth-account-btn"),
+    authHeaderLogoutBtn: document.getElementById("auth-header-logout-btn"),
     authButtonLabel: document.getElementById("auth-button-label"),
     authBackdrop: document.getElementById("auth-backdrop"),
     authModal: document.getElementById("auth-modal"),
@@ -157,7 +160,11 @@
      ======================================================================== */
   function renderAuthUi() {
     const signedIn = Boolean(state.auth.user);
-    elements.authButtonLabel.textContent = signedIn ? state.auth.user.username : "Đăng nhập";
+    elements.authLoginBtn.classList.toggle("hidden", signedIn);
+    elements.authRegisterBtn.classList.toggle("hidden", signedIn);
+    elements.authAccountBtn.classList.toggle("hidden", !signedIn);
+    elements.authHeaderLogoutBtn.classList.toggle("hidden", !signedIn);
+    elements.authButtonLabel.textContent = signedIn ? state.auth.user.username : "";
     elements.authSignedIn.classList.toggle("hidden", !signedIn);
     elements.authForm.classList.toggle("hidden", signedIn);
     elements.authSwitchBtn.classList.toggle("hidden", signedIn);
@@ -186,7 +193,8 @@
     elements.authAlert.classList.add("hidden");
   }
 
-  function openAuthModal() {
+  function openAuthModal(mode = state.auth.mode) {
+    state.auth.mode = mode;
     clearAuthError();
     renderAuthUi();
     elements.authBackdrop.classList.remove("hidden");
@@ -227,7 +235,9 @@
     renderAuthUi();
   }
 
-  elements.authOpenBtn.addEventListener("click", openAuthModal);
+  elements.authLoginBtn.addEventListener("click", () => openAuthModal("login"));
+  elements.authRegisterBtn.addEventListener("click", () => openAuthModal("register"));
+  elements.authAccountBtn.addEventListener("click", () => openAuthModal());
   elements.authCloseBtn.addEventListener("click", closeAuthModal);
   elements.authBackdrop.addEventListener("click", closeAuthModal);
   elements.authSwitchBtn.addEventListener("click", () => {
@@ -236,6 +246,7 @@
     renderAuthUi();
   });
   elements.authLogoutBtn.addEventListener("click", signOut);
+  elements.authHeaderLogoutBtn.addEventListener("click", signOut);
   elements.authForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     clearAuthError();
