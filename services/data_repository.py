@@ -4,6 +4,12 @@ import sys
 from pathlib import Path
 import pandas as pd
 from sqlalchemy import create_engine
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env.local")
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+except ImportError:
+    pass
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -57,36 +63,8 @@ class DataRepository:
             logging.warning(f"- Không tìm thấy file: {exam_path}")
 
         # 2. Nạp dữ liệu điểm chuẩn / ngành nghề (Master Admission)
-        if conn:
-            try:
-                query_master = """
-                    SELECT 
-                        u.uni_code AS university_admission_code, 
-                        u.name AS university_name,
-                        m.major_code, 
-                        m.name AS major_name,
-                        m.major_group_code,
-                        m.major_group_name,
-                        c.code AS subject_combination, 
-                        a.year, 
-                        a.cutoff_score,
-                        a.cutoff_score_30 
-                    FROM admission_options a
-                    JOIN universities u ON a.university_id = u.id
-                    JOIN majors m ON a.major_id = m.id
-                    JOIN subject_combinations c ON a.combination_id = c.id
-                """
-                df_master = pd.read_sql(query_master, conn)
-                if not df_master.empty:
-                    self._data_cache["master_data"] = df_master
-                    logging.info(f"- Đã nạp dữ liệu Master từ Cloud Database: {len(df_master)} dòng.")
-                else:
-                    raise ValueError("Bảng admission_options đang trống.")
-            except Exception as e:
-                logging.warning(f"- Cloud DB Master trống hoặc lỗi ({e}), chuyển sang đọc file CSV...")
-                self._fallback_load_master()
-        else:
-            self._fallback_load_master()
+        # Nạp trọn vẹn 43 trường đặc trưng (ML features, XGBoost cutoff forecast, job mapping)
+        self._fallback_load_master()
 
         # 3. Nạp dữ liệu thị trường việc làm theo danh mục (Jobs Summary)
         if conn:

@@ -4,3 +4,5 @@ __pycache__/
 .impeccable/
 .cache/
 dist/
+.neon
+.env.local
