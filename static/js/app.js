@@ -299,6 +299,7 @@
     if (state.assistantAbortController) state.assistantAbortController.abort();
     state.assistantHistory = [];
     elements.assistantMessages.replaceChildren();
+    elements.assistantPanel.classList.remove("assistant-panel--wide");
     appendAssistantMessage("Chào bạn! Hãy hỏi về ngành học, trường hoặc cách sắp xếp nguyện vọng.", "assistant");
     elements.assistantPanel.classList.add("hidden");
     state.wishlist = [];
@@ -395,7 +396,9 @@
 
   function renderAssistantMarkdown(element, markdown) {
     element.classList.add("assistant-message--markdown");
+    const tableScrollPositions = Array.from(element.querySelectorAll(".assistant-table-scroll"), (table) => table.scrollLeft);
     if (!window.marked?.parse || !window.DOMPurify?.isSupported) {
+      element.classList.remove("assistant-message--has-table");
       element.textContent = markdown;
       return;
     }
@@ -406,9 +409,23 @@
         ALLOWED_ATTR: ["href", "title"],
       });
     } catch (_) {
+      element.classList.remove("assistant-message--has-table");
       element.textContent = markdown;
       return;
     }
+    const tables = element.querySelectorAll("table");
+    element.classList.toggle("assistant-message--has-table", tables.length > 0);
+    if (tables.length > 0) elements.assistantPanel.classList.add("assistant-panel--wide");
+    tables.forEach((table, index) => {
+      const scroll = document.createElement("div");
+      scroll.className = "assistant-table-scroll";
+      scroll.setAttribute("role", "region");
+      scroll.setAttribute("aria-label", "Bảng kết quả tư vấn, cuộn ngang để xem đầy đủ");
+      scroll.tabIndex = 0;
+      table.replaceWith(scroll);
+      scroll.appendChild(table);
+      scroll.scrollLeft = tableScrollPositions[index] || 0;
+    });
     element.querySelectorAll("a[href]").forEach((link) => {
       let url;
       try {
