@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Trường Đại học Hà Hoa Tiên</title>
+  <desc id="desc">Wordmark dự phòng dùng khi trường không còn công bố tệp logo độc lập.</desc>
+  <rect width="512" height="512" rx="72" fill="#fffdf7"/>
+  <circle cx="256" cy="204" r="137" fill="none" stroke="#0f5c4d" stroke-width="18"/>
+  <circle cx="256" cy="204" r="113" fill="none" stroke="#c79a32" stroke-width="5"/>
+  <path d="M166 150v108M166 204h70M236 150v108M276 150h92M322 150v108"
+        fill="none" stroke="#0f5c4d" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M209 300c29 17 65 17 94 0" fill="none" stroke="#c79a32" stroke-width="10" stroke-linecap="round"/>
+  <text x="256" y="390" text-anchor="middle" fill="#0f5c4d"
+        font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="700" letter-spacing="1.2">ĐẠI HỌC</text>
+  <text x="256" y="432" text-anchor="middle" fill="#0f5c4d"
+        font-family="Arial, Helvetica, sans-serif" font-size="37" font-weight="800" letter-spacing="0.8">HÀ HOA TIÊN</text>
+</svg>
